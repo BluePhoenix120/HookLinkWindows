@@ -76,6 +76,7 @@ final class HookLink: ObservableObject {
     @AppStorage("gpu") var gpu: String = "g19p"
     @AppStorage("appName") var appName: String = ""       // the name on the home screen; empty: the game's own
     @AppStorage("appIcon") var appIcon: String = ""       // a PNG or JPEG of the player's choice; empty: the game's own
+    @AppStorage("smallIPA") var smallIPA: Bool = false   // for AltStore, SideStore and LiveContainer: no GPU pipeline archive (a 4+ GB file their installers cannot read), built on the phone instead
     @AppStorage("enginePath") var enginePathSetting: String = ""
 
     // Build
@@ -311,16 +312,22 @@ final class HookLink: ObservableObject {
         if isMac {   // a double-clickable Mac app for this Mac's own GPU; the game files go inside it, so nothing is copied afterwards
             args += ["--platform", "mac-app", "--allow-damaged", "--env-file", resources.appendingPathComponent("presets/mac.env").path]
         } else {
-            args += ["--platform", "ios", "--romfs", "separate", "--allow-damaged", "--gpu", gpu, "--env-file", resources.appendingPathComponent("presets/iphone.env").path]
+            args += ["--platform", "ios", "--romfs", "separate", "--allow-damaged", "--env-file", resources.appendingPathComponent("presets/iphone.env").path]
+            if !smallIPA { args += ["--gpu", gpu] }   // the archive for this GPU (over 4 GB for the A20 Pro); without it the first start prepares the pipelines on the phone
         }
         args += ["--work-dir", workDir.path, "-o", product.path, "--progress", "json"]
         let name = appName.trimmingCharacters(in: .whitespacesAndNewlines)
         if !name.isEmpty { args += ["--app-name", name] }
         if !appIcon.isEmpty, FileManager.default.fileExists(atPath: appIcon) { args += ["--icon", appIcon] }
+        args += ["--fallback-icon", resources.appendingPathComponent("presets/fallback-icon.png").path]   // a dump or a NUP without the game's icon (a Discord report: the second build had none)
         say("$ " + args.joined(separator: " "))
         let r = Runner(); runner = r
         var collectingDamaged = false
-        let status = await r.run(args, cwd: engine, env: toolEnv.merging(["DM_ENTITLEMENTS": resources.appendingPathComponent("presets/entitlements.plist").path]) { a, _ in a }) { line in
+        // Per-device launcher defaults: the A19 and A18 Pro GPUs are near the frame budget at 60 fps (an iPhone 17 Pro averaged 30 fps at 60, 1.8.5 logs), so their builds start in
+        // 30 fps + frame generation at the Lighter size; the player's own choice in the launcher still wins
+        var buildEnv = ["DM_ENTITLEMENTS": resources.appendingPathComponent("presets/entitlements.plist").path]
+        if !isMac, ["g18p", "g17p"].contains(gpu) { buildEnv["DM_FRAME_MODE_DEFAULT"] = "2"; buildEnv["DM_FRAMEGEN_SCALE_DEFAULT"] = "0.75" }
+        let status = await r.run(args, cwd: engine, env: toolEnv.merging(buildEnv) { a, _ in a }) { line in
             guard let data = line.data(using: .utf8), let ev = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let kind = ev["ev"] as? String else {
                 self.say(line)
                 if collectingDamaged, line.hasPrefix("  ") { self.damagedFiles.append(line.trimmingCharacters(in: .whitespaces)) } else { collectingDamaged = false }
