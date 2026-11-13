@@ -326,7 +326,7 @@ final class HookLink: ObservableObject {
         // Per-device launcher defaults: the A19 and A18 Pro GPUs are near the frame budget at 60 fps (an iPhone 17 Pro averaged 30 fps at 60, 1.8.5 logs), so their builds start in
         // 30 fps + frame generation at the Lighter size; the player's own choice in the launcher still wins
         var buildEnv = ["DM_ENTITLEMENTS": resources.appendingPathComponent("presets/entitlements.plist").path]
-        if !isMac { buildEnv["DM_QOS_MAP_DEFAULT"] = "1"; buildEnv["DM_DYNRES_DEFAULT"] = "1"; buildEnv["DM_THERMAL_CAP_DEFAULT"] = "0" }   // the launcher's starting values, as the preset had them fixed before 1.9
+        if !isMac { buildEnv["DM_QOS_MAP_DEFAULT"] = "1"; buildEnv["DM_DYNRES_DEFAULT"] = "1"; buildEnv["DM_THERMAL_CAP_DEFAULT"] = "0"; buildEnv["DM_RC_STALE_DEFAULT"] = "1" }   // the launcher's starting values, as the preset had them fixed before 1.9
         if !isMac, ["g18p", "g17p"].contains(gpu) { buildEnv["DM_FRAME_MODE_DEFAULT"] = "2"; buildEnv["DM_FRAMEGEN_SCALE_DEFAULT"] = "0.75" }
         let status = await r.run(args, cwd: engine, env: toolEnv.merging(buildEnv) { a, _ in a }) { line in
             guard let data = line.data(using: .utf8), let ev = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let kind = ev["ev"] as? String else {
