@@ -328,6 +328,9 @@ final class HookLink: ObservableObject {
         var buildEnv = ["DM_ENTITLEMENTS": resources.appendingPathComponent("presets/entitlements.plist").path]
         if !isMac { buildEnv["DM_QOS_MAP_DEFAULT"] = "1"; buildEnv["DM_DYNRES_DEFAULT"] = "1"; buildEnv["DM_THERMAL_CAP_DEFAULT"] = "0"; buildEnv["DM_RC_STALE_DEFAULT"] = "1" }   // the launcher's starting values, as the preset had them fixed before 1.9
         if !isMac, ["g18p", "g17p"].contains(gpu) { buildEnv["DM_FRAME_MODE_DEFAULT"] = "2"; buildEnv["DM_FRAMEGEN_SCALE_DEFAULT"] = "0.75" }
+        // Every iPhone build: frame generation at the Lighter size. At full size the interpolation took 5.7 ms of GPU a frame at 60 fps + frame generation on an A20 Pro
+        // (test36), which warmed the phone into the fair thermal state in about 4 minutes, after which the CPU clock halved and frames dropped
+        if !isMac { buildEnv["DM_FRAMEGEN_SCALE_DEFAULT"] = "0.75" }
         let status = await r.run(args, cwd: engine, env: toolEnv.merging(buildEnv) { a, _ in a }) { line in
             guard let data = line.data(using: .utf8), let ev = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let kind = ev["ev"] as? String else {
                 self.say(line)
