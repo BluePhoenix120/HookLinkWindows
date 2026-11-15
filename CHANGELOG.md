@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.1
+
+- **The engine's "update available" link works.** In 1.9, clicking it at the bottom left of the window did nothing: only the Update and rebuild button in the banner at the top applied the update. The link now applies it too, never during a build.
+- The engine update also brings the phone launcher's title right: 1.9 builds said "HookLink 1.8" at the top left. Update the engine and build again to get it.
+
 ## 1.9
 
 Frame generation that works at 60 fps, a newer engine, heat and battery on the frame-rate counter, and fixes for the freezes players reported. Build again from your dump after updating: HookLink's engine updates itself.

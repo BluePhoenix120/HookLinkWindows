@@ -80,7 +80,7 @@ extension HookLink {
     /// Moves the engine to the fetched branch. The player then builds again and installs the new IPA over the old one:
     /// saves, game files and the resolution file stay on the phone.
     func applyEngineUpdate() async {
-        guard engineIsManaged, engineUpdate != nil else { return }
+        guard engineIsManaged, engineUpdate != nil, !busy else { return }   // never under a build that reads the engine
         busy = true; defer { busy = false; endWork() }
         beginWork("Updating the game engine"); workStep(0, "Moving to the new version")
         let cfg = Engine.load(from: resources)
@@ -167,7 +167,7 @@ struct VersionPanel: View {
                 }
                 if let e = app.engineVersion {
                     row("Engine \(e.commit) (\(e.date))" + (e.managed ? "" : ", your folder"), update: app.engineUpdate != nil ? "update available" : nil) {
-                        app.updateMessage = ""   // the banner at the top has What's new and Update and rebuild
+                        Task { await app.applyEngineUpdate() }   // as the banner's Update and rebuild (1.9 only cleared a message here: the link seemed to do nothing)
                     }
                 } else {
                     Text("Engine: not downloaded yet").font(.caption).foregroundStyle(.secondary)
