@@ -1,5 +1,40 @@
 # Changelog
 
+## X1 (2.0)
+
+HookLink X1 is a new engine and a redesigned launcher. The engine is the latest nxnative with HookLink's own fixes and the best of cheemu21's kid-with-sword-remake on top, and every setting both projects offer is in the launcher.
+
+### Before you update
+
+The engine compiles the game's shaders differently again, so the first build after updating compiles every shader (about 30 minutes on an M-series Mac), and the first start on the phone prepares the game's pipelines behind the progress screen for a while. Leave the phone plugged in; later starts take seconds.
+
+### A new launcher
+
+- **Play** shows the game, Play and a **Resolution** dial in the middle of the left side: Coolest, Cool, Balanced, Sharp and Sharpest. With Dynamic resolution on it reads Auto; moving it fixes a size.
+- **Quick settings** on the right, each with a line on what it does: Frame rate, Frame generation, Cool mode, Potato mode, Wide view and the Ocarina mic.
+- **Frame generation and the frame rate mode are one choice**: turning frame generation off moves 60 + frame generation to 60 fps, and on again moves back.
+- **Settings** has Game, Controls and Performance as tabs, with real switches and sliders. **Extras** is a set of cards that say what each does.
+- The title bar says HookLink X1, and nothing sits under the Dynamic Island on either side.
+
+### New settings
+
+- **Render scale**, 25 % to 100 % (it never worked for Ocarina before: the game's render-scale hook was missing).
+- **Cool mode**: half the 3D resolution and smaller in-between frames, for less heat and longer battery. It starts on for iPhones with less than 10 GB of memory.
+- **Potato mode**: the lightest the game can run, at 25 % resolution with memory savers, for older iPhones. The settings it sets are locked while it is on.
+- **Light movies**: the title and opening movies skip a sharpening step that kept the title screen under 60 fps. A slightly softer movie; turn it off for the movies as made.
+- **Microphone**: play the ocarina by humming or whistling.
+
+### Faster and steadier
+
+- About 11 % less CPU work per object drawn, and far fewer hitches after loading an area (texture tables reused instead of made 16 times a frame; from kid-with-sword-remake).
+- Less GPU memory at scene changes: the old scene's textures are no longer made again (about 2.5 GB at the house-to-forest change). This is aimed at the crashes when loading a save on iPhones with less memory.
+- Frame generation pauses in the pause menu, where it could hang the GPU, and is switched off on iPhones whose GPU can't make in-between frames.
+- nxnative's newest work, including a faster start (the pipeline archive opens 3 to 6 times faster) and steadier frame pacing.
+
+### Known issues
+
+- Hyrule Field can still drop under 60 fps when the GPU falls behind or the phone is warm. 30 fps + frame generation, Cool mode or a lower Resolution help there.
+
 ## 1.9.1
 
 - **The engine's "update available" link works.** In 1.9, clicking it at the bottom left of the window did nothing: only the Update and rebuild button in the banner at the top applied the update. The link now applies it too, never during a build.
