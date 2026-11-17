@@ -102,11 +102,13 @@ class SDKImportTests(unittest.TestCase):
     def test_gui_includes_import_dialog_consent_and_recheck(self):
         gui = (ROOT / 'win/hooklink_gui.pyw').read_text(encoding='utf-8')
         self.assertIn("text='Import SDK from Xcode .xip…'", gui)
+        self.assertIn("text='Download .xip'", gui)
+        self.assertIn('webbrowser.open_new_tab(XCODE_XIP_DOWNLOAD_URL)', gui)
         self.assertIn("filetypes=[('Xcode XIP archives', '*.xip')", gui)
         self.assertIn("Do you confirm that you are authorized to proceed?", gui)
         self.assertIn("'hooklink_sdk_import.py'", gui)
         self.assertIn("if title == 'iPhoneOS SDK import':", gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.0.5'", gui)
+        self.assertIn("GUI_VERSION = 'Alpha V1.0.6'", gui)
 
 
 if __name__ == '__main__':
