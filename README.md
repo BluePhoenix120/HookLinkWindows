@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/icon.png" width="128" alt="HookLink icon"></p>
 
-<h1 align="center">HookLink</h1>
+<h1 align="center">HookLinkWindows</h1>
 
 <p align="center"><b>The Legend of Zelda: Ocarina of Time (Nintendo Switch 2 Edition) on your iPhone, natively, built on your Mac from your own copy of the game.</b></p>
 
