@@ -72,6 +72,27 @@ def normalize_doctor_json(payload) -> CheckReport:
     return report
 
 
+
+def can_auto_prepare_translator(report: CheckReport) -> bool:
+    """Auto-prepare only a MISSING translator on an otherwise suitable host.
+
+    iPhoneOS SDK is intentionally NOT required to build the managed shader
+    translator, so SDK acquisition can be guided separately after preparation.
+    An existing DLL, even if mismatched, is never replaced automatically.
+    """
+    if report.blockers:
+        return False
+    entries = {item['name']: item for item in report.entries}
+    translator = entries.get('shader translator DLLs')
+    if not translator or translator['ok']:
+        return False
+    prerequisites = (
+        'Windows', 'Python 3.10+', '.NET SDK 10', 'spirv-cross',
+        'Metal compiler (iphoneos)', 'Metal compiler (macosx)',
+    )
+    return all(entries.get(name, {}).get('ok') is True for name in prerequisites)
+
+
 def run_prerequisite_check(root: Path, python: str, timeout: int = 150) -> CheckReport:
     root = Path(root)
     doctor = root / 'win' / 'doctor.py'
