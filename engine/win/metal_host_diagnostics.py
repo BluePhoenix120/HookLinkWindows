@@ -116,7 +116,7 @@ def run_host_msl(cmd, env, *, runner=subprocess.run,
     # outputs. Those paths must also be free of spaces.
     staged_env.update(TMP=str(stage), TEMP=str(stage), TMPDIR=str(stage))
     print('[INFO] Windows Metal shader paths contain whitespace; compiling '
-          '16 host shaders from a space-free staging directory.', flush=True)
+          f'{len(sources)} host shaders from a space-free staging directory.', flush=True)
     rc = _run_captured(new_cmd, staged_env, runner)
     if rc:
         return rc
