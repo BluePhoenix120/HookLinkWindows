@@ -54,23 +54,21 @@ Official sources: https://developer.apple.com/download/all/ and https://develope
 
 **Do not copy the full Xcode application into the project or commit an SDK folder to GitHub.** Keep local SDK/compiler paths in ignored local config. The GUI checks that `win/toolchain.json` is readable but does not download or manage these files.
 
-## 4. Configure nonstandard paths and build the translator if missing
+## 4. Toolchain setup in Alpha 1.0.3
 
-If Check prerequisites cannot locate a tool, put its installation path in `engine/win/toolchain.json` (legacy checkout: `win/toolchain.json`) (copy `engine/win/toolchain.example.json` if provided). This local file is not for publication. Supported keys in the upstream toolchain locator include `ios_sdk`, `llvm`, `metal_tools`, `spirv_cross_dir`, `zstd_dir`, and `dotnet`. Alternatively use its `NXW_<KEY>` environment variables. Use UTF-8 **without a BOM**, as older Windows PowerShell commands can write a BOM which this project's Python JSON reader rejects.
+**No command-line compilation or JSON editing is needed for the shader translator.** Click **Check prerequisites** in the GUI. When the `dmsh_xlate.dll` translator is absent and the required .NET 10 SDK, SPIRV-Cross and Apple Metal compilers are already available, HookLinkWindows automatically prepares graphics support from the bundled source, verifies it, and backs up the local shader-chain metadata before synchronization. The progress and any errors appear in **Build output and diagnostics**. This does not delete the game or shader caches, although a new shader-chain identity can make previously built shaders incompatible.
 
-If the checker reports **shader translator DLL missing**, build from the repository's own C# source using .NET SDK 10. In a PowerShell window opened at the checkout root:
+If automatic graphics setup fails, open **Toolchain setup… → Retry graphics setup**. For an existing translator, automatic setup never overwrites it: any manual retry that may regenerate a shader chain requires confirmation.
 
-```powershell
-dotnet publish .\engine\dm\gfx\tools\dmsh_xlate\dmsh_xlate.csproj -c Release --self-contained false -p:PublishTrimmed=false -p:PublishAot=false -o .\engine\dm\gfx\tools\dmsh_xlate_bin
-```
+The **iPhoneOS 26+ SDK is a separate prerequisite**; it is *not* needed for preparing the translator. It is not bundled with HookLinkWindows. Obtain it from an authorized Apple Xcode distribution and comply with the applicable Apple license. The GUI currently provides **Toolchain setup… → Browse… → Save SDK directory** to register an already extracted SDK. Automatic SDK acquisition and extraction are not yet implemented.
 
-Do not commit generated compiler artifacts unless their distribution has been reviewed. If the compiler fails, keep its full log and inspect the active port's exact source layout. The GUI cannot fix a missing or incompatible build toolchain by itself.
+The advanced developer path `engine/win/toolchain.json` also supports nonstandard paths (`ios_sdk`, `llvm`, `metal_tools`, `spirv_cross_dir`, `zstd_dir`), but everyday users should not need to edit this file for SDK selection or graphics setup. Python 3 and the separately installed compiler/SDK tools remain required for actual IPA compilation.
 
 ## 5. Run checks and choose the game NUP
 
 1. Open `HookLinkWindows.exe` from the **complete** checkout root.
 2. Click **Check prerequisites**. If the repository is incomplete, follow **Why** and **How to fix** beside `Repository layout: incomplete`, then retry.
-3. Once the layout is complete, the same action checks compilers/SDKs. Fix each `MISSING` required item and rerun until all required items show `OK`. Optional entries are labeled as optional.
+3. Once the layout is complete, the same action checks compilers/SDKs and automatically prepares missing graphics support if its dependencies are available. Select an existing iPhoneOS SDK through **Toolchain setup…** if needed. Other required third-party compilers must still be installed independently; rerun until every required item shows `OK`. Optional entries are labeled as optional.
 4. Choose your own Ocarina of Time remake **`.nup`** under **Game .nup file**. No `prod.keys` field is used in this NUP-specific GUI.
 5. Leave the default **App-only (recommended)** packaging selected for a smaller sideloadable IPA plus separately transferred data files. Change build directory and output IPA if you want; neither must be in your Windows home directory.
 6. The included `config/iphone-oot.env` uses `DM_NVN_ENC_THREAD=0`, `DM_PSO_MTL4=0`, `DM_NVN_BARRIER=full`, and `DM_MSL_DIR=.`. The user may choose another runtime file; these settings were verified on one device, not every iPhone.
