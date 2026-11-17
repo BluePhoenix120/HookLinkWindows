@@ -35,7 +35,7 @@ class DependencyManagerTests(unittest.TestCase):
     def test_all_download_links_are_explicit_https_pages(self):
         self.assertEqual(len({d.key for d in DEPENDENCIES}), len(DEPENDENCIES))
         self.assertTrue(all(not dep.url or dep.url.startswith('https://') for dep in DEPENDENCIES))
-        self.assertIn('developer.apple.com/metal/tools/', {d.url for d in DEPENDENCIES})
+        self.assertIn('https://developer.apple.com/metal/tools/', {d.url for d in DEPENDENCIES})
 
     def test_only_expected_required_missing_packages_are_installed(self):
         report = self.report(('Python 3.10+', True, '', True),
