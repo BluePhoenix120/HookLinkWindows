@@ -33,11 +33,12 @@ from auto_workers import logical_workers
 from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
 from hooklink_sdk_import import validate_xip_archive
 from hooklink_dependency_manager import XCODE_XIP_DOWNLOAD_URL, dependency_statuses, missing_python_packages
+from hooklink_engine_pin import read_engine_pin
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.0.6'
+GUI_VERSION = 'Alpha V1.0.7'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -116,7 +117,20 @@ class App(tk.Tk):
         outer = ttk.Frame(self, padding=16)
         outer.pack(fill='both', expand=True)
         ttk.Label(outer, text='HookLinkWindows', font=('Segoe UI', 18, 'bold')).pack(anchor='w')
-        ttk.Label(outer, text='Create an iOS app from your own Ocarina of Time .nup file.', foreground='#555').pack(anchor='w', pady=(2, 12))
+        ttk.Label(outer, text='Create an iOS app from your own Ocarina of Time .nup file.', foreground='#555').pack(anchor='w', pady=(2, 5))
+        self.engine_pin = read_engine_pin(ROOT)
+        pin_row = ttk.Frame(outer)
+        pin_row.pack(fill='x', pady=(0, 9))
+        ttk.Label(pin_row, text='NXNative upstream base (pinned):', foreground='#555').pack(side='left', padx=(0, 8))
+        self.upstream_sha_var = tk.StringVar(value=self.engine_pin.display)
+        ttk.Entry(pin_row, textvariable=self.upstream_sha_var, width=45, state='readonly').pack(side='left', padx=(0, 8))
+        upstream_button = ttk.Button(
+            pin_row, text='View commit',
+            command=lambda: webbrowser.open_new_tab(self.engine_pin.url) if self.engine_pin.url else None)
+        upstream_button.pack(side='left', padx=(0, 8))
+        if not self.engine_pin.url:
+            upstream_button.configure(state='disabled')
+        ttk.Label(pin_row, text='Windows engine modified', foreground='#555').pack(side='left')
         form = ttk.LabelFrame(outer, text='Build configuration', padding=12)
         form.pack(fill='x')
         self._field(form, 0, 'Game .nup file', self.input_var, self._browse_input)
