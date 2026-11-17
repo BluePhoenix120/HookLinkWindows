@@ -36,7 +36,7 @@ class PinnedEngineDeltaTests(unittest.TestCase):
         self.assertEqual(manifest['from_commit'], OLD_PIN)
         self.assertEqual(manifest['nxnative_repo'], pin['nxnative_repo'])
         files = manifest['changed_paths']
-        self.assertEqual(len(files), 26)
+        self.assertEqual(len(files), 25)
         self.assertEqual(len({x['path'] for x in files}), len(files))
         for row in files:
             path = row['path']
