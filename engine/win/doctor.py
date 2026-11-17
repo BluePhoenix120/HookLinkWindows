@@ -8,7 +8,7 @@ import toolchain as tc
 
 
 def run(cmd):
-    try: r = subprocess.run([str(c) for c in cmd], capture_output=True, text=True, timeout=60)
+    try: r = subprocess.run([str(c) for c in cmd], capture_output=True, text=True, timeout=60, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     except (OSError, subprocess.TimeoutExpired) as e: return 1, str(e)
     return r.returncode, ((r.stdout or '') + (r.stderr or '')).strip()
 
@@ -38,10 +38,13 @@ def checks():
     lld = tc.llvm_tool('ld64.lld')
     add('ld64.lld (LLVM Mach-O linker)', lld, str(lld or ''), 'ships with LLVM for Windows (bin/ld64.lld.exe)')
 
-    sdk = tc.ios_sdk()
+    sdk, sdk_source, sdk_warnings = tc.ios_sdk_details()
     ver, build = tc.sdk_settings(sdk) if sdk else ('', '')
-    add('iPhoneOS SDK 26+', sdk and ver.split('.')[0].isdigit() and int(ver.split('.')[0]) >= 26, f'{sdk} {ver} {build}' if sdk else 'not found',
-        'python win/sdk/extract_xip.py <Xcode_26.xip> (Xcode from developer.apple.com/download, free Apple ID), or copy iPhoneOS.sdk from a Mac; then set "ios_sdk"')
+    sdk_detail = f'{sdk} {ver} {build} [{sdk_source}]' if sdk else 'not found'
+    if sdk_warnings:
+        sdk_detail += ' | ' + '; '.join(sdk_warnings)
+    add('iPhoneOS SDK 26+', bool(sdk), sdk_detail,
+        'Extract an iPhoneOS 26+ SDK into this or a sibling checkout under win/sdk/out, or set NXW_IOS_SDK / "ios_sdk" to an SDK path')
 
     for sdkname in ('iphoneos', 'macosx'):
         m = tc.metal_tool(sdkname, 'metal'); ml = tc.metal_tool(sdkname, 'metallib')

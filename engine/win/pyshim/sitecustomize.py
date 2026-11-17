@@ -12,6 +12,18 @@ import os, sys
 # On Linux the driver sets NXW_LINUX: the same mappings hold there (no xcrun, no Xcode, a Mach-O translator apphost), with the Metal tools run under Wine (toolchain.cmd)
 if (os.name == 'nt' or os.environ.get('NXW_LINUX')) and not os.environ.get('NXW_SHIM_OFF'):
     import ctypes, shutil, subprocess
+    if not hasattr(os, "pread"):
+        import threading as _pread_threading
+        _pread_lock = _pread_threading.Lock()
+        def _nxw_pread(fd, size, offset):
+            with _pread_lock:
+                old = os.lseek(fd, 0, os.SEEK_CUR)
+                try:
+                    os.lseek(fd, offset, os.SEEK_SET)
+                    return os.read(fd, size)
+                finally:
+                    os.lseek(fd, old, os.SEEK_SET)
+        os.pread = _nxw_pread
     from pathlib import Path
     _WIN = Path(__file__).resolve().parent.parent
     _XCRUN = str(_WIN / 'xcrun.py')
@@ -145,6 +157,21 @@ if (os.name == 'nt' or os.environ.get('NXW_LINUX')) and not os.environ.get('NXW_
 
     _init = subprocess.Popen.__init__
     def _popen_init(self, args, *a, **k):
-        if os.environ.get('NXW_SHIM_TRACE'): print('nxw shim:', args, '->', _map(args), file=sys.stderr)
-        _init(self, _map(args), *a, **k)
+        mapped = _map(args)
+        if os.environ.get('NXW_SHIM_TRACE'): print('nxw shim:', args, '->', mapped, file=sys.stderr)
+        # Pythonw/Tkinter has no parent console. Without this flag, every child
+        # console program (clang.exe, ld64.lld, dotnet, etc.) creates a visible
+        # transient window and steals focus from the GUI during a Windows build.
+        # Preserve callers that explicitly request a new/detached console.
+        # NXW_SHOW_CHILD_CONSOLES=1 is an opt-out for interactive debugging.
+        # Positional creationflags (13th arg after args) cannot be overridden
+        # safely via kwargs; leave those calls unchanged.
+        if (os.name == 'nt' and os.environ.get('NXW_SHOW_CHILD_CONSOLES') != '1'
+                and len(a) < 13):
+            flags = k.get('creationflags', 0) or 0
+            incompatible = (getattr(subprocess, 'CREATE_NEW_CONSOLE', 0)
+                            | getattr(subprocess, 'DETACHED_PROCESS', 0))
+            if not (flags & incompatible):
+                k['creationflags'] = flags | subprocess.CREATE_NO_WINDOW
+        _init(self, mapped, *a, **k)
     subprocess.Popen.__init__ = _popen_init

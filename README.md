@@ -15,7 +15,7 @@ HookLinkWindows helps users build an **unsigned iOS application locally** from a
 5. Select **App-only (recommended)** or **Full** packaging, review the settings with **Preview command**, and select **Build IPA**.
 6. **Sign and sideload** the generated IPA using a compatible tool. With app-only packaging, transfer the accompanying `RomFS.img`, matching `b-<shader-chain>.img`, and `env.txt` into the app's Documents folder as described in the setup guide.
 
-**Read the full instructions before building:** [Getting Started](docs/GETTING_STARTED.md) · [Prerequisites](docs/PREREQUISITES.md) · [Troubleshooting and issues](docs/HOOKLINKWINDOWS_PORT_ISSUES.md)
+**Read the full instructions before building:** [Getting Started](docs/GETTING_STARTED.md) · [Prerequisites](docs/PREREQUISITES.md) · [Shader-chain setup](docs/SHADER_CHAIN.md)
 
 ## Prerequisites at a glance
 
@@ -57,9 +57,9 @@ The repository can be extracted outside the Windows home directory. Build/output
 
 ## Known limitations
 
-- **Clean-install reproducibility remains unverified.** GUI unit tests and a successful earlier developer build are not evidence that a fresh computer can compile and sideload an app using this consolidated checkout.
-- **Windows shader-chain portability is incomplete.** The working developer installation used a locally generated shader chain/Metal compiler fingerprint. This repository retains upstream chain defaults pending a reproducible, build-local setup; do not assume archives produced by different compiler versions are interchangeable.
-- Some portability workarounds and the UIKit game-menu bridge are experimental. See [Port Issues](docs/HOOKLINKWINDOWS_PORT_ISSUES.md).
+- **Clean-install reproducibility remains unverified.** The Alpha V1.0.0 IPA was successfully built and tested on the developer machine, and 96 regression tests passed. A fresh Windows checkout, compilation, signing, and sideload have not yet been validated end to end.
+- **Windows shader-chain setup is build-specific.** The tested Windows toolchain uses shader chain `a58d7f1f4ef9`. Fresh installations can build the managed translator from source and generate a matching local tool lock and chain header using [Translator Bootstrap](docs/TRANSLATOR_BOOTSTRAP.md); this clean-install procedure remains unverified. Shader caches produced with different tool fingerprints are not necessarily compatible. [ENGINE_PIN.json](ENGINE_PIN.json) records the bundled nxnative revision.
+- Some portability workarounds and the UIKit game-menu bridge are experimental. See [Getting Started](docs/GETTING_STARTED.md) and [release checklist](docs/RELEASE_CHECKLIST.md).
 - The app may require an increased-memory-limit entitlement, which depends on signing and device support. An unsigned IPA alone does not grant it.
 - The GitHub Actions GUI executable packaging is independent of the much larger iOS compilation toolchain and does not supply missing SDKs or proprietary tools.
 

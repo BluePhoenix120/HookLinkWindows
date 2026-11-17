@@ -76,7 +76,7 @@ Do not commit generated compiler artifacts unless their distribution has been re
 6. The included `config/iphone-oot.env` uses `DM_NVN_ENC_THREAD=0`, `DM_PSO_MTL4=0`, `DM_NVN_BARRIER=full`, and `DM_MSL_DIR=.`. The user may choose another runtime file; these settings were verified on one device, not every iPhone.
 7. Leave **Allow damaged assets** and **Allow alternate Metal version** checked if required by your toolchain. They bypass validation and may mask problems; they are user-editable.
 8. Optionally edit **Advanced settings → Bundle ID** (default `PhoenixNetwork.HookLinkWindows`). A different ID creates a separate iOS application identity with separate Documents/save data.
-9. Click **Preview command** and review its output. Click **Build IPA**. Do not interrupt shader compilation unnecessarily; it can be lengthy and consume substantial disk space (tens of gigabytes for the tested game).
+9. Click **Preview command** and review its output. Click **Build IPA**. The GUI validates the shader-chain lock and host header against installed tools before compilation. If the chain differs, it backs up and synchronizes only these local source files, verifies them again, and blocks the build on any failure. This preflight does not compile game shaders; the subsequent build may compile them if the matching library is absent. See `docs/SHADER_CHAIN.md`. Do not interrupt game shader compilation unnecessarily; it can be lengthy and consume substantial disk space (tens of gigabytes for the tested game).
 
 ### Output formats
 
@@ -101,4 +101,4 @@ For app-only mode, transfer the locally generated `RomFS.img`, the **matching** 
 - **IPA fails to install:** Verify signing/entitlements, output integrity, App IDs and device limitations, and keep the matching external game data available.
 - **No SDK/compiler bundled:** This is intentional, for licensing and release-size reasons.
 
-For project release preparation read `docs/RELEASE_CHECKLIST.md`, `docs/HOOKLINKWINDOWS_PORT_ISSUES.md`, and the upstream port's `engine/win/README.md` when available. The published GitHub source must be audited for third-party licenses and private/generated assets. **The repository is not yet certified as clean-room reproducible.**
+For project release preparation read `docs/RELEASE_CHECKLIST.md`, `docs/SHADER_CHAIN.md`, and the upstream port's `engine/win/README.md` when available. The published GitHub source must be audited for third-party licenses and private/generated assets. **The repository is not yet certified as clean-room reproducible.**

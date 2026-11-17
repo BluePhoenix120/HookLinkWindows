@@ -20,8 +20,8 @@ int dm_opmode(void) {
     return m;
 }
 // ---------- System notification queue (AppletMessage): front end state changes → fetched by the game every frame with TryPopNotificationMessage ----------
-// Message numbers the host sends: 15 focus change, 30 operation mode change, 31 performance mode change
-enum { MSG_FOCUS = 15, MSG_OPMODE = 30, MSG_PERFMODE = 31 };
+// Message numbers the host sends: 15 focus change, 30 operation mode change, 31 performance mode change, 95 startup logo disappeared
+enum { MSG_FOCUS = 15, MSG_OPMODE = 30, MSG_PERFMODE = 31, MSG_STARTUP_LOGO = 95 };
 #define MQ 32
 static pthread_mutex_t g_mq_lock = PTHREAD_MUTEX_INITIALIZER; static pthread_cond_t g_mq_cond = PTHREAD_COND_INITIALIZER;   // cond: wakes the blocking PopNotificationMessage
 static uint32_t g_mq[MQ]; static int g_mqh, g_mqn;
@@ -47,7 +47,8 @@ static void mq_push_(uint32_t m) {
     // 15/30/31 are invalidation notifications meaning "query the current state", not events carrying historical values.
     // While one of the same type has not been taken yet, the first queue position is kept: a consumer loop only reads the latest state, repeated notifications write back the same thing, and with the same size there is no further resize.
     // Only these three state notifications are merged; future per-occurrence events (such as Resume/Exit) must not use this rule.
-    // Legitimate producers only send these three, so at most three items are pending, and any number of focus losses/restores no longer hits the 32-slot limit; after a pop, new changes are enqueued as usual.
+    // Legitimate state producers only send these three, so at most three of them are pending, and any number of focus losses/restores no longer hits the 32-slot limit; after a pop, new changes are enqueued as usual.
+    // Per-occurrence messages (95, startup logo disappeared) keep a position each.
     if (m == MSG_FOCUS || m == MSG_OPMODE || m == MSG_PERFMODE)
         for (int i = 0; i < g_mqn; i++)
             if (g_mq[(g_mqh + i) % MQ] == m) { pthread_mutex_unlock(&g_mq_lock); return; }
@@ -100,6 +101,10 @@ void dm_focus_set(int st) {
 }
 static int opmode(void) { return dm_opmode(); }
 
+// The SDK's backlight calls dereference am's absent CommonStateGetter.
+// The host does not control a Switch LCD; leave the host display on.
+HLE_FORCE("_ZN2nn2oe20SwitchLcdBacklightOnEv", "turn the handheld screen on (through am); the host has no Switch LCD", void, h_oe_LcdOn, void) {}
+HLE_FORCE("_ZN2nn2oe21SwitchLcdBacklightOffEv", "turn the handheld screen off (through am); the host has no Switch LCD", void, h_oe_LcdOff, void) {}
 // Screenshot / video recording switches: the host has no system screenshot service, no-op
 // Star Fox (SDK 21): the game marks the sections where it shows the player's own photographs (GameChat's camera pictures on screen); the system keeps those out of captures. No captures here
 HLE_FORCE("_ZN2nn2oe32BeginPresentPhotographedContentsEv", "photographed contents on screen: noted nowhere (no capture service)", void, h_oe_PhotoBegin, void) {}
@@ -108,6 +113,8 @@ HLE_FORCE("_ZN2nn2oe41ExitApplicationAndGoBackToInStoreDemoMenuEv", "the in-stor
     static int once; if (!once++) LOG("[RED] oe: ExitApplicationAndGoBackToInStoreDemoMenu called: ignored (no in-store demo menu)");
 }
 HLE_FORCE("_ZN2nn2oe17FinishStartupLogoEv", "dismiss the system boot screen (through the am application proxy); the host has no boot screen", void, h_oe_FinishLogo, void) {}   // Metroid Dread calls it at main+0xadfed0
+HLE_FORCE("_ZN2nn2oe35EnableStartupLogoDisappearedMessageEv", "startup logo is already absent: deliver its notification through the host's queue, without an am proxy",
+          void, h_oe_EnableStartupLogoMessage, void) { mq_push(MSG_STARTUP_LOGO); }
 // am retains the requested inactivity extension even when auto-sleep is disabled.
 // SDK 12.3.9 maps the normal setter to mode 1, Unsafe to mode 2, and false to 0.
 // Xenoblade Chronicles 3 reads it after the opening movie (sdk+0x3391f0).
@@ -168,20 +175,23 @@ HLE_FORCE("_ZN2nn2oe23GetPreviousProgramIndexEv", "previous program index: the p
 // program and schedules a notification that opens the app (front_program_handoff), the app ends, and its next start reads the file and runs that program. A program the app lacks: its first
 // program, with no parameters. An app of one program cannot start itself again: the front end asks the player to open the app again (front_program_handoff with no DM_EXEC_OUT), and the app ends.
 #if !TARGET_OS_IPHONE
-typedef struct { const char *exe, *cwd; char **argv, **env; char *argv2[3]; char self[4096]; } prog_plan;   // cwd NULL: stay in this folder
+// cwd NULL: stay in this folder. The plan owns what it allocates (prog_plan_free): env (its entries point into environ, tsv or own), the table tsv that exe, cwd and arg point into,
+// and own, the two start keys. The host makes one plan and replaces itself with it (execve); a caller that makes another frees the first
+typedef struct { const char *exe, *cwd; char **argv, **env; char *argv2[3]; char self[4096]; char *tsv, *own[2]; } prog_plan;
+static void prog_plan_free(prog_plan *p) { free(p->env); free(p->tsv); free(p->own[0]); free(p->own[1]); memset(p, 0, sizeof *p); }
 static int prog_row_sets(const char *row, const char *kv) {
     size_t kl = strcspn(kv, "=");
     for (const char *f = strchr(row, '\t'); f && f[1]; f = strchr(f + 1, '\t')) if (!strncmp(f + 1, kv, kl) && f[1 + kl] == '=') return 1;
     return 0;
 }
 static int prog_start_key(const char *kv) { return !strncmp(kv, "DM_LAUNCH_PARAM=", 16) || !strncmp(kv, "DM_PREV_PROGRAM=", 16) || !strncmp(kv, "DM_RELAUNCH=", 12); }
-// The plan of the program that starts: rows[hit] of the table (hit -1: this host itself, again). Its environment is this one less the keys a start sets and every key a row sets, then the
-// row's keys, then the start's own (DM_RELAUNCH=1, or DM_LAUNCH_PARAM and DM_PREV_PROGRAM with the parameters in <its folder>/launch_param.bin)
+// The plan of the program that starts: rows[hit] of the table (hit -1: this host itself, again; the rows point into out->tsv). Its environment is this one less the keys a start sets and
+// every key a row sets, then the row's keys, then the start's own (DM_RELAUNCH=1, or DM_LAUNCH_PARAM and DM_PREV_PROGRAM with the parameters in <its folder>/launch_param.bin).
+// 0: no plan (out keeps what it holds, for the caller's prog_plan_free)
 static int prog_plan_make(char **rows, int nr, int hit, prog_plan *out, const void *param, size_t n, int relaunch, const char *call) {
     extern char **environ;
-    memset(out, 0, sizeof *out);
     size_t ne = 0; while (environ[ne]) ne++;
-    char **env = calloc(ne + 68, sizeof *env); size_t k = 0;
+    char **env = out->env = calloc(ne + 68, sizeof *env); size_t k = 0;
     if (!env) die("%s: out of memory", call);
     for (size_t i = 0; i < ne; i++) {
         int drop = prog_start_key(environ[i]);
@@ -198,12 +208,12 @@ static int prog_plan_make(char **rows, int nr, int hit, prog_plan *out, const vo
             else if (!strncmp(f, "cwd=", 4)) out->cwd = f + 4;
             else if (strchr(f, '=') && k < ne + 64) env[k++] = f;
         }
-        if (!out->exe || !arg || !out->cwd) { LOG("[RED] %s: DM_PROGRAMS's row of program %d lacks exe=, arg= or cwd=", call, prog); free(env); return 0; }
+        if (!out->exe || !arg || !out->cwd) { LOG("[RED] %s: DM_PROGRAMS's row of program %d lacks exe=, arg= or cwd=", call, prog); return 0; }
         out->argv2[0] = (char *)out->exe; out->argv2[1] = (char *)arg; out->argv = out->argv2; dir = out->cwd;
     } else {
         uint32_t sz = sizeof out->self;
-        if (_NSGetExecutablePath(out->self, &sz)) { LOG("[RED] %s: the host's path does not fit", call); free(env); return 0; }
-        if (!relaunch && !getcwd(here, sizeof here)) { LOG("[RED] %s: no current folder", call); free(env); return 0; }
+        if (_NSGetExecutablePath(out->self, &sz)) { LOG("[RED] %s: the host's path does not fit", call); return 0; }
+        if (!relaunch && !getcwd(here, sizeof here)) { LOG("[RED] %s: no current folder", call); return 0; }
         out->exe = out->self; out->argv = *_NSGetArgv();   // main leaves its argv as it was given, and the host never changes folder
     }
     if (relaunch) env[k++] = "DM_RELAUNCH=1";
@@ -213,24 +223,25 @@ static int prog_plan_make(char **rows, int nr, int hit, prog_plan *out, const vo
         FILE *po = fopen(pp, "wb");
         if (!po || (n && fwrite(param, n, 1, po) != 1)) LOG("[RED] %s: cannot write %s", call, pp);
         if (po) fclose(po);
-        free(pp); env[k++] = pe; env[k++] = pv;
+        free(pp); env[k++] = out->own[0] = pe; env[k++] = out->own[1] = pv;
     }
-    env[k] = NULL; out->env = env;
+    env[k] = NULL;
     return 1;
 }
-// The Mac's plan for starting program `index` in this one's place; 0: nothing can start, this program just ends
+// The Mac's plan for starting program `index` in this one's place, into P (an earlier plan there is freed first); 0: nothing can start, this program just ends (P holds nothing)
 static int oe_plan(int index, const void *param, size_t n, int relaunch, prog_plan *P, const char *call) {
+    prog_plan_free(P);
     int cur = (int)(DM_GAME_PROGRAM_ID & 0xf);   // the program index is the program ID less the application's
     const char *pf = getenv("DM_PROGRAMS");
     if (!pf || !*pf) {   // a program run by itself
         if (!relaunch && index != cur) return 0;
-        if (!prog_plan_make(NULL, 0, -1, P, param, n, relaunch, call)) return 0;
+        if (!prog_plan_make(NULL, 0, -1, P, param, n, relaunch, call)) { prog_plan_free(P); return 0; }
         LOG("%s: this program ends and starts again", call);
         return 1;
     }
-    static char *tsv; FILE *fp = fopen(pf, "rb");
+    char *tsv = NULL; FILE *fp = fopen(pf, "rb");
     long sz = fp && !fseek(fp, 0, SEEK_END) ? ftell(fp) : -1;   // -1: no file, or one that cannot seek
-    if (sz >= 0 && (tsv = calloc(1, (size_t)sz + 1))) { fseek(fp, 0, SEEK_SET); if (fread(tsv, 1, (size_t)sz, fp) != (size_t)sz) tsv[0] = 0; }
+    if (sz >= 0 && (tsv = P->tsv = calloc(1, (size_t)sz + 1))) { fseek(fp, 0, SEEK_SET); if (fread(tsv, 1, (size_t)sz, fp) != (size_t)sz) tsv[0] = 0; }
     if (fp) fclose(fp);
     if (!tsv) { LOG("[RED] %s: cannot read DM_PROGRAMS %s", call, pf); return 0; }
     char *rows[64]; int nr = 0, hit = -1, first = -1;
@@ -244,7 +255,7 @@ static int oe_plan(int index, const void *param, size_t n, int relaunch, prog_pl
         LOG("[RED] %s: this application has no such program here; its first program starts instead", call);
         hit = first; param = NULL; n = 0;
     }
-    if (hit < 0 || !prog_plan_make(rows, nr, hit, P, param, n, relaunch, call)) return 0;
+    if (hit < 0 || !prog_plan_make(rows, nr, hit, P, param, n, relaunch, call)) { prog_plan_free(P); return 0; }
     if (relaunch) LOG("%s: the application starts again from its first program, %s", call, P->exe);
     else LOG("%s: this program ends, %s starts", call, P->exe);
     return 1;
@@ -270,6 +281,7 @@ static void oe_start(int index, const void *param, size_t n, int relaunch) {
     char hex[3 * 32 + 1] = "", call[192]; for (size_t i = 0; i < n && i < 32; i++) snprintf(hex + 3 * i, 4, " %02x", ((const uint8_t *)param)[i]);
     if (relaunch) snprintf(call, sizeof call, "%s", what); else snprintf(call, sizeof call, "%s(%d, %zu bytes of parameters:%s)", what, index, n, hex);
     int cur = (int)(DM_GAME_PROGRAM_ID & 0xf);
+    dm_gfx_quit_begin();   // this program ends: the pipeline archive starts writing now, beside the iPhone's notice (front_program_handoff, 1.5-3 s), and the exit waits for the rest
 #if !TARGET_OS_IPHONE
     static prog_plan P;
     if (oe_plan(index, param, n, relaunch, &P, call)) { dm_host_shutdown_then(what, prog_exec, &P); for (;;) pause(); }
@@ -369,6 +381,11 @@ HLE_FORCE("_ZN2nn2oe33EnableAlbumImageTakenNotificationEv", "screenshot-taken no
 HLE_FORCE("_ZN2nn2oe24IsInStoreDemoModeEnabledEv", "retail store demo mode (through am); never", unsigned, h_oe_StoreDemo, void) { return 0; }
 HLE_FORCE("_ZN2nn2oe27SetPerformanceConfigurationENS0_15PerformanceModeEi", "set the CPU/GPU clock config; the host does not scale clocks", void, h_oe_SetPerfCfg, int mode, int cfg) {
     LOG("oe::SetPerformanceConfiguration mode=%d cfg=%#x (ignored)", mode, cfg);
+}
+// The one-argument overload sets the configuration of both modes (SDK 14.3, TUNIC's sdk+0x3a5630: a table lookup, then apm::SetPerformanceConfiguration for Normal and for Boost); SDK 21.4.7's
+// goes through oe::detail::ApmSetPerformanceConfiguration. Both read the apm session the host never opened (Warhammer Survivors: null read at sdk+0x40720c as a scene begins)
+HLE_FORCE("_ZN2nn2oe27SetPerformanceConfigurationEi", "set the CPU/GPU clock config of both modes (through apm); the host does not scale clocks", void, h_oe_SetPerfCfgBoth, int cfg) {
+    LOG("oe::SetPerformanceConfiguration cfg=%#x (ignored)", cfg);
 }
 
 // Scripted state changes (verify lifecycle / overheat downgrade without a window): DM_OE_SCRIPT="focus=3@10,focus=1@20,opmode=0@30" (second N); bg=1 / bg=0 run the whole background round trip (see script_bg)

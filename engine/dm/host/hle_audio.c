@@ -1,7 +1,7 @@
 // nn::audio AudioOut: the game (FMOD nx output layer) appends PCM buffers block by block; once played the system puts them back on the "released" queue and signals the event.
 // Host: real audio output = CoreAudio AudioUnit (Mac DefaultOutput / iOS RemoteIO); silent sink = consumes buffers in real time (no sound, pacing matches the real device).
 //       iOS defaults to real audio output (the product must have sound), tests that want silence set DM_AUDIO=0 explicitly; Mac defaults to the silent sink (replay / gate checks are silent), DM_AUDIO=1 for real audio output.
-// The contents of AudioOut / AudioOutBuffer / AudioOutParameter are read and written only through the interfaces below; the host defines its own internal layout and only writes the front part of the structs (AudioOut: the SDK's own fields, au_info).
+// The contents of AudioOut / AudioOutParameter are read and written only through the interfaces below; the host defines its own internal layout and only writes the front part of the structs (AudioOut: the SDK's own fields, au_info). AudioOutBuffer is the exception: it is the SDK's own struct (aout_buf, hle.h), filled and read by the SDK's own descriptor functions
 #include "hle.h"
 #include <AudioToolbox/AudioToolbox.h>
 #include <TargetConditionals.h>
@@ -13,7 +13,6 @@ enum { FMT_PCM16 = 2, STATE_STARTED = 0, STATE_STOPPED = 1, RATE = 48000 };
 enum { BK_NONE, BK_AU, BK_NULL };   // what is consuming an output's queue right now (aout.backend)
 enum { AU_IDLE, AU_STARTING, AU_CANCELED, AU_WAIT_CALLBACK };
 
-typedef struct { void *ptr; uint64_t cap, size; } gbuf;     // The first 24 bytes written into the guest AudioOutBuffer
 #define QMAX 64
 #define RELMAX QMAX                    // Released max = number of in-flight buffers (the game must take a buffer back before it can append again), same limit as pending
 typedef struct { uint64_t calls, count, qsum, underruns, zero_bytes; uint32_t fmin, fmax; } audio_stats;
@@ -23,8 +22,8 @@ typedef struct {
     int ch;
     _Atomic int state;
     _Atomic uint32_t vol;              // SetAudioOutVolume gain as float bits (1.0 at open), applied to the samples as they are pulled
-    gbuf *q[QMAX]; _Atomic uint32_t q_head, q_tail;       // Pending: written by the game side, read by the output side
-    gbuf *rel[RELMAX]; _Atomic uint32_t rel_head, rel_tail; // Released: written by the output side, read by the game side
+    aout_buf *q[QMAX]; _Atomic uint32_t q_head, q_tail;       // Pending: written by the game side, read by the output side
+    aout_buf *rel[RELMAX]; _Atomic uint32_t rel_head, rel_tail; // Released: written by the output side, read by the game side
     uint64_t pos;                      // Bytes already played of the current block
     AudioUnit au;
     int start_phase, reset_pending, mute;   // a reset during start replaces the unit after the call returns
@@ -100,7 +99,7 @@ static void pull(aout *a, uint8_t *dst, uint64_t n) {
         if (qh == qt || atomic_load_explicit(&a->state, memory_order_acquire) != STATE_STARTED) {
             if (qh == qt && atomic_load_explicit(&a->state, memory_order_acquire) == STATE_STARTED) { atomic_fetch_add(&a->under_n, 1); atomic_fetch_add(&a->under_b, n); }
             memset(dst, 0, n); break; }
-        gbuf *b = a->q[qh & (QMAX - 1)];
+        aout_buf *b = a->q[qh & (QMAX - 1)];
         uint64_t k = b->size - a->pos; if (k > n) k = n;
         memcpy(dst, (uint8_t *)b->ptr + a->pos, k);
         dst += k; n -= k; a->pos += k;
@@ -439,15 +438,15 @@ static Result au_open_at(void *g, void *ev, const char *name, const uint8_t *par
     return RES_OK;
 }
 HLE_FORCE("_ZN2nn5audio12OpenAudioOutEPNS0_8AudioOutEPNS_2os11SystemEventEPKcRKNS0_17AudioOutParameterE", "connect to the audout service; host AudioUnit / silent sink",
-          Result, h_au_Open, void *g, void *ev, const char *name, const uint8_t *param) { return au_open_at(g, ev, name, param, __builtin_return_address(0)); }
+          Result, h_au_Open, void *g, void *ev, const char *name, const uint8_t *param) { return au_open_at(g, ev, name, param, dm_bigstack_caller(__builtin_return_address(0))); }
 // The two default-device overloads (Engage, SDK 12): as OpenAudioOut with the default device name; the overload without an event binds no release event (the game polls GetReleasedAudioOutBuffer)
 // SDK 22 dropped the release event from the parameter-carrying overload (Well Dweller calls this one; unbound it reached the SDK's audout session, which fails with 0xe15 and the game aborts)
 HLE_FORCE("_ZN2nn5audio12OpenAudioOutEPNS0_8AudioOutEPKcRKNS0_17AudioOutParameterE", "connect to the audout service, no release event (SDK 22 overload)",
-          Result, h_au_Open4, void *g, const char *name, const uint8_t *param) { return au_open_at(g, NULL, name, param, __builtin_return_address(0)); }
+          Result, h_au_Open4, void *g, const char *name, const uint8_t *param) { return au_open_at(g, NULL, name, param, dm_bigstack_caller(__builtin_return_address(0))); }
 HLE_FORCE("_ZN2nn5audio19OpenDefaultAudioOutEPNS0_8AudioOutEPNS_2os11SystemEventERKNS0_17AudioOutParameterE", "connect to the audout service (default device); same as OpenAudioOut",
-          Result, h_au_OpenDef, void *g, void *ev, const uint8_t *param) { return au_open_at(g, ev, NULL, param, __builtin_return_address(0)); }
+          Result, h_au_OpenDef, void *g, void *ev, const uint8_t *param) { return au_open_at(g, ev, NULL, param, dm_bigstack_caller(__builtin_return_address(0))); }
 HLE_FORCE("_ZN2nn5audio19OpenDefaultAudioOutEPNS0_8AudioOutERKNS0_17AudioOutParameterE", "connect to the audout service (default device, no event); same as OpenAudioOut",
-          Result, h_au_OpenDef0, void *g, const uint8_t *param) { return au_open_at(g, NULL, NULL, param, __builtin_return_address(0)); }
+          Result, h_au_OpenDef0, void *g, const uint8_t *param) { return au_open_at(g, NULL, NULL, param, dm_bigstack_caller(__builtin_return_address(0))); }
 static Result au_start_at(void *g, void *lr) {
     aout *a = ao(g);
     pthread_mutex_lock(&g_aos_lock);
@@ -465,7 +464,7 @@ static Result au_start_at(void *g, void *lr) {
 // demangler under CAReporter); Arcade Archives RAINBOW ISLANDS 1.0.2, SDK 19.3.11, M1, macOS 27.2, PR #721. Stop (AudioOutputUnitStop) and Close (disposing the AudioUnit) talk to the same service.
 // AudioOutputUnitStart itself now runs on a host worker (au_start_device, issue #1030).
 // dm_bigstack_caller gives the game's call site back for the log line
-HLE_FORCE_BIG("_ZN2nn5audio13StartAudioOutEPNS0_8AudioOutE", "start playback", Result, h_au_Start, void *g) { return au_start_at(g, dm_bigstack_caller(__builtin_return_address(0))); }
+HLE_FORCE("_ZN2nn5audio13StartAudioOutEPNS0_8AudioOutE", "start playback", Result, h_au_Start, void *g) { return au_start_at(g, dm_bigstack_caller(__builtin_return_address(0))); }
 // After the backend stops, return even its partly played buffer. FMOD can wait for these releases before joining its output thread (Pokemon Brilliant Diamond 1.0.0, PR #190).
 // The stopped backend excludes the consumer; m excludes append/reclaim. Buffers appended while already stopped belong to the next Start, so only a started -> stopped transition calls this.
 static void au_release_pending(aout *a) {
@@ -492,7 +491,7 @@ static void au_stop_at(void *g, void *lr) {   // lr NULL: the stop inside Close,
     if (was == STATE_STARTED) au_release_pending(a);
     pthread_mutex_unlock(&g_aos_lock);
 }
-HLE_FORCE_BIG("_ZN2nn5audio12StopAudioOutEPNS0_8AudioOutE", "stop playback", void, h_au_Stop, void *g) { au_stop_at(g, dm_bigstack_caller(__builtin_return_address(0))); }
+HLE_FORCE("_ZN2nn5audio12StopAudioOutEPNS0_8AudioOutE", "stop playback", void, h_au_Stop, void *g) { au_stop_at(g, dm_bigstack_caller(__builtin_return_address(0))); }
 static void au_close(void *g, void *lr) {
     au_note(ao(g), "Close", lr);
     au_stop_at(g, NULL);
@@ -512,7 +511,7 @@ static void au_close(void *g, void *lr) {
     if (!in_flight) aout_free(a);
     au_info(g, ch, STATE_STOPPED);
 }
-HLE_FORCE_BIG("_ZN2nn5audio13CloseAudioOutEPNS0_8AudioOutE", "close the audio output", void, h_au_Close, void *g) { au_close(g, dm_bigstack_caller(__builtin_return_address(0))); }
+HLE_FORCE("_ZN2nn5audio13CloseAudioOutEPNS0_8AudioOutE", "close the audio output", void, h_au_Close, void *g) { au_close(g, dm_bigstack_caller(__builtin_return_address(0))); }
 HLE_FORCE("_ZN2nn5audio16GetAudioOutStateEPKNS0_8AudioOutE", "playback state", int, h_au_State, const void *g) { return atomic_load_explicit(&ao(g)->state, memory_order_acquire); }
 // Pokémon Legends: Z-A (SDK 19): Wwise's sink wakeup thread (main+0x30faae8) asks after every release event and marks the sink starved at 0; the SDK's own version read the audout session the host never made
 HLE_FORCE("_ZN2nn5audio22GetAudioOutBufferCountEPKNS0_8AudioOutE", "buffers appended and not yet played to the end (the one playing included)", unsigned, h_au_BufCount, const void *g) {
@@ -531,12 +530,10 @@ HLE_FORCE("_ZN2nn5audio17GetAudioOutVolumeEPKNS0_8AudioOutE", "output volume", f
     uint32_t b = atomic_load_explicit(&ao(g)->vol, memory_order_relaxed); float v; memcpy(&v, &b, 4); return v;
 }
 
-HLE_FORCE("_ZN2nn5audio21SetAudioOutBufferInfoEPNS0_14AudioOutBufferEPvmm", "buffer description; written into the first 24 bytes of the guest struct", void, h_au_SetBuf, gbuf *b, void *p, uint64_t cap, uint64_t size) {
-    b->ptr = p; b->cap = cap; b->size = size;
-}
-HLE_FORCE("_ZN2nn5audio28GetAudioOutBufferDataPointerEPKNS0_14AudioOutBufferE", "buffer data pointer", void *, h_au_BufPtr, const gbuf *b) { return b->ptr; }
-HLE_FORCE("_ZN2nn5audio25GetAudioOutBufferDataSizeEPKNS0_14AudioOutBufferE", "buffer data size", uint64_t, h_au_BufSize, const gbuf *b) { return b->size; }
-HLE_FORCE("_ZN2nn5audio20AppendAudioOutBufferEPNS0_8AudioOutEPNS0_14AudioOutBufferE", "append a buffer to play", unsigned, h_au_Append, void *g, gbuf *b) {
+// The buffer descriptor functions (both SetAudioOutBufferInfo overloads, GetAudioOutBufferDataPointer / BufferSize / DataSize) only fill and read the game's own struct and run in
+// the sdk, as AudioIn's do: aout_buf (hle.h) is that struct, so the host reads what they wrote. Until 2026-11 the host took three of them over to keep a private layout, and the ones
+// it left (GetAudioOutBufferBufferSize, the overload without a buffer size) read it wrong (docs/reference/audio.md)
+HLE_FORCE("_ZN2nn5audio20AppendAudioOutBufferEPNS0_8AudioOutEPNS0_14AudioOutBufferE", "append a buffer to play", unsigned, h_au_Append, void *g, aout_buf *b) {
     aout *a = ao(g);
     // Diagnostic switch DM_AUDIO_DUMP=<file>: every PCM block the game appends is written out as is (16-bit, 48 kHz, channel count per the OpenAudioOut log, usually 6). Used to judge "did a given sound play or not":
     // cross-correlate the original game's audio against it (this is how the tier-one drop sound was verified). The file is opened only when the variable is set; when unset this costs only one extra cached check
@@ -550,8 +547,8 @@ HLE_FORCE("_ZN2nn5audio20AppendAudioOutBufferEPNS0_8AudioOutEPNS0_14AudioOutBuff
     pthread_mutex_unlock(&a->m);
     return ok;      // bool: false when the queue is full (the real device has a limit too)
 }
-HLE_FORCE("_ZN2nn5audio25GetReleasedAudioOutBufferEPNS0_8AudioOutE", "get a played buffer; NULL if none", gbuf *, h_au_Released, void *g) {
-    aout *a = ao(g); gbuf *b = NULL;
+HLE_FORCE("_ZN2nn5audio25GetReleasedAudioOutBufferEPNS0_8AudioOutE", "get a played buffer; NULL if none", aout_buf *, h_au_Released, void *g) {
+    aout *a = ao(g); aout_buf *b = NULL;
     pthread_mutex_lock(&a->m);
     uint32_t rr = atomic_load_explicit(&a->rel_head, memory_order_relaxed);
     uint32_t rw = atomic_load_explicit(&a->rel_tail, memory_order_acquire);
@@ -570,11 +567,11 @@ static Result ai_open(const char *name, void *lr) {
     return RES_FAIL;
 }
 HLE_FORCE("_ZN2nn5audio11OpenAudioInEPNS0_7AudioInEPNS_2os11SystemEventEPKcRKNS0_16AudioInParameterE", "connect to the audin service; no microphone on the host: fails",
-          Result, h_ai_Open, void *g, void *ev, const char *name, const void *param) { (void)g; (void)ev; (void)param; return ai_open(name, __builtin_return_address(0)); }
+          Result, h_ai_Open, void *g, void *ev, const char *name, const void *param) { (void)g; (void)ev; (void)param; return ai_open(name, dm_bigstack_caller(__builtin_return_address(0))); }
 HLE_FORCE("_ZN2nn5audio11OpenAudioInEPNS0_7AudioInEPKcRKNS0_16AudioInParameterE", "connect to the audin service (no buffer event: Patrick's Parabox imports this one); no microphone on the host: fails",
-          Result, h_ai_OpenNoEv, void *g, const char *name, const void *param) { (void)g; (void)param; return ai_open(name, __builtin_return_address(0)); }
+          Result, h_ai_OpenNoEv, void *g, const char *name, const void *param) { (void)g; (void)param; return ai_open(name, dm_bigstack_caller(__builtin_return_address(0))); }
 HLE_FORCE("_ZN2nn5audio18OpenDefaultAudioInEPNS0_7AudioInEPNS_2os11SystemEventERKNS0_16AudioInParameterE", "connect to the audin service (default device); no microphone on the host: fails",
-          Result, h_ai_OpenDef, void *g, void *ev, const void *param) { (void)g; (void)ev; (void)param; return ai_open(NULL, __builtin_return_address(0)); }
+          Result, h_ai_OpenDef, void *g, void *ev, const void *param) { (void)g; (void)ev; (void)param; return ai_open(NULL, dm_bigstack_caller(__builtin_return_address(0))); }
 HLE_FORCE("_ZN2nn5audio12StartAudioInEPNS0_7AudioInE", "start recording; never opened on the host: fails", Result, h_ai_Start, void *g) { (void)g; return RES_FAIL; }
 HLE_FORCE("_ZN2nn5audio11StopAudioInEPNS0_7AudioInE", "stop recording; never opened on the host", void, h_ai_Stop, void *g) { (void)g; }
 HLE_FORCE("_ZN2nn5audio12CloseAudioInEPNS0_7AudioInE", "close the audio input; never opened on the host", void, h_ai_Close, void *g) { (void)g; }
@@ -594,13 +591,29 @@ HLE_FORCE("_ZN2nn5audio22GetAudioInSampleFormatEPKNS0_7AudioInE", "recording sam
 // (main+0xad1310: a started stream is stopped, then purged and closed). Without these the SDK connected to auddmg:u itself and aborted with 0xa99 (sdk+0x221520)
 enum { OS_NONE = 0, OS_STOPPED = 1, OS_STARTED = 2, OS_FLOAT = 5, OS_PCM16 = 2 };
 typedef struct { uint8_t key[64]; pthread_mutex_t m; int ch, fmt, cap, queued, nblk, state; } ostream;   // key: the AudioOut's object (au_info writes its first 16 bytes)
-typedef struct { gbuf b; int frames; int16_t pcm[]; } oblock;
+typedef struct { aout_buf b; int frames; int16_t pcm[]; } oblock;
 static ostream *os_of(const void *g) { ostream *o = objmap_get(g); if (!o) die("OutputStream %p was not opened by the host", g); return o; }
 static void os_reclaim(ostream *o) {   // under o->m: the blocks the output played
-    gbuf *b; while ((b = h_au_Released(o->key))) { oblock *k = (oblock *)b; o->queued -= k->frames; o->nblk--; free(k); }
+    aout_buf *b; while ((b = h_au_Released(o->key))) { oblock *k = (oblock *)b; o->queued -= k->frames; o->nblk--; free(k); }
 }
+enum { VDEV_NAME = 0x100 };   // nn::audio::AudioDeviceName
+static const char VDEV_OUT[] = "AudioVirtualOutput";   // the host's one virtual output device, a name of the host's
 HLE_FORCE("_ZN2nn5audio29GetDefaultVirtualOutputDeviceEPNS0_15AudioDeviceNameE", "connect to auddmg:u; the host has one output: its name", void, h_os_DefaultDev, char *name) {
-    memset(name, 0, 0x100); strlcpy(name, "AudioVirtualOutput", 0x100);
+    memset(name, 0, VDEV_NAME); strlcpy(name, VDEV_OUT, VDEV_NAME);
+}
+// nn::audio::VirtualDeviceProperties, 0x110 bytes, as audio::detail::GetVirtualOutputDeviceProperties fills it from the device manager's 0x228-byte profile (Nintendo Switch Sports
+// Resort's sdk+0x224cd4; the input and injection twins at sdk+0x1f6314 and sdk+0x1f4db4 do the same): the name asked about, the profile's +0x218 at +0x100 and its +0x108 at +0x108.
+// The profile's +0x218 is the shortest stream as a duration in ns: OutputStreamImpl::Open refuses a capacity under ceil(it x rate / 1e9) frames with 0x899 (sdk+0x225a94..0x225ad0,
+// InputStreamImpl::Open the same at sdk+0x1f6928). Nothing in the sdk reads the +0x108 word; its meaning is open, 0 here. Both of the game's callers (main+0x5eda90, main+0x7a0414)
+// and Donkey Kong Bananza's (main+0x57cadc, main+0x187cee4) only test the Result before opening a stream. Unhooked, the SDK connected to auddmg:u and aborted with 0xa99 (sdk+0x224d1c)
+#define OS_MIN_NS 10000000LL   // the host's AudioOut takes any block size and os_open sets no minimum: one 10 ms period, what Xenoblade Chronicles 2 and Star Fox write per block
+typedef struct { char name[VDEV_NAME]; int64_t min_ns; uint32_t word_108, pad; } vdev_props;
+HLE_FORCE("_ZN2nn5audio32GetVirtualOutputDevicePropertiesEPNS0_23VirtualDevicePropertiesERKNS0_15AudioDeviceNameE", "connect to auddmg:u; the host's one output device",
+          Result, h_os_Props, vdev_props *p, const char *name) {
+    if (strncmp(name, VDEV_OUT, VDEV_NAME)) { LOG("[RED] virtual output device %.64s: the host has only %s, no properties", name, VDEV_OUT); return RES_FAIL; }
+    memset(p, 0, sizeof *p); memcpy(p->name, name, sizeof p->name);
+    p->min_ns = OS_MIN_NS;
+    return RES_OK;
 }
 static Result os_open(void *g, void *ev, const int32_t *fmt, int frames, void *lr) {
     int f = fmt[0], ch = fmt[1], rate = fmt[2];
@@ -618,18 +631,24 @@ static Result os_open(void *g, void *ev, const int32_t *fmt, int frames, void *l
 HLE_FORCE("_ZN2nn5audio16OpenOutputStreamEPNS0_16OutputStreamTypeEPNS_2os11SystemEventEPvmRKNS0_15AudioDeviceNameERKNS0_12StreamFormatEiiNS_4util10BitFlagSetILi32ENS0_16OutputStreamFlagEEE",
           "connect to auddmg:u; an AudioOut of the host's", Result, h_os_Open, void *g, void *ev, void *buf, size_t size, const char *dev, const int32_t *fmt, int frames, int threshold, uint32_t flags) {
     (void)buf; (void)size; (void)dev; (void)threshold; (void)flags;
-    return os_open(g, ev, fmt, frames, __builtin_return_address(0));
+    return os_open(g, ev, fmt, frames, dm_bigstack_caller(__builtin_return_address(0)));
+}
+// The overload without flags (Nintendo Switch Sports Resort, main+0x5edb34): the SDK's (sdk+0x224740) is the one above with no flags (sdk+0x225d10)
+HLE_FORCE("_ZN2nn5audio16OpenOutputStreamEPNS0_16OutputStreamTypeEPNS_2os11SystemEventEPvmRKNS0_15AudioDeviceNameERKNS0_12StreamFormatEii",
+          "connect to auddmg:u (no flags); an AudioOut of the host's", Result, h_os_OpenNoFlags, void *g, void *ev, void *buf, size_t size, const char *dev, const int32_t *fmt, int frames, int threshold) {
+    (void)buf; (void)size; (void)dev; (void)threshold;
+    return os_open(g, ev, fmt, frames, dm_bigstack_caller(__builtin_return_address(0)));
 }
 HLE_FORCE("_ZN2nn5audio16OpenOutputStreamEPNS0_16OutputStreamTypeEPvmRKNS0_15AudioDeviceNameERKNS0_12StreamFormatEiNS_4util10BitFlagSetILi32ENS0_16OutputStreamFlagEEE",
           "connect to auddmg:u (no event: the game polls); an AudioOut of the host's", Result, h_os_OpenNoEv, void *g, void *buf, size_t size, const char *dev, const int32_t *fmt, int frames, uint32_t flags) {
     (void)buf; (void)size; (void)dev; (void)flags;
-    return os_open(g, NULL, fmt, frames, __builtin_return_address(0));
+    return os_open(g, NULL, fmt, frames, dm_bigstack_caller(__builtin_return_address(0)));
 }
-HLE_FORCE_BIG("_ZN2nn5audio17StartOutputStreamEPNS0_16OutputStreamTypeE", "start the stream's output", Result, h_os_Start, void *g) {
+HLE_FORCE("_ZN2nn5audio17StartOutputStreamEPNS0_16OutputStreamTypeE", "start the stream's output", Result, h_os_Start, void *g) {
     ostream *o = os_of(g); o->state = OS_STARTED; return au_start_at(o->key, dm_bigstack_caller(__builtin_return_address(0)));
 }
 // Star Fox (Wwise 2024.1, main+0xbce9294) starts its main and passthrough streams together
-HLE_FORCE_BIG("_ZN2nn5audio18StartOutputStreamsEPKPNS0_16OutputStreamTypeEi", "start several streams' outputs", Result, h_os_StartN, void *const *gs, int n) {
+HLE_FORCE("_ZN2nn5audio18StartOutputStreamsEPKPNS0_16OutputStreamTypeEi", "start several streams' outputs", Result, h_os_StartN, void *const *gs, int n) {
     void *lr = dm_bigstack_caller(__builtin_return_address(0));
     for (int i = 0; i < n; i++) {
         ostream *o = os_of(gs[i]); o->state = OS_STARTED;
@@ -637,7 +656,7 @@ HLE_FORCE_BIG("_ZN2nn5audio18StartOutputStreamsEPKPNS0_16OutputStreamTypeEi", "s
     }
     return RES_OK;
 }
-HLE_FORCE_BIG("_ZN2nn5audio16StopOutputStreamEPNS0_16OutputStreamTypeE", "stop the stream's output", void, h_os_Stop, void *g) {
+HLE_FORCE("_ZN2nn5audio16StopOutputStreamEPNS0_16OutputStreamTypeE", "stop the stream's output", void, h_os_Stop, void *g) {
     ostream *o = os_of(g); au_stop_at(o->key, dm_bigstack_caller(__builtin_return_address(0))); o->state = OS_STOPPED;
 }
 HLE_FORCE("_ZN2nn5audio17PurgeOutputStreamEPNS0_16OutputStreamTypeE", "drop the frames not yet played", void, h_os_Purge, void *g) {
@@ -646,7 +665,7 @@ HLE_FORCE("_ZN2nn5audio17PurgeOutputStreamEPNS0_16OutputStreamTypeE", "drop the 
     pthread_mutex_lock(&g_aos_lock); au_release_pending(ao(o->key)); pthread_mutex_unlock(&g_aos_lock);
     pthread_mutex_lock(&o->m); os_reclaim(o); pthread_mutex_unlock(&o->m);
 }
-HLE_FORCE_BIG("_ZN2nn5audio17CloseOutputStreamEPNS0_16OutputStreamTypeE", "close the stream's output", void, h_os_Close, void *g) {
+HLE_FORCE("_ZN2nn5audio17CloseOutputStreamEPNS0_16OutputStreamTypeE", "close the stream's output", void, h_os_Close, void *g) {
     ostream *o = objmap_get(g); if (!o) return;
     au_stop_at(o->key, NULL);   // every block the output still held comes back as released
     pthread_mutex_lock(&o->m); os_reclaim(o); pthread_mutex_unlock(&o->m);
@@ -697,30 +716,119 @@ typedef struct { int64_t a, b, c; } os_stats;
 HLE_FORCE("_ZN2nn5audio25GetOutputStreamStatisticsEPNS0_16OutputStreamTypeEb", "stream statistics: none kept", os_stats, h_os_Stats, void *g, bool reset) {
     (void)g; (void)reset; os_stats s = {0}; return s;
 }
-// SDK 21's input streams (a microphone, GameChat; Star Fox imports them), as AudioIn above: no device is listed and an open fails, so the calls that need an open stream are never reached;
-// they still answer without touching the guest object, in case a game ignores the open's result
-HLE_FORCE("_ZN2nn5audio23ListVirtualInputDevicesEPNS0_15AudioDeviceNameEi", "connect to auddmg:u; the host has no microphone: no device", int, h_is_List, void *names, int n) { (void)names; (void)n; return 0; }
+// SDK 21's input streams (a microphone, GameChat; Star Fox imports them). With the microphone on (DM_MIC, mic_apple.m) the host lists one virtual input device and each open stream reads
+// the device's microphone at 48 kHz mono PCM16, from a cursor of its own into the capture's ring; otherwise no device is listed and an open fails, as before, and the calls that need an
+// open stream still answer without touching the guest object, in case a game ignores the open's result. The Legend of Zelda: Ocarina of Time (0400486024DEC000, SDK 22) plays its ocarina
+// by voice: it lists up to 8 devices (256-byte names, main+0xf48124), opens the first and the SDK's true raw input device (GetTrueRawAudioInputDevice: a name the SDK copies itself)
+// with PCM16 mono 48 kHz (its format at main+0x3f11464) and 4,800-frame blocks, starts both, and reads them 256 frames at a time (main+0x336d7d0). It aborted on the refused auddmg:u
+// connection (Result 0xa99) before the listing was answered here. The streams are the host's own (keyed by the guest object, whose Impl pointer stays null), so every call is answered here
+#include "mic_apple.h"
+// No microphone where mic_apple.m is not linked (the host's unit tests of this file): it lists no device, as before. The full build's mic_apple.m replaces these
+#ifndef DM_MIC_FAKE   // t_input_stream brings a fake microphone of its own
+__attribute__((weak)) int dm_mic_available(void) { return 0; }
+__attribute__((weak)) int dm_mic_retain(void) { return 0; }
+__attribute__((weak)) void dm_mic_release(void) {}
+__attribute__((weak)) uint64_t dm_mic_head(void) { return 0; }
+__attribute__((weak)) int dm_mic_copy(uint64_t from, int16_t *dst, int n) { (void)from; (void)dst; (void)n; return 0; }
+#endif
+typedef struct { const void *g; int state, ch; uint32_t cap; uint64_t cur; float gain; int retained; } istream;   // state: 0 closed, 1 open and stopped, 2 started (GetInputStreamState)
+enum { IS_MAX = 8 };
+static istream g_is[IS_MAX]; static pthread_mutex_t g_is_mu = PTHREAD_MUTEX_INITIALIZER;
+static istream *is_of(const void *g) { for (int i = 0; i < IS_MAX; i++) if (g_is[i].state && g_is[i].g == g) return &g_is[i]; return NULL; }   // g_is_mu held
+static uint32_t is_filled(istream *s) {   // g_is_mu held: what this stream has not read yet, at most its capacity (older frames are passed over)
+    uint64_t h = dm_mic_head();
+    if (h - s->cur > s->cap) s->cur = h - s->cap;
+    return (uint32_t)(h - s->cur);
+}
+HLE_FORCE("_ZN2nn5audio23ListVirtualInputDevicesEPNS0_15AudioDeviceNameEi", "the device's microphone with DM_MIC, else none", int, h_is_List, char *names, int n) {
+    if (n < 1 || !names || !dm_mic_available()) return 0;
+    memset(names, 0, 256); strcpy(names, "MainMicrophone");
+    static int once; if (!once++) LOG("audio input: the device's microphone is listed to the game (DM_MIC)");
+    return 1;
+}
 HLE_FORCE("_ZN2nn5audio31GetVirtualInputDevicePropertiesEPNS0_23VirtualDevicePropertiesERKNS0_15AudioDeviceNameE", "connect to auddmg:u; no such device", Result, h_is_Props, void *props, const char *name) { (void)props; (void)name; return RES_FAIL; }
-HLE_FORCE("_ZN2nn5audio15OpenInputStreamEPNS0_15InputStreamTypeEPvmRKNS0_15AudioDeviceNameERKNS0_12StreamFormatEi", "connect to auddmg:u; no microphone on the host: fails", Result, h_is_Open,
-          void *g, void *buf, size_t size, const char *dev, const void *fmt, int frames) { (void)g; (void)buf; (void)size; (void)dev; (void)fmt; (void)frames; return RES_FAIL; }
-HLE_FORCE("_ZN2nn5audio16CloseInputStreamEPNS0_15InputStreamTypeE", "input stream, never open", void, h_is_Close, void *g) { (void)g; }
-HLE_FORCE("_ZN2nn5audio16StartInputStreamEPNS0_15InputStreamTypeE", "input stream, never open", Result, h_is_Start, void *g) { (void)g; return RES_FAIL; }
-HLE_FORCE("_ZN2nn5audio15StopInputStreamEPNS0_15InputStreamTypeE", "input stream, never open", void, h_is_Stop, void *g) { (void)g; }
-HLE_FORCE("_ZN2nn5audio15ReadInputStreamEPNS0_15InputStreamTypeEPvi", "input stream, never open: nothing read", int, h_is_Read, void *g, void *buf, int frames) { (void)g; (void)buf; (void)frames; return 0; }
-HLE_FORCE("_ZN2nn5audio30GetInputStreamFilledFrameCountEPKNS0_15InputStreamTypeE", "input stream, never open: nothing captured", int, h_is_Filled, const void *g) { (void)g; return 0; }
+HLE_FORCE("_ZN2nn5audio15OpenInputStreamEPNS0_15InputStreamTypeEPvmRKNS0_15AudioDeviceNameERKNS0_12StreamFormatEi", "the device's microphone with DM_MIC, else fails", Result, h_is_Open,
+          void *g, void *buf, size_t size, const char *dev, const int32_t *fmt, int frames) {
+    (void)buf;
+    if (!dm_mic_available()) return RES_FAIL;
+    int f = fmt ? fmt[0] : OS_PCM16, ch = fmt ? fmt[1] : 1, rate = fmt ? fmt[2] : RATE;
+    if (f != OS_PCM16 || (rate && rate != RATE) || ch < 1 || ch > 2) { LOG("[RED] input stream format %d, %d channels, %d Hz: not supported (PCM16, 48 kHz), the open fails", f, ch, rate); return RES_FAIL; }
+    pthread_mutex_lock(&g_is_mu);
+    istream *s = is_of(g); if (!s) for (int i = 0; i < IS_MAX && !s; i++) if (!g_is[i].state) s = &g_is[i];
+    if (!s) { pthread_mutex_unlock(&g_is_mu); LOG("[RED] more than %d input streams open: the open fails", IS_MAX); return RES_FAIL; }
+    uint32_t cap = size ? (uint32_t)(size / (2u * (unsigned)ch)) : (uint32_t)frames * 4u;
+    if (cap < (uint32_t)frames) cap = (uint32_t)frames;
+    if (cap > DM_MIC_RING / 2) cap = DM_MIC_RING / 2;
+    *s = (istream){g, 1, ch, cap, dm_mic_head(), 1.0f, 0};
+    pthread_mutex_unlock(&g_is_mu);
+    LOG("audio input: stream %p open on \"%.64s\", %d channel(s), %d-frame blocks, %u frames kept", g, dev ? dev : "", ch, frames, cap);
+    return 0;
+}
+HLE_FORCE("_ZN2nn5audio16CloseInputStreamEPNS0_15InputStreamTypeE", "closes the host's stream", void, h_is_Close, void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); int rel = s && s->retained; if (s) *s = (istream){0}; pthread_mutex_unlock(&g_is_mu);
+    if (rel) dm_mic_release();
+}
+HLE_FORCE("_ZN2nn5audio16StartInputStreamEPNS0_15InputStreamTypeE", "starts the microphone's capture for the stream", Result, h_is_Start, void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g);
+    if (!s) { pthread_mutex_unlock(&g_is_mu); return RES_FAIL; }
+    int need = !s->retained; pthread_mutex_unlock(&g_is_mu);
+    int ok = !need || dm_mic_retain();   // outside the lock: the first start brings the capture up
+    pthread_mutex_lock(&g_is_mu); s = is_of(g);
+    if (s) { if (need && ok) s->retained = 1; s->state = 2; s->cur = dm_mic_head(); }   // started even when the capture could not start: it reads nothing, rather than an error the game may abort on
+    else if (need && ok) dm_mic_release();
+    pthread_mutex_unlock(&g_is_mu);
+    return 0;
+}
+HLE_FORCE("_ZN2nn5audio15StopInputStreamEPNS0_15InputStreamTypeE", "stops the stream; the capture with the last one", void, h_is_Stop, void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); int rel = s && s->retained; if (s) { s->state = 1; s->retained = 0; } pthread_mutex_unlock(&g_is_mu);
+    if (rel) dm_mic_release();
+}
+HLE_FORCE("_ZN2nn5audio15ReadInputStreamEPNS0_15InputStreamTypeEPvi", "the microphone's frames this stream has not read, up to the count", int, h_is_Read, void *g, int16_t *buf, int frames) {
+    if (!buf || frames <= 0) return 0;
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g);
+    if (!s || s->state != 2) { pthread_mutex_unlock(&g_is_mu); return 0; }
+    uint32_t have = is_filled(s); int n = frames < (int)have ? frames : (int)have;
+    int16_t tmp[512]; int done = 0, ch = s->ch; float gain = s->gain;
+    while (done < n) {
+        int k = dm_mic_copy(s->cur, tmp, n - done < 512 ? n - done : 512); if (k <= 0) break;
+        for (int i = 0; i < k; i++) {
+            int v = gain == 1.0f ? tmp[i] : (int)(tmp[i] * gain); v = v > 32767 ? 32767 : v < -32768 ? -32768 : v;
+            for (int c = 0; c < ch; c++) buf[(done + i) * ch + c] = (int16_t)v;
+        }
+        s->cur += (uint64_t)k; done += k;
+    }
+    pthread_mutex_unlock(&g_is_mu);
+    return done;
+}
+HLE_FORCE("_ZN2nn5audio30GetInputStreamFilledFrameCountEPKNS0_15InputStreamTypeE", "frames captured and not read", int, h_is_Filled, const void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); int n = s && s->state == 2 ? (int)is_filled(s) : 0; pthread_mutex_unlock(&g_is_mu); return n;
+}
 typedef struct { int32_t format, channels, rate; } os_format;   // nn::audio::StreamFormat, 12 bytes: returned in registers
-HLE_FORCE("_ZN2nn5audio20GetInputStreamFormatEPKNS0_15InputStreamTypeE", "input stream, never open: 48 kHz mono PCM16", os_format, h_is_Format, const void *g) { (void)g; return (os_format){OS_PCM16, 1, RATE}; }
-// The rest of the input stream calls. The SDK passes them to the stream'"'"'s Impl pointer, which is null for a type that never opened (sdk+0x1f7040 reads [Impl+0x340] first: SIGSEGV at address 0x340),
-// and only GetInputStreamState answers a null Impl itself (0, closed; sdk+0x1f6020). The Legend of Zelda: Ocarina of Time asks the state of its two microphone streams, purges them when they are not
-// started (main+0x336ee7c, the crash when a song is played), and reads their statistics each update (main+0x336d5d4); it opens them only when a virtual input device is listed, so here never.
-// The state is closed, a purge does nothing, the statistics are zero (InputStreamImpl::GetStatistics zeroes its result first, sdk+0x1f6ff4), the free and capacity counts 0, the gain 1
-HLE_FORCE("_ZN2nn5audio19GetInputStreamStateEPKNS0_15InputStreamTypeE", "input stream, never open: closed (0)", int, h_is_State, const void *g) { (void)g; return 0; }
-HLE_FORCE("_ZN2nn5audio16PurgeInputStreamEPNS0_15InputStreamTypeE", "input stream, never open: nothing buffered", void, h_is_Purge, void *g) { (void)g; }
-HLE_FORCE("_ZN2nn5audio24GetInputStreamStatisticsEPNS0_15InputStreamTypeEb", "input stream, never open: zero", os_stats, h_is_Stats, void *g, bool reset) { (void)g; (void)reset; os_stats s = {0}; return s; }
-HLE_FORCE("_ZN2nn5audio28GetInputStreamFreeFrameCountEPKNS0_15InputStreamTypeE", "input stream, never open: none", int, h_is_Free, const void *g) { (void)g; return 0; }
-HLE_FORCE("_ZN2nn5audio32GetInputStreamCapacityFrameCountEPKNS0_15InputStreamTypeE", "input stream, never open: none", int, h_is_Capacity, const void *g) { (void)g; return 0; }
-HLE_FORCE("_ZN2nn5audio18GetInputStreamGainEPKNS0_15InputStreamTypeE", "input stream, never open: 1", float, h_is_GetGain, const void *g) { (void)g; return 1.0f; }
-HLE_FORCE("_ZN2nn5audio18SetInputStreamGainEPNS0_15InputStreamTypeEfNS_8TimeSpanE", "input stream, never open: nothing to ramp", void, h_is_SetGain, void *g, float gain, int64_t ramp_ns) { (void)g; (void)gain; (void)ramp_ns; }
+HLE_FORCE("_ZN2nn5audio20GetInputStreamFormatEPKNS0_15InputStreamTypeE", "48 kHz PCM16, the stream's channels", os_format, h_is_Format, const void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); int ch = s ? s->ch : 1; pthread_mutex_unlock(&g_is_mu); return (os_format){OS_PCM16, ch, RATE};
+}
+// The SDK passes the rest of the calls to the stream's Impl pointer, which is null for the host's streams (sdk+0x1f7040 reads [Impl+0x340] first: SIGSEGV at address 0x340), and only
+// GetInputStreamState answers a null Impl itself (0, closed; sdk+0x1f6020). Ocarina of Time asks the state of its two microphone streams and purges and starts them when they are not
+// started (main+0x336ee60: 2 is started), and reads their statistics each update (main+0x336d5d4)
+HLE_FORCE("_ZN2nn5audio19GetInputStreamStateEPKNS0_15InputStreamTypeE", "the host's stream: 0 closed, 1 stopped, 2 started", int, h_is_State, const void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); int st = s ? s->state : 0; pthread_mutex_unlock(&g_is_mu); return st;
+}
+HLE_FORCE("_ZN2nn5audio16PurgeInputStreamEPNS0_15InputStreamTypeE", "drops what the stream has not read", void, h_is_Purge, void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); if (s) s->cur = dm_mic_head(); pthread_mutex_unlock(&g_is_mu);
+}
+HLE_FORCE("_ZN2nn5audio24GetInputStreamStatisticsEPNS0_15InputStreamTypeEb", "none kept: zero", os_stats, h_is_Stats, void *g, bool reset) { (void)g; (void)reset; os_stats s = {0}; return s; }
+HLE_FORCE("_ZN2nn5audio28GetInputStreamFreeFrameCountEPKNS0_15InputStreamTypeE", "capacity less the frames not read", int, h_is_Free, const void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); int n = s ? (int)(s->cap - (s->state == 2 ? is_filled(s) : 0)) : 0; pthread_mutex_unlock(&g_is_mu); return n;
+}
+HLE_FORCE("_ZN2nn5audio32GetInputStreamCapacityFrameCountEPKNS0_15InputStreamTypeE", "the frames a stream keeps", int, h_is_Capacity, const void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); int n = s ? (int)s->cap : 0; pthread_mutex_unlock(&g_is_mu); return n;
+}
+HLE_FORCE("_ZN2nn5audio18GetInputStreamGainEPKNS0_15InputStreamTypeE", "the stream's gain (1 when not open)", float, h_is_GetGain, const void *g) {
+    pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); float v = s ? s->gain : 1.0f; pthread_mutex_unlock(&g_is_mu); return v;
+}
+HLE_FORCE("_ZN2nn5audio18SetInputStreamGainEPNS0_15InputStreamTypeEfNS_8TimeSpanE", "sets the stream's gain at once (no ramp)", void, h_is_SetGain, void *g, float gain, int64_t ramp_ns) {
+    (void)ramp_ns; pthread_mutex_lock(&g_is_mu); istream *s = is_of(g); if (s) s->gain = gain < 0 ? 0 : gain; pthread_mutex_unlock(&g_is_mu);
+}
 
 // Host-internal PCM output (used by the in-process audio renderer, see hle_audren.c): the same AudioOut machinery (real output / silent sink / background take-over), keyed by a host-allocated dummy object
 void *dm_pcmout_open(int ch) {

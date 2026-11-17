@@ -3,15 +3,17 @@ import Foundation
 import Combine
 
 struct Setting: Decodable, Identifiable {
-    let env, kind, label, note, def: String
+    let env, kind, label: String
+    var note, def: String   // var: this phone's own starting values and notes (Launcher.swift deviceAdjusted)
     let section: String?   // heading on the settings screen; absent in older bundles
     let needs: String?     // "<VAR>=<value>": a sub-setting, drawn only while that setting has that value
     let level: String?     // "basic": shown first (the Mac window's Basic settings); any other or none: Advanced settings. The iPhone keeps one list
     let base: Base?        // render scale: the 3D views' size at 1.0, docked and handheld, for the size in pixels (the Mac window)
     struct Base: Decodable { let docked, handheld: [Int] }
-    let options: [[String]]?   // choice: [value, label]
+    var options: [[String]]?   // choice: [value, label]; var: a choice this phone cannot make leaves (deviceAdjusted)
     let min, max, step: Double?   // range
     let on, off: String?   // toggle: the values the variable takes (1 / 0 when not given)
+    let sets: [String]?    // Potato mode (DM_PRESET): the rows it sets when the game starts, locked while it is on (settings.py)
     var id: String { env }
     var sectionTitle: String { section ?? "Game" }
     var basic: Bool { level == "basic" }
@@ -30,7 +32,7 @@ struct Setting: Decodable, Identifiable {
         default: return true
         }
     }
-    enum CodingKeys: String, CodingKey { case env, kind, label, note, def = "default", section, needs, level, base, options, min, max, step, on, off }
+    enum CodingKeys: String, CodingKey { case env, kind, label, note, def = "default", section, needs, level, base, options, min, max, step, on, off, sets }
 }
 struct SettingsFile: Decodable { let settings: [Setting] }
 
@@ -39,7 +41,24 @@ final class LauncherModel: ObservableObject {
     let fixed: Set<String>      // set by an env file or by the launch environment: shown, not changed
     let fromLaunch: Set<String>   // of those, the ones the launch environment set (a front end's launch overrides, Xcode; DM_ENV_LAUNCH_KEYS from launcher.c or main.m)
     let ignoreSaved: Bool   // DM_SAVED_CHOICES=0: start from the defaults, and leave the saved choices as they are
-    @Published var values: [String: String] = [:]
+    @Published var values: [String: String] = [:] { didSet { linkFrameGeneration(oldValue) } }
+    private var linking = false
+    // HookLink X1: frame generation and the frame rate mode are one choice (DM_FRAME_MODE 0 = 60, 1 = steady 30, 2 = 30 + frame generation, 3 = 60 + frame generation). Turning frame
+    // generation on or off moves the mode between 60 and 60 + frame generation, or steady 30 and 30 + frame generation; picking a mode sets frame generation to match. Only after init:
+    // property observers do not run there, so the saved choices load as they were
+    private func linkFrameGeneration(_ old: [String: String]) {
+        guard !linking, let fm = settings.first(where: { $0.env == "DM_FRAME_MODE" }), let fg = settings.first(where: { $0.env == "DM_FRAMEGEN" }) else { return }
+        linking = true; defer { linking = false }
+        let mode = values[fm.env] ?? fm.def, gen = values[fg.env] ?? fg.def
+        if gen != (old[fg.env] ?? fg.def) {
+            let on = gen == fg.onValue
+            let want = on ? (mode == "0" ? "3" : mode == "1" ? "2" : mode) : (mode == "3" ? "0" : mode == "2" ? "1" : mode)
+            if want != mode, fm.options?.contains(where: { $0[0] == want }) ?? false { values[fm.env] = want }
+        } else if mode != (old[fm.env] ?? fm.def) {
+            let want = mode == "2" || mode == "3" ? fg.onValue : fg.offValue
+            if gen != want { values[fg.env] = want }
+        }
+    }
 
     private let defaults: UserDefaults
 
@@ -56,6 +75,10 @@ final class LauncherModel: ObservableObject {
             let saved = ignoreSaved ? nil : defaults.object(forKey: "launcher." + s.env) as? String   // a string, as launcher.c reads it: not string(forKey:), which turns a number into one
             values[s.env] = saved.flatMap { s.accepts($0) ? $0 : nil } ?? s.def   // a saved choice the game no longer offers: its default
         }
+        // Frame generation follows the frame rate mode from the start (the mode decides the game's frame generation, main.c dm_frame_mode_apply)
+        if let fm = settings.first(where: { $0.env == "DM_FRAME_MODE" }), let fg = settings.first(where: { $0.env == "DM_FRAMEGEN" }), !fixed.contains(fg.env) {
+            let mode = values[fm.env] ?? fm.def; values[fg.env] = mode == "2" || mode == "3" ? fg.onValue : fg.offValue
+        }
     }
 
     var sections: [String] {
@@ -69,6 +92,11 @@ final class LauncherModel: ObservableObject {
         let key = String(n[n.startIndex..<eq]), want = String(n[n.index(after: eq)...])
         guard let v = values[key] else { return true }
         return v == want
+    }
+    // A row Potato mode sets (its list in the profile, game.tsv potato): locked while Potato mode is on, as the game takes the list's value whatever the row says (loader.c dm_preset_apply)
+    func presetLocked(_ s: Setting) -> Bool {
+        guard let p = settings.first(where: { $0.env == "DM_PRESET" }), let sets = p.sets, (values[p.env] ?? p.def) == p.onValue else { return false }
+        return sets.contains(s.env)
     }
     func rows(in section: String) -> [Setting] { settings.filter { $0.sectionTitle == section && visible($0) } }
     // The Mac window: Basic settings first, then Advanced settings, each in the list's sections and order
@@ -111,15 +139,22 @@ final class LauncherModel: ObservableObject {
     // A value an env file or the launch fixed stays
     func choose(_ s: Setting, _ v: String) {
         guard !fixed.contains(s.env), s.accepts(v) else { return }
+        let before = values
         values[s.env] = v; store(s, v); setenv(s.env, v, 1)
         fputs("launcher: \(s.env)=\(v) (in-game menu)\n", stderr)
+        for o in settings where o.env != s.env && !fixed.contains(o.env) {   // what the choice moved with it (frame generation and the frame rate mode: linkFrameGeneration)
+            guard let nv = values[o.env], nv != before[o.env] else { continue }
+            store(o, nv); setenv(o.env, nv, 1); fputs("launcher: \(o.env)=\(nv) (follows \(s.env))\n", stderr)
+        }
     }
 
     // DM_LAUNCHER=0: no screen, but the saved choices still apply (only DM_SAVED_CHOICES=0 ignores them); nothing is written
     func applySaved() {
+        if ignoreSaved { return }   // DM_SAVED_CHOICES=0: nothing of the launcher's goes into the environment, the per-device defaults included (the host's own defaults run)
         for s in settings where !fixed.contains(s.env) {
             let v = values[s.env] ?? s.def
-            if !s.isDefault(v) { setenv(s.env, v, 1); fputs("launcher: \(s.env)=\(v) (saved choice)\n", stderr) }
+            setenv(s.env, v, 1)   // defaults too: a row's default can differ from the host's own (HookLink's per-device and preset defaults)
+            if !s.isDefault(v) { fputs("launcher: \(s.env)=\(v) (saved choice)\n", stderr) }
         }
     }
 }

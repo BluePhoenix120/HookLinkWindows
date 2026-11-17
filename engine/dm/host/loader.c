@@ -224,12 +224,24 @@ static void force_init(void) {
             if (!g_fidx[j]) { g_fidx[j] = i + 1; break; }
             if (!strcmp(g_force[g_fidx[j] - 1].name, g_force[i].name)) die("duplicate entry in the forced takeover list: %s", g_force[i].name);
         }
+    for (unsigned i = 0; i < g_nforce; i++)   // an alias binds to the guest's definition: a target the host takes over would bypass that take-over
+        if (g_force[i].to)
+            for (unsigned j = sym_hash(g_force[i].to) & g_fmask; g_fidx[j]; j = (j + 1) & g_fmask)
+                if (!strcmp(g_force[g_fidx[j] - 1].name, g_force[i].to)) die("forced alias %s: its target %s is itself taken over", g_force[i].name, g_force[i].to);
 }
 static void *force_lookup(const char *name) {
     if (!g_fmask) return NULL;
     for (unsigned j = sym_hash(name) & g_fmask; g_fidx[j]; j = (j + 1) & g_fmask) {
         unsigned i = g_fidx[j] - 1;
         if (!strcmp(g_force[i].name, name)) {
+            if (g_force[i].to) {   // a guest alias (hle.h HLE_FORCE_ALIAS); the caller holds g_modules_mu or is relocating at startup, as for resolve_sym
+                void *p = loaded_sym(g_force[i].to);
+                if (!g_force_hits[i]++) {
+                    if (!p) LOG("[RED] forced alias %s: no loaded module defines %s; bound without the alias", name, g_force[i].to);
+                    else if (g_flag.imports) LOG("force %s -> %s  (%s)", name, g_force[i].to, g_force[i].why);
+                }
+                void *hlecount_wrap(const char *, const char *, void *); return p ? hlecount_wrap("ALIAS", name, p) : NULL;
+            }
             if (!g_force_hits[i]++ && g_flag.imports) LOG("force %s  (%s)", name, g_force[i].why);
             void *hlecount_wrap(const char *, const char *, void *); return hlecount_wrap("FORCE", name, g_force[i].fn);   // A counting stub when DM_HLECOUNT is set
         }
@@ -266,10 +278,13 @@ static void read_layout(module_t *m, const char *dir) {
         else if (!strcmp(key, "DATA_OFF")) m->data_off = v;
         else if (!strcmp(key, "FPS_STATE_OFF")) m->fps_state_off = v;
         else if (!strcmp(key, "RENDER_SCALE")) m->render_scale_max = (uint32_t)v;
+        else if (!strcmp(key, "STEP_MAX")) m->step_max = (uint32_t)v;
         else if (!strcmp(key, "UE_MALLOC_VT")) m->ue_malloc_vt = v;
         else if (!strcmp(key, "UE_MALLOC_SLOT")) m->ue_malloc_slot = (unsigned)v;
         else if (!strcmp(key, "FPS_TARGET_PTR")) m->fps_target_ptr = v;
         else if (!strcmp(key, "FPS_TARGET_FIELD")) m->fps_target_field = (uint32_t)v;
+        else if (!strcmp(key, "MONOLITH_INTERVAL")) m->monolith_interval = v;
+        else if (!strcmp(key, "NATIVE_FPS_BLOCKED")) m->native_fps_blocked = v != 0;
         else if (!strcmp(key, "UE_FIXED_RATE_PTR")) m->ue_fixed_ptr = v;
         else if (!strcmp(key, "UE_FIXED_RATE_FIELD")) m->ue_fixed_field = (uint32_t)v;
         else if (!strcmp(key, "UE_FIXED_RATE_FLAG")) m->ue_fixed_flag = (uint32_t)v;
@@ -305,16 +320,41 @@ static void read_layout(module_t *m, const char *dir) {
 // target, 0 = the game's own interval logic. The profile's fps_target, overridden by DM_FPS_TARGET (0, 30 or 60); the graphics layer decides the steps and paces presents
 // (hle_nvn.c fstep_tick)
 uint8_t *dm_fps_state;
+int dm_fps_step_max;   // the largest step the stubs give the game (STEP_MAX in its fixups table; 0 = FSTEP_MAX): the frame step holds frames and pays back within it (hle_nvn.c)
 static const char *g_fps_mod;   // the module holding the state page (for the log)
 static float g_render_scale_max = 1.0f;   // the render-scale stub's largest scale (RENDER_SCALE in its fixups table; 1 for a stub that only lowers the game's size)
 static void install_fps_state(module_t *m) {
     if (m->fps_state_off + 0x40 > m->size || m->fps_state_off < m->key_page_off + m->key_page_size) die("%s: frame step state page out of range", m->name);
-    dm_fps_state = m->base + m->fps_state_off; g_fps_mod = m->name;
+    dm_fps_state = m->base + m->fps_state_off; g_fps_mod = m->name; dm_fps_step_max = (int)m->step_max;
     if (m->render_scale_max > 1) g_render_scale_max = (float)m->render_scale_max;
 }
 // The settings in the state page, written when the game starts (main.c, after host loading): on iOS the loading runs at app launch, before the launcher has set DM_FPS_TARGET and
 // DM_RENDER_SCALE (Launcher.swift), and nothing reads the page before the game runs
+// The launcher's Potato mode (kid-with-sword-remake V18, HookLink VX1): DM_PRESET=potato sets the profile's potato list (game.py, DM_GAME_POTATO: <VAR>=<value>,...) before anything
+// of the game reads them, over the env file's and the launcher's own values (the Render scale slider among them; the launcher locks those rows). First in dm_fps_state_apply
+static int g_scale_forced;   // Cool mode or Potato mode fixed the render scale: it holds even with dynamic resolution on (dm_fps_state_apply)
+static void dm_preset_apply(void) {
+    const char *p = getenv("DM_PRESET"); if (!p || strcmp(p, "potato")) return;
+    g_scale_forced = 1;
+    const char *list = DM_GAME_POTATO; if (!*list) { LOG("[RED] DM_PRESET=potato: this game's profile has no potato list"); return; }
+    char buf[1024]; snprintf(buf, sizeof buf, "%s", list);
+    for (char *save = NULL, *kv = strtok_r(buf, ",", &save); kv; kv = strtok_r(NULL, ",", &save)) {
+        char *eq = strchr(kv, '='); if (!eq) continue; *eq = 0;
+        setenv(kv, eq + 1, 1); LOG("Potato mode: %s=%s", kv, eq + 1);
+    }
+}
 void dm_fps_state_apply(void) {
+    dm_preset_apply();
+    // Cool mode (DM_COOL=1, the launcher's Cool mode; kid-with-sword-remake FF9, HookLink VX1): less GPU work, so a phone keeps its clocks longer. The GPU heats an iPhone 18 Pro most at
+    // 30 fps with frame generation (the game's own frame 21-24 ms of each 33 ms, the interpolation 2-6 ms more; iOS cut the CPU clock 3.9 -> 1.6 GHz after 145 s). It sets the 3D views to
+    // 0.5 (DM_RENDER_SCALE, unless already lower) and frame generation's frames to 0.5 of the size shown (DM_FRAMEGEN_SCALE, unless already lower: HookLink's launcher always passes it).
+    // Mac, one route: GPU busy about 13 ms a frame against 17-20 ms, the interpolation about 1.5 ms against 3 ms
+    { const char *c = getenv("DM_COOL");
+      if (c && !strcmp(c, "1")) {
+          g_scale_forced = 1;
+          const char *r = getenv("DM_RENDER_SCALE"); if (!r || !(atof(r) > 0 && atof(r) <= 0.5)) setenv("DM_RENDER_SCALE", "0.5", 1);
+          const char *f = getenv("DM_FRAMEGEN_SCALE"); if (!f || !(atof(f) >= 0.5 && atof(f) <= 0.5)) setenv("DM_FRAMEGEN_SCALE", "0.5", 1);
+          LOG("cool mode (DM_COOL=1): render scale %s, frame generation's frames at %s of the size shown", getenv("DM_RENDER_SCALE"), getenv("DM_FRAMEGEN_SCALE")); } }
     if (!dm_fps_state) return;
     const char *e = getenv("DM_FPS_TARGET"); int t = e ? atoi(e) : DM_GAME_FPS_TARGET;
     if (t != 0 && t != 30 && t != 60) { LOG("[RED] DM_FPS_TARGET=%s: must be 0, 30 or 60; using the game's own frame step", e); t = 0; }
@@ -323,7 +363,12 @@ void dm_fps_state_apply(void) {
     // and dynamic resolution; another factor fixes the size at that fraction (DM_RENDER_SCALE, 0.5 to the stub's largest scale: 1.0, or above for a stub that also raises it,
     // Hades II's 3.0). Independent of the frame step: written at target 0 too
     const char *rs = getenv("DM_RENDER_SCALE"); float sc = 1.0f, hi = g_render_scale_max;
-    if (rs) { char *end; sc = strtof(rs, &end); if (end == rs || *end || !(sc >= 0.5f && sc <= hi)) { LOG("[RED] DM_RENDER_SCALE=%s: must be 0.5 to %.1f; keeping the game's size", rs, hi); sc = 1.0f; } else LOG("%s: 3D views rendered at %.2f of the game's size (DM_RENDER_SCALE)", g_fps_mod, sc); }
+    if (rs) { char *end; sc = strtof(rs, &end); if (end != rs && !*end && sc >= 10.0f && sc <= 100.0f) sc /= 100.0f;   /* a percentage (75 = 0.75): a Mac player's env.txt had DM_RENDER_SCALE=75 */
+      if (end == rs || *end || !(sc >= 0.25f && sc <= hi)) { LOG("[RED] DM_RENDER_SCALE=%s: must be 0.25 to %.1f; keeping the game's size", rs, hi); sc = 1.0f; } else LOG("%s: 3D views rendered at %.2f of the game's size (DM_RENDER_SCALE)", g_fps_mod, sc); }
+    // HookLink VX1: with the game's dynamic resolution on (DM_DYNAMIC_RESOLUTION=1) the size is left to it (0 at +0x10: Ocarina of Time's render-scale stub runs the game's own
+    // code, which the dynamic resolution stub drives), unless Cool mode or Potato mode fixed a smaller one (g_scale_forced): the launcher always passes its Render scale, so a fixed
+    // scale would otherwise turn dynamic resolution off for every player who left it on
+    { const char *d = getenv("DM_DYNAMIC_RESOLUTION"); if (d && !strcmp(d, "1") && !g_scale_forced && rs) { sc = 0.0f; LOG("%s: render scale left to the dynamic resolution (DM_DYNAMIC_RESOLUTION=1)", g_fps_mod); } }
     memcpy(dm_fps_state + 0x10, &sc, sizeof sc);
     // The game's own dynamic resolution, for builds whose stubs read it (the DYNAMIC_RESOLUTION capability of a frame step stub: Ocarina of Time's level function): 1 lets it
     // run, 0 (the default) holds full resolution. Builds without such a stub ignore the field
@@ -335,7 +380,7 @@ void dm_fps_state_apply(void) {
     // Wide view (Ocarina of Time's patches.py wide_view): DM_WIDE_VIEW=1 with DM_WIDE_ASPECT, the screen's width / height from 1.8 to 2.6 (set by the iOS front end), makes the game's
     // output and render widths follow the screen, multiples of 16: +0x100 u32 the 1440-high width, +0x104 the 1080-high width, +0x108 the former as a float, +0x10c the ratio in 16.16. 0 = 16:9
     { const char *wv = getenv("DM_WIDE_VIEW"), *wa = getenv("DM_WIDE_ASPECT"); char *wend = NULL; float wr = wa ? strtof(wa, &wend) : 0;
-      if (wv && !strcmp(wv, "1") && wa && wend != wa && !*wend && wr >= 1.8f && wr <= 2.6f) {
+      if (wv && !strcmp(wv, "1") && wa && wend != wa && !*wend && ((wr >= 1.8f && wr <= 2.6f) || (wr >= 1.25f && wr <= 1.74f))) {   // (squarer than 16:9 too: an unfolded iPhone Duo, 1.43)
           uint32_t w1 = (uint32_t)(1440.0f * wr / 16.0f + 0.5f) * 16, w2 = (uint32_t)(1080.0f * wr / 16.0f + 0.5f) * 16, q = (uint32_t)(wr * 65536.0f + 0.5f); float wf = (float)w1;
           memcpy(dm_fps_state + 0x100, &w1, 4); memcpy(dm_fps_state + 0x104, &w2, 4); memcpy(dm_fps_state + 0x108, &wf, 4); memcpy(dm_fps_state + 0x10c, &q, 4);
           extern void mtl_present_screen(uint32_t w, uint32_t h); mtl_present_screen(w1, 1440);   // the picture's shape for a texture that follows it (nvn_mtl.m present_shape); without it the view is laid out 16:9
@@ -343,11 +388,11 @@ void dm_fps_state_apply(void) {
           // +0x160 the squeeze of the full-screen UI projection (16:9 over the picture's ratio) and +0x164 the movie's margin on each side, (1 - squeeze) / 2 of the width
           // (patches.py wide_hud, Ivan0xFF's sites): the HUD, menus and movies keep 16:9 in the middle of the picture. DM_WIDE_HUD=0 leaves them over the whole picture
           const char *wh = getenv("DM_WIDE_HUD"); int hud = !(wh && !strcmp(wh, "0"));
-          if (hud) { float sq = (16.0f / 9.0f) / wcam, mg = (1.0f - sq) / 2.0f; memcpy(dm_fps_state + 0x160, &sq, 4); memcpy(dm_fps_state + 0x164, &mg, 4);
+          if (hud && wcam > 16.0f / 9.0f) { float sq = (16.0f / 9.0f) / wcam, mg = (1.0f - sq) / 2.0f;   /* (a squarer picture has no middle 16:9: the HUD and movies take its whole width, a little narrow) */ memcpy(dm_fps_state + 0x160, &sq, 4); memcpy(dm_fps_state + 0x164, &mg, 4);
                      LOG("%s: wide view: HUD, menus and movies in the middle %.1f%% (DM_WIDE_HUD)", g_fps_mod, sq * 100.0f); }
           // The view size the game lays its screen out by (1.8's way to the HUD): with the squeeze above it would no longer be the 3840x2160 grid the HUD site matches, so it
           // stays the game's own unless DM_WIDE_VIEW_SIZE=1 asks for it
-          { const char *vs = getenv("DM_WIDE_VIEW_SIZE"); float vw = vs ? (strcmp(vs, "0") ? (float)w2 : 0) : (hud ? 0 : (float)w2); memcpy(dm_fps_state + 0x118, &vw, 4);   // +0x118: the view size's width, the handheld render width (patches.py wide_sites: the HUD and menus are laid out by it); DM_WIDE_VIEW_SIZE=0: the game's own 1920
+          { const char *vs = getenv("DM_WIDE_VIEW_SIZE"); float vw = vs ? (strcmp(vs, "0") ? (float)w2 : 0) : (hud || wcam < 16.0f / 9.0f ? 0 : (float)w2); memcpy(dm_fps_state + 0x118, &vw, 4);   // +0x118: the view size's width, the handheld render width (patches.py wide_sites: the HUD and menus are laid out by it); DM_WIDE_VIEW_SIZE=0: the game's own 1920
             LOG("%s: wide view: view size width %.0f (DM_WIDE_VIEW_SIZE)", g_fps_mod, vw); }
           LOG("%s: wide view: %.3f:1, output %ux1440, handheld %ux1080, camera ratio %.4f (DM_WIDE_VIEW)", g_fps_mod, wr, w1, w2, wcam); } }
     // Screen shape: DM_SCREEN_ASPECT, the screen's width / height between 1.3 and 1.77, makes the builds with screen-shape stubs
@@ -573,9 +618,11 @@ static unsigned rebind(module_t *k, module_t *nm, int load) {
     return n;
 }
 
-// Every load of an NRO, linked or alone, starts from its data as rewritten and a zero bss. The first load snapshots the initialized data (only those bytes: no guest code can modify
+// Every load of an NRO, linked or alone, starts from its data as rewritten and a zero bss. A module already loaded is not loaded again: resetting its data under a live
+// user (a second CreateJitEnvironment for a plugin whose first environment is not destroyed, a LoadModule of a plugin's image) would pull its state from under it. The first load snapshots the initialized data (only those bytes: no guest code can modify
 // an inactive NRO before it, and copying FFX/X-2's 1,432 modules eagerly committed 5.8 GB of mostly unused bss); a reload restores it and zeroes the bss. Call with g_modules_mu held
 static void nro_reset_data(module_t *m) {
+    if (m->loaded) die("NRO %s: loaded again while it is loaded%s", m->name, m->alone ? " alone (a JIT plugin whose environment was not destroyed)" : "");
     if (!m->pristine) {
         if (!(m->pristine = malloc(m->pristine_len ? m->pristine_len : 1))) die("%s: pristine data copy", m->name);
         memcpy(m->pristine, m->base + m->data_off, m->pristine_len);
@@ -592,7 +639,7 @@ void nro_load(module_t *m) {
     nro_reset_data(m); g_loaded[g_nloaded++] = m;
     relocate(m);
     unsigned n = 0;
-    for (int i = 0; i < g_nmod; i++) if (g_mod[i].loaded && &g_mod[i] != m) n += rebind(&g_mod[i], m, 1);
+    for (int i = 0; i < g_nmod; i++) if (g_mod[i].loaded && !g_mod[i].alone && &g_mod[i] != m) n += rebind(&g_mod[i], m, 1);   // a module loaded alone binds nothing outside itself
     pthread_rwlock_unlock(&g_modules_mu);
     LOG("NRO %s loaded (load %u, base %p): %u imports of the modules loaded before bound to it", m->name, m->loads, m->base, n);
 }
@@ -601,7 +648,7 @@ void nro_load(module_t *m) {
 // undefined weak symbols 0; Super Mario 64's EmuSystemJITPlugin.nro has only those and relative relocations) and never takes part in the game's symbol lookups
 void nro_load_alone(module_t *m) {
     pthread_rwlock_wrlock(&g_modules_mu);
-    nro_reset_data(m);
+    nro_reset_data(m); m->alone = 1;
     relocs_t rl = relocs_of(m);
     unsigned nrel = rl.relr ? relr_apply(m, rl.relr, rl.relrsz, (uint64_t)m->base) : 0, nsym = 0;
     for (int t = 0; t < 2; t++)
@@ -619,12 +666,23 @@ void nro_load_alone(module_t *m) {
     LOG("NRO %s loaded alone (load %u, base %p): %u relative relocations, %u to its own or undefined weak symbols", m->name, m->loads, m->base, nrel, nsym);
 }
 
+// Its fini has run (the caller's). Deactivated as nro_unload deactivates a linked one, under the same locks and with the same check of stacks borrowing its data; nothing to
+// unbind, as no other module was bound to it
+void nro_unload_alone(module_t *m) {
+    pthread_rwlock_wrlock(&g_modules_mu);
+    if (!m->alone) die("NRO %s: unloaded alone but not loaded alone", m->name);
+    if (!svc_nro_deactivate(m)) die("NRO %s: cannot unload while a mapped stack borrows its data", m->name);
+    m->alone = 0;
+    pthread_rwlock_unlock(&g_modules_mu);
+    LOG("NRO %s unloaded (it was loaded alone)", m->name);
+}
+
 void nro_unload(module_t *m) {
     pthread_rwlock_wrlock(&g_modules_mu);
     if (!svc_nro_deactivate(m)) die("NRO %s: cannot unload while a mapped stack borrows its data", m->name);
     for (int i = 0; i < g_nloaded; i++) if (g_loaded[i] == m) { memmove(g_loaded + i, g_loaded + i + 1, (size_t)(--g_nloaded - i) * sizeof *g_loaded); break; }
     unsigned n = 0;
-    for (int i = 0; i < g_nmod; i++) if (g_mod[i].loaded) n += rebind(&g_mod[i], m, 0);
+    for (int i = 0; i < g_nmod; i++) if (g_mod[i].loaded && !g_mod[i].alone) n += rebind(&g_mod[i], m, 0);
     pthread_rwlock_unlock(&g_modules_mu);
     LOG("NRO %s unloaded: %u imports that pointed into it bound again", m->name, n);
 }

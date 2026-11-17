@@ -54,3 +54,12 @@ res_overlay/
 
 # Private development records
 /docs/HOOKLINKWINDOWS_PORT_ISSUES.md
+
+# Locally generated shader translator binaries
+/engine/dm/gfx/tools/dmsh_xlate_bin/
+/engine/dm/gfx/tools/dmsh_xlate/bin/
+/engine/dm/gfx/tools/dmsh_xlate/obj/
+
+# Locally generated shader profile tables
+/engine/dm/games/**/c1_full.tsv
+/engine/dm/games/**/cb_extent.tsv

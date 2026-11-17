@@ -180,6 +180,7 @@ static int boot_env(void) {
     // HookLink: the cheats folder (hle_cheats.c DM_CHEATS), in Documents so the player can put an Atmosphère cheat file there with Files; the launcher's Extras lists its entries
     { NSString *ch = [doc stringByAppendingPathComponent:@"cheats"]; [NSFileManager.defaultManager createDirectoryAtPath:ch withIntermediateDirectories:YES attributes:nil error:nil]; setenv("DM_CHEATS", ch.fileSystemRepresentation, 0); }
     setenv("DM_TEMP", [doc stringByAppendingPathComponent:@"temp"].fileSystemRepresentation, 0);
+    setenv("DM_SYSTEM_DIR", [doc stringByAppendingPathComponent:@"system"].fileSystemRepresentation, 0);
     setenv("DM_GUEST_FILE_DIR", NSTemporaryDirectory().fileSystemRepresentation, 0);   // DM_GUEST_FILE (hle_svc.c) keeps the guest's memory in files there
     setenv("DM_FONT_DIR", [[res stringByAppendingPathComponent:@"dm"] stringByAppendingPathComponent:@"font"].fileSystemRepresentation, 0);   // Shared-font stand-ins (standard.ttf / nintendo_ext.ttf): iOS lacks the macOS font path
     aoc_locate();   // add-on content: Documents/aoc, else <App>/aoc; an empty Documents/aoc explicitly selects no DLC
@@ -226,6 +227,8 @@ static NSString *program_env(void) {
       if ([NSFileManager.defaultManager fileExistsAtPath:ov isDirectory:&isdir] && isdir) { setenv("DM_ROMFS_OVERLAY", ov.fileSystemRepresentation, 1); fprintf(stderr, "boot: game file overlay %s\n", ov.fileSystemRepresentation); } }
     setenv("DM_NVN_SHMAP", [dmdir stringByAppendingPathComponent:@"shader_map.tsv"].fileSystemRepresentation, 0);
     setenv("DM_MSL_DIR", msl.fileSystemRepresentation, 0);
+    NSString *control = [dmdir stringByAppendingPathComponent:@"control.nacp"];   // the game's control data (build_ipa.sh program_tables; hle_fs.c control_read)
+    if ([fm fileExistsAtPath:control]) setenv("DM_CONTROL_NACP", control.fileSystemRepresentation, 0);
     return dmdir;
 }
 static int g_boot_ok;

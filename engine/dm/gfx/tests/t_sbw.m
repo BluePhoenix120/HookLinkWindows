@@ -37,6 +37,16 @@ int main(void){@autoreleasepool{
     uint64_t done=g_done;gw_commit(done+1000);
     CHECK("a running submission's wide write is seen by the next",gw_live(base+0x41000,base+0x41010));
     CHECK("and not elsewhere",!gw_live(ub,ub+0x100));
+    // The commit reads the pages this submission noted, not the whole page set (Ocarina of Time commits about 30 submissions a frame): a GPU page goes into the running writes,
+    // a page only a report wrote does not (the report counts by its own 16 bytes), and a page of an earlier submission is not met again
+    pend_reset();{const uint64_t a=0x7300000000ull,b=0x7300100000ull,r=0x7300200000ull;
+    sbw_note(a,16,SBW_GPU);sbw_note(b+0x10,0x1800,SBW_GPU);sbw_note(r,16,SBW_REPORT);sbw_note(a+8,8,SBW_GPU);
+    CHECK("the submission lists each page it noted once",g_nsbw==4&&g_sbwp[g_sbw_list[0]].page==a>>12&&g_sbwp[g_sbw_list[1]].page==b>>12&&g_sbwp[g_sbw_list[2]].page==(b>>12)+1&&g_sbwp[g_sbw_list[3]].page==r>>12);
+    gw_commit(done+900);
+    CHECK("its GPU pages are running writes",gw_live(a+0x800,a+0x810)&&gw_live(b+0x1000,b+0x1010));
+    CHECK("a page only a report wrote is not",!gw_live_in(g_gw,r+0x100,r+0x110));
+    pend_reset();sbw_note(ub+0x3000,16,SBW_GPU);
+    CHECK("the next submission lists only its own pages",g_nsbw==1&&g_sbwp[g_sbw_list[0]].page==(ub+0x3000)>>12);}
     // A write of 16 MB or more is kept whole: a uniform block elsewhere stays readable, and the same range coming back takes no new slot
     pend_reset();uint64_t wide=0x7100000000ull,big=0x2000000;
     sbw_note(wide,big,SBW_GPU);gw_commit(done+1001);
@@ -52,7 +62,10 @@ int main(void){@autoreleasepool{
     for(uint64_t i=0;i<9000;i++)rc_note(0x7100000000ull+i*16,2);
     rc_note((uint64_t)&rec[0],1);
     CHECK("a timestamp report after 9000 query reports counts as 0",rc_value((uint64_t)&rec[0],&x)&&x==0);
-    CHECK("a record with no report reads memory",rc_value((uint64_t)&rec[1],&x)&&x==0);
+    CHECK("a record with no report is unknown while a GPU write anywhere still runs (above)",!rc_value((uint64_t)&rec[1],&x));
+    uint64_t was=g_done;g_done=done+100000;   // every write above has landed
+    CHECK("once nothing that could write it runs, a record with no report reads memory",rc_value((uint64_t)&rec[1],&x)&&x==0);
+    g_done=was;
     CHECK("a query's report stays unknown",!rc_value(0x7100000000ull+8999*16,&x)&&!rc_value(0x7100000000ull,&x));
     (void)q;for(uint64_t i=0;i<300;i++)rc_note((uint64_t)&big+0x1000+i,1);
     CHECK("more timestamp reports than the first table held",rc_value((uint64_t)&big+0x1000,&x)&&x==0);
@@ -81,6 +94,25 @@ int main(void){@autoreleasepool{
     rc_note((uint64_t)rec,1);
     CHECK("a later timestamp restores known zero after the opaque writer",rc_value((uint64_t)rec,&x)&&x==0);
     rc_forget();atomic_store(&g_rc_complete,completed);}
+    // Skip hidden objects (DM_NVN_RC_STALE): a pending samples-passed result is decided by the one that landed before it at that address; one that never landed, a write
+    // over the record, and the switch off keep it unknown
+    {static uint64_t q[4];uint64_t x=9,c0=atomic_load(&g_rc_complete);g_rc_stale_on=1;
+    rc_note((uint64_t)&q[0],2);
+    CHECK("stale: a first query is unknown",!rc_value((uint64_t)&q[0],&x));
+    rc_commit(c0+1);atomic_store(&g_rc_complete,c0+1);q[0]=0;   // its submission completes: the result (0, hidden) lands in memory
+    CHECK("stale: the landed result is read from memory",rc_value((uint64_t)&q[0],&x)==1&&x==0);
+    rc_note((uint64_t)&q[0],2);   // the next frame's query at the same address, pending
+    CHECK("stale: a pending query takes the result that landed before",rc_value((uint64_t)&q[0],&x)==2&&x==0);
+    g_rc_stale_on=0;CHECK("stale off: a pending query is unknown",!rc_value((uint64_t)&q[0],&x));g_rc_stale_on=1;
+    rc_note((uint64_t)&q[0],2);
+    CHECK("stale: a second report while the first is pending has no landed result",!rc_value((uint64_t)&q[0],&x));
+    rc_commit(c0+2);atomic_store(&g_rc_complete,c0+2);q[0]=5;rc_note((uint64_t)&q[0],2);
+    CHECK("stale: the newest landed result is the one taken",rc_value((uint64_t)&q[0],&x)==2&&x==5);
+    uint64_t fill=0;rc_write((uint64_t)&q[0],8,&fill,1);
+    CHECK("stale: a write over the record drops the result before",rc_value((uint64_t)&q[0],&x)!=2);
+    rc_note((uint64_t)&q[2],1);
+    CHECK("stale: a timestamp report is not taken for one",rc_value((uint64_t)&q[2],&x)==1&&x==0);
+    rc_forget();atomic_store(&g_rc_complete,c0);g_rc_stale_on=-1;}
     pend_reset();
     printf("t_sbw: %d checks, %d failed\n",checks,failed);return failed!=0;
 }}

@@ -1,0 +1,8 @@
+{
+    "hooklink_base":  "2.0",
+    "nxnative_repo":  "https://github.com/dsi-hub/nxnative.git",
+    "nxnative_commit":  "3a28152fe7052c9f45ede460022d39be6c91e3cf",
+    "engine_location":  "engine/",
+    "shader_chain":  "a58d7f1f4ef9",
+    "release":  "Alpha V1.0.0"
+}

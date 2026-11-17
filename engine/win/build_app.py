@@ -43,11 +43,11 @@ def host_sources(game_h_dir):
     shim_env['PYTHONPATH'] = str(WIN / 'pyshim') + os.pathsep + shim_env.get('PYTHONPATH', '')
     msl_cmd = [sys.executable, str(DM / 'gfx/tools/host_msl.py'), '--sdk', 'iphoneos', '--min', str(tc.setting('ios_deployment', tc.IOS_DEPLOYMENT)), str(msl)] + [str(p) for p in sorted((DM / 'gfx/msl').glob('*.metal'))]
     if subprocess.run(msl_cmd, env=shim_env).returncode: die('iOS host Metal shader generation failed')
-    want_src = 'SRC=main.c loader.c hle.c crash.c probe.c thread.c save_sync.c memstat.m haptics_apple.m pad_switch2_apple.m $(sort $(wildcard hle_*.c)) front_mac.m web_apple.m entry.S'
+    want_src = 'SRC=main.c loader.c hle.c crash.c probe.c thread.c save_sync.c memstat.m haptics_apple.m mic_apple.m pad_switch2_apple.m $(sort $(wildcard hle_*.c)) front_mac.m web_apple.m entry.S'
     want_gfx = 'GFX=$(sort $(wildcard ../gfx/*.c ../gfx/nvn/*.c ../gfx/nvn/*.m ../gfx/nvn/*.S ../gfx/tex/*.c ../gfx/tex/*.m ../gfx/vk/*.m ../gfx/gl/*.m))'
     for w in (want_src, want_gfx):
         if w not in mk: die(f'dm/host/Makefile changed ({w.split("=")[0]}= line): update host_sources() in win/build_app.py')
-    src = [HOST / n for n in 'main.c loader.c hle.c crash.c probe.c thread.c save_sync.c memstat.m haptics_apple.m pad_switch2_apple.m'.split()]
+    src = [HOST / n for n in 'main.c loader.c hle.c crash.c probe.c thread.c save_sync.c memstat.m haptics_apple.m mic_apple.m pad_switch2_apple.m'.split()]
     src += sorted(HOST.glob('hle_*.c'), key=lambda p: p.name)
     src += [HOST / 'front_mac.m', HOST / 'web_apple.m', HOST / 'entry.S']
     gfx = []
@@ -211,15 +211,25 @@ def list_files(src):
     return out
 
 
-def split_data(data, parts, stamp, name, skip_suffix=()):
+def split_data(data, parts, stamp, name, skip_suffix=(), copy_files=()):
     """Fill the data folder of a split build: {path inside it: source folder}. Files are hard-linked (no disk space) on several threads, and copied where links fail
     (another drive). A folder that a build with the same stamp and the same files filled is kept as it is; otherwise it is made again in <folder>.partial and swapped in,
     so it never mixes files from two builds. Returns (files, bytes)"""
     import concurrent.futures as cf
-    todo = [(f, f'{rel}/{r}', n) for rel, src in parts.items() for f, r, n in list_files(src) if not r.endswith(tuple(skip_suffix))]
+    # A split may contain standalone RomFS.img and packed b-<chain>.img files.
+    # Never enumerate a RomFS image as a directory (nor split the whole image).
+    todo = []
+    for rel, src in parts.items():
+        src = Path(src)
+        if src.is_file(): todo.append((str(src), rel, src.stat().st_size))
+        else: todo.extend((f, f'{rel}/{r}', n) for f, r, n in list_files(src) if not r.endswith(tuple(skip_suffix)))
     count, size = len(todo), sum(n for _, _, n in todo)
-    sig = stamp + f'files\t{count}\nbytes\t{size}\n'
-    if (data / 'nxw_data.tsv').is_file() and (data / 'nxw_data.tsv').read_text(encoding='utf-8') == sig:
+    # Names, source sizes and modification times are part of the data-folder reuse key.
+    # Hash the small runtime settings file too: changing 0 to 1 must not reuse old env.txt.
+    source_ids = ''.join(f'{rel}\t{n}\t{os.stat(f).st_mtime_ns}\n' for f, rel, n in todo)
+    settings_hash = ''.join(hashlib.sha256(Path(f).read_bytes()).hexdigest() for f, rel, _ in todo if rel == 'env.txt')
+    sig = stamp + f'files\t{count}\nbytes\t{size}\nsource_fingerprint\t{hashlib.sha256(source_ids.encode()).hexdigest()}\nenv_sha256\t{settings_hash}\n'
+    if (data / 'nxw_data.tsv').is_file() and (data / 'nxw_data.tsv').read_text(encoding='utf-8') == sig and all((data / r).is_file() and (data / r).stat().st_size == n for _, r, n in todo):
         t(f'split build: reusing the data folder {data} ({count:,} files, {size / 2**30:.2f} GB, the same build)')
         return count, size
     t(f'split build: game files and shader libraries go to {data} ({count:,} files, hard links on {min(32, (os.cpu_count() or 4) * 2)} threads)')
@@ -228,8 +238,10 @@ def split_data(data, parts, stamp, name, skip_suffix=()):
     for d in sorted({str(Path(r).parent) for _, r, _ in todo}): (tmp / d).mkdir(parents=True, exist_ok=True)
     def one(item):
         f, r, _ = item; dst = tmp / r
-        try: os.link(f, dst)
-        except OSError: shutil.copy2(f, dst)
+        if r in copy_files: shutil.copy2(f, dst)  # never hard-link an external donor's shader image
+        else:
+            try: os.link(f, dst)
+            except OSError: shutil.copy2(f, dst)
     with cf.ThreadPoolExecutor(min(32, (os.cpu_count() or 4) * 2)) as ex: list(ex.map(one, todo, chunksize=256))
     (tmp / 'nxw_data.tsv').write_text(sig, encoding='utf-8')
     (tmp / 'README.txt').write_text(
@@ -280,7 +292,6 @@ def main():
         if not ((patched / f'{m}.patched.bin').exists() and (patched / f'{m}.fixups.tsv').exists()): die(f'no rewritten module {patched}/{m} (run dm/tools/patch_nso.py first)')
     if not (romfs / marker).exists(): die(f'no RomFS at {romfs} (missing {marker})')
     if image and env.get('NXW_MODS_ROMFS'): die('mods\' RomFS folders are laid over a RomFS folder, and this extraction is one RomFS image (RomFS.img)')
-    if image and env.get('NXW_SPLIT_DATA', '') not in ('', '0'): die('a split build copies the RomFS as a folder, and this extraction is one RomFS image (RomFS.img): build without --split-data')
     if env.get('NXW_MODS_ROMFS'):   # mods' RomFS folders (win/mods.py): hard links of the game's files with the mods' laid over them
         import mods
         romfs = mods.overlay_romfs(romfs, env['NXW_MODS_ROMFS'].split(os.pathsep), w / 'build/romfs_mods', log=t)
@@ -386,7 +397,10 @@ def main():
         sp = env.get('NXW_SPLIT_DATA', '')
         if sp and sp != '0':   # a split build: the app's "game data needed" screen (win/ios/DataHelp.m) names the data folder and its size
             dname = Path(sp).name if sp not in ('1', 'YES') else out_ipa.stem + '-data'
-            dsize = sum(n for d in (romfs, msl_ios / msldir, aoc if aoc and aoc.is_dir() else None) if d for _, _, n in list_files(d))   # listed once, reused by split_data
+            if image and gfx == 'nvn' and not capture:
+                dsize = Path(romfs).stat().st_size + Path(shader_lib.image_of(msl_ios / msldir)).stat().st_size
+            else:
+                dsize = sum(n for d in (romfs, msl_ios / msldir, aoc if aoc and aoc.is_dir() else None) if d for _, _, n in list_files(d))
             pl['NXWDataFolder'] = dname; pl['NXWDataSize'] = f'{dsize / 2**30:.1f} GB' if dsize >= 2**30 else f'{dsize / 2**20:.0f} MB'
         plistlib.dump(pl, f, fmt=plistlib.FMT_BINARY)
     (app / 'PkgInfo').write_bytes(b'APPL????')
@@ -404,8 +418,21 @@ def main():
         # Split build: the IPA holds only the app (small, quick to sign and install); the game files and shader libraries go to a data folder the player copies
         # into the app's Documents (dm/ios/Sources/main.m looks for <Documents>/romfs and <Documents>/<folder>/romfs, and takes msl/ and aoc/ beside it)
         data = Path(split) if split not in ('1', 'YES') else out_ipa.with_name(out_ipa.stem + '-data')
-        split_data(data, {'romfs': romfs, f'msl/{msldir}': msl_ios / msldir, **({'aoc': aoc} if has_aoc else {})},
-                   f'game\t{game}\nbundle_id\t{bundle_id}\nversion\t{version}\nchain\t{v}\ngfx\t{gfx}\n', name, skip_suffix=('_bp.metallib',) if skip_bp else ())
+        if image and gfx == 'nvn' and not capture:
+            # Match the already-tested iPhone Documents layout: RomFS.img, b-<chain>.img, env.txt.
+            # If the shader image comes from an external completed build, COPY, never hard-link it.
+            shader_image = Path(shader_lib.image_of(msl_ios / msldir))
+            if not shader_image.is_file(): die(f'packed iOS shader image missing: {shader_image}')
+            parts = {'RomFS.img': Path(romfs), f'b-{v}.img': shader_image}
+            protected = (f'b-{v}.img',) if env.get('NXW_REUSE_SHADER_WORK') else ()
+            if env.get('DM_ENV_FILE'):
+                parts['env.txt'] = Path(env['DM_ENV_FILE'])
+            else: die('Native split-data mode requires --env-file for reproducible iPhone settings')
+            if has_aoc: parts['aoc'] = aoc
+            split_data(data, parts, f'game\t{game}\nbundle_id\t{bundle_id}\nversion\t{version}\nchain\t{v}\ngfx\t{gfx}\n', name, copy_files=protected)
+        else:
+            split_data(data, {'romfs': romfs, f'msl/{msldir}': msl_ios / msldir, **({'aoc': aoc} if has_aoc else {})},
+                       f'game\t{game}\nbundle_id\t{bundle_id}\nversion\t{version}\nchain\t{v}\ngfx\t{gfx}\n', name, skip_suffix=('_bp.metallib',) if skip_bp else ())
     else:
         maps.append(f'Payload/DmIOS.app/msl/{msldir}={msl_ios / msldir}')
         if has_aoc: maps.append(f'Payload/DmIOS.app/aoc={aoc}')

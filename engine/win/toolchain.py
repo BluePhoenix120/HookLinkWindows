@@ -91,11 +91,100 @@ def llvm_tool(name):
     return Path(w) if w else None
 
 
+def _ios_sdk_valid(path):
+    """Reject old/partial SDKs: Metal 4 requires iOS 26+, headers and frameworks."""
+    try:
+        path = Path(path)
+        if not path.is_dir() or not path.name.lower().startswith('iphoneos') or path.suffix.lower() != '.sdk':
+            return False
+        version, _ = sdk_settings(path)
+        major = str(version).split('.', 1)[0]
+        return (major.isdigit() and int(major) >= 26
+                and (path / 'usr' / 'include').is_dir()
+                and (path / 'System' / 'Library' / 'Frameworks').is_dir())
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def _ios_sdk_override(value):
+    """Resolve SDK paths in local toolchain.json relative to that file when needed.
+
+    ${PROJECT} is the top-level checkout; ${ENGINE} is the nxnative engine.
+    Absolute paths remain supported. No configuration file is rewritten.
+    """
+    if not isinstance(value, str) or not value.strip():
+        return None
+    value = os.path.expandvars(value.strip())
+    project = REPO.parent if REPO.name.lower() == 'engine' else REPO
+    for marker, base in (('${PROJECT}', project), ('${ENGINE}', REPO), ('${WIN}', WIN)):
+        if value == marker:
+            return base
+        if value.startswith(marker + '/') or value.startswith(marker + chr(92)):
+            return base / value[len(marker) + 1:]
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else WIN / path
+
+
+def _ios_sdk_search_roots():
+    """Bounded relocation search: this checkout, then nearby source checkouts.
+
+    No recursive scanning of entire drives, home directories or build workspaces.
+    The relative patterns describe a checkout layout, not a particular drive or name.
+    """
+    project = REPO.parent if REPO.name.lower() == 'engine' else REPO
+    roots = [WIN / 'sdk' / 'out', project / 'win' / 'sdk' / 'out',
+             project / 'engine' / 'win' / 'sdk' / 'out']
+    try:
+        siblings = sorted((p for p in project.parent.iterdir() if p.is_dir()), key=lambda p: p.name.casefold())
+    except OSError:
+        siblings = []
+    for sibling in siblings:
+        roots.extend((sibling / 'win' / 'sdk' / 'out', sibling / 'engine' / 'win' / 'sdk' / 'out'))
+    seen = set()
+    for root in roots:
+        key = os.path.normcase(str(root.resolve(strict=False)))
+        if key not in seen:
+            seen.add(key)
+            yield root
+
+
+def ios_sdk_details():
+    """Return (SDK, source, warnings), preferring valid overrides over discovery.
+
+    A stale local path never disables discovery. SDK directories must be complete
+    and have a reported iOS version of at least 26.
+    """
+    warnings = []
+    explicit = [('NXW_IOS_SDK', os.environ.get('NXW_IOS_SDK')),
+                ('toolchain.json', _cfg().get('ios_sdk'))]
+    for name, value in explicit:
+        candidate = _ios_sdk_override(value)
+        if candidate is None:
+            continue
+        if _ios_sdk_valid(candidate):
+            return candidate, name, warnings
+        warnings.append(f'{name} ios_sdk is missing, incomplete or older than iOS 26: {candidate}')
+    for root in _ios_sdk_search_roots():
+        if not root.is_dir():
+            continue
+        try:
+            candidates = [p for p in root.rglob('iPhoneOS*.sdk') if p.is_dir()]
+        except OSError:
+            continue
+        # Prefer the most recent version within each SDK output tree.
+        def version_key(p):
+            version, _ = sdk_settings(p)
+            parts = str(version).split('.')
+            return tuple(int(v) if v.isdigit() else 0 for v in (parts + ['0', '0'])[:3])
+        for candidate in sorted(candidates, key=version_key, reverse=True):
+            if _ios_sdk_valid(candidate):
+                return candidate, 'auto-discovered near this checkout', warnings
+    return None, 'not found', warnings
+
+
 def ios_sdk():
-    """The iPhoneOS SDK folder (iPhoneOS<ver>.sdk, from Xcode.xip via win/sdk/extract_xip.py)"""
-    cands = [setting('ios_sdk')]
-    cands += sorted(glob.glob(str(WIN / 'sdk' / 'out' / '**' / 'iPhoneOS*.sdk'), recursive=True), reverse=True)
-    return _first(cands)
+    """Validated iPhoneOS SDK, independent of checkout location."""
+    return ios_sdk_details()[0]
 
 
 def sdk_settings(sdk):

@@ -1,6 +1,6 @@
 # HookLinkWindows — source-only public release checklist
 
-This GUI overlay is **not a complete repo**. Before publishing your forthcoming HookLinkWindows GitHub repository, integrate it into the complete Windows port and test that whole repository on a second Windows installation or clean virtual machine.
+This checkout contains the integrated HookLink 2.0 frontend, bundled nxnative engine, and Windows port. Alpha V1.0.0 has passed developer-machine build and regression testing; a fresh Windows installation and complete end-to-end build and sideload remain unverified. Complete the checks below before declaring clean-install support validated.
 
 - [ ] The public repository includes the working, licensed HookLink/nxnative engine and all required `win/` source modifications, not just this small GUI overlay.
 - [ ] Preserve upstream copyright and license notices, document the origin of ported components, and review third-party license obligations.

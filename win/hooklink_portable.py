@@ -16,9 +16,14 @@ DEFAULT_IPA_NAME = 'HookLinkWindows-Full.ipa'
 PRESET_REL = 'config/iphone-oot.env'
 ALLOWED_KEYS = {
     'input_path', 'work_dir', 'env_file', 'output_ipa', 'bundle_id',
-    'workers', 'allow_damaged', 'allow_metal', 'entitlements', 'output_auto', 'package_mode',
+    'workers', 'auto_workers', 'allow_damaged', 'allow_metal', 'entitlements', 'output_auto', 'package_mode',
+    'reuse_shader_work', 'native_app_only',
 }
 
+
+def native_display_path(value: str) -> str:
+    """Normalize only for display; Windows accepts forward or backslashes."""
+    return os.path.normpath(value) if value else value
 
 def user_settings_path(home: Path | None = None, local_appdata: str | None = None) -> Path:
     """Settings live outside the checkout, irrespective of clone/extract location."""
@@ -89,18 +94,18 @@ class SettingsStore:
                 values.pop('allow_metal', None)
             if values.get('package_mode') not in ('app_only', 'full'):
                 values.pop('package_mode', None)
-            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'bundle_id'):
+            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'bundle_id', 'reuse_shader_work'):
                 if key in values and not isinstance(values[key], str):
                     values.pop(key)
-            for key in ('allow_damaged', 'allow_metal', 'entitlements', 'output_auto'):
+            for key in ('auto_workers', 'allow_damaged', 'allow_metal', 'entitlements', 'output_auto', 'native_app_only'):
                 if key in values and not isinstance(values[key], bool):
                     values.pop(key)
             n = values.get('workers')
             if not isinstance(n, int) or isinstance(n, bool) or not 1 <= n <= 61:
                 values.pop('workers', None)
-            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa'):
+            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'reuse_shader_work'):
                 if key in values:
-                    values[key] = _decode_path(values[key], self.root)
+                    values[key] = native_display_path(_decode_path(values[key], self.root))
             warnings = ['Previous GUI preferences loaded; compatibility defaults upgraded to enabled.'] if legacy else []
             return values, warnings
         except (OSError, ValueError, UnicodeError) as exc:
@@ -108,7 +113,7 @@ class SettingsStore:
 
     def save(self, values: dict) -> None:
         safe = {k: v for k, v in values.items() if k in ALLOWED_KEYS}
-        for key in ('input_path', 'work_dir', 'env_file', 'output_ipa'):
+        for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'reuse_shader_work'):
             if isinstance(safe.get(key), str):
                 safe[key] = _encode_path(safe[key], self.root)
         payload = {'version': SETTINGS_VERSION, 'settings': safe}
@@ -196,7 +201,7 @@ def check_project_installation(root: Path) -> Preflight:
             for key in ('ios_sdk', 'llvm', 'metal_tools', 'spirv_cross_dir', 'glslangValidator_dir', 'zstd', 'dotnet'):
                 value = settings.get(key)
                 if isinstance(value, str) and value and not Path(value).exists():
-                    result.advisories.append(f'toolchain.json: {key} points to a missing location: {value}')
+                    result.advisories.append(f'toolchain.json: {key} points to a missing location: {value}' + ('; automatic SDK discovery will try nearby checkouts without rewriting your JSON' if key == 'ios_sdk' else ''))
         except (OSError, UnicodeError, ValueError) as exc:
             result.advisories.append(f'toolchain.json could not be parsed ({type(exc).__name__}); check encoding and JSON syntax')
     else:

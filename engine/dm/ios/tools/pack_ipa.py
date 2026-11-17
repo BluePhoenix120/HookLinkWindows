@@ -277,9 +277,10 @@ def main():
     ap.add_argument('--skip', action='append', default=[], help='an archive path left out of the folder walk that would add it')
     ap.add_argument('--skip-suffix', action='append', default=[], help='files whose names end so are left out of every folder walk')
     ap.add_argument('--no-reuse', action='store_true', help='pack every file again, without copying from the old IPA')
+    ap.add_argument('--exec', action='append', default=[], help='mark this app executable with mode 755')
     ap.add_argument('--shader-files', action='store_true', help='an NVN game\'s shader library goes in as its separate files, not as one image, for install tools that cannot copy a large file (AltServer)')
-    ap.add_argument('--exec', action='append', default=[])
     a = ap.parse_args()
+    if not hasattr(os, 'pread'): a.no_reuse = True
     maps = []
     for m in a.maps:
         arc, sep, src = m.partition('=')

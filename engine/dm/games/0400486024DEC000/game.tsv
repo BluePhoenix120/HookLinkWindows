@@ -51,8 +51,6 @@ fps_target	60
 # iPhone 18 Pro Max: hybrid pipelines, so first-seen pipelines stop freezing the game; the archive is built for its GPU
 pso_mtl4	on
 pso_gpu	applegpu_g19p
-# agl wraps its clears in render conditions on Donkey Kong Bananza and Splatoon Raiders; the same library here
-render_cond	on
 draw_barriers	game
 # As Tears of the Kingdom: the terrain's height, blend and hole maps are written by the CPU into textures after they are created. Without these keys they stay zero: holes in the ground and the wrong materials
 tex_flush_upload	on
@@ -82,10 +80,6 @@ upscaler_chain	f8965bffbdf51d78,d17eefaff4f0bc23,a335c1db6270c355>aad7ea7e5c02f4
 # the scene colour (RG11B10F) and depth have no lossy form
 # HookLink 1.8.5: off again, as 1.5.1 and 1.7 ran (1.8 took it on with the steady 30 fps merge); 60 fps restarted an iPhone 18 Pro Max once on 1.8
 rt_lossy	off
-# The game's compute dispatches with no barrier of its between them run side by side (nvn_mtl.m dispatch_enc): 117 at the start of a frame in Kokiri Forest waited each for the one
-# before, 5.7 ms; side by side 3.7 ms, the frame 27.1 -> 24.9 ms (docked, Apple M4 Pro), the picture within run-to-run noise (from the Mighty Green Kokiri Kid fork, 5208584a)
-# HookLink 1.8.5: off again, as 1.5.1 and 1.7 ran
-dispatch_overlap	off
 # One Render scale slider in place of the Resolution row (Normal / Potato): a fixed fraction of the game's base size (render_base: 2560x1440 docked, 1920x1080
 # handheld), from 0.25 (480x270 handheld, marked Potato) to 1.0 (1920x1080); 0.667 is the old Normal's 1280x720. The render-scale stub (patches.py) fixes every value up to 1.0
 res_presets	off
@@ -94,3 +88,13 @@ render_scale	0.25:1.0:0.05
 render_scale_default	0.667
 render_scale_marks	0.25=Potato
 frame_wg	off
+# The model optimizer's thread only gets idle time on the console (priority 55 under strict priorities); under the QoS map it competed with the frame's threads for the
+# iPhone's two performance cores, 700-770 ms of CPU a second through whole area visits (hle_thread.c thread_main; Hookshot PR 959 found the same on PCs)
+# Pool tables give a finalized texture's ID the dummy instead of making its texture again: about 2.5 GB at the house-to-forest change (upstream PR #1393, open; from the kid-with-sword-remake fork's FF line, HookLink 1.9 test42)
+pool_skip_retired	on
+# The launcher's Potato mode (DM_PRESET=potato; loader.c dm_preset_apply sets this list when the game starts, over the launcher's own values; kid-with-sword-remake V18's mechanism,
+# HookLink VX1's list): the 3D views at 0.25 (the Render scale's Potato mark, 480x270 handheld), frame generation's frames at half the size shown, the prewarm warm-only (no pipeline kept:
+# a kept prewarm held about 1.2 GB on an iPhone), and the idle shared textures let go from 60 % of Metal's working set down to 50 % (85 / 75 by default). kid-with-sword's other memory
+# savers (the GPU memory guard, the texture recycle bin, lazy textures, big pools in the guest files) were written on an engine whose memory code nxnative has since rewritten: main's
+# own render-target release, pool chunks, stand-ins and HookLink's idle retirement and pool_skip_retired stand for them here
+potato	DM_RENDER_SCALE=0.25,DM_FRAMEGEN_SCALE=0.5,DM_PSO_WARM_ONLY=1,DM_NVN_ALIAS_HI=60,DM_NVN_ALIAS_LO=50

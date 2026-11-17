@@ -39,6 +39,10 @@ def main():
     sys.argv[1:] = rest
     # every Python the pipeline starts loads the shim; this one too
     os.environ['PYTHONPATH'] = os.pathsep.join([str(SHIM)] + [p for p in os.environ.get('PYTHONPATH', '').split(os.pathsep) if p])
+    if str(SHIM) not in sys.path: sys.path.insert(0, str(SHIM))  # Make Windows shim modules importable in this interpreter
+    if os.name == 'nt': os.environ.setdefault('DMSH_PCH', '0')
+    if os.name == 'nt': os.environ['DMSH_PROCS'] = '0'  # Native Windows does not support fork  # Safe Windows default; optional Metal PCH may fail on exFAT
+    if os.name == 'nt': os.environ.setdefault('DM_REWRITE_J', str(min(8, max(2, (os.cpu_count() or 4) // 2))))  # per-module x18 subprocesses
     os.environ.setdefault('PYTHONUTF8', '1')   # the pipeline reads and writes UTF-8 text without naming the encoding
     os.environ.setdefault('J', str(max(8, 2 * (os.cpu_count() or 4))))   # dmsh_build.py's workers (upstream 8): on Windows each shader compile is mostly metal.exe starting up, so twice the cores keep the CPU busy
     # Windows builds get their own bundle IDs (org.nxnativewindows.<title ID>), so they install beside a Mac-built IPA of the same game; --bundle-id still names any ID

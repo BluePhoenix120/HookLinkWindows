@@ -3,6 +3,8 @@ name: Build HookLinkWindows for Windows
 on:
   workflow_dispatch:
   push:
+    branches:
+      - windows-port
     tags:
       - 'v*'
 

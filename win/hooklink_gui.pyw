@@ -20,17 +20,20 @@ from hooklink_gui_core import (BuildConfig, PACKAGE_APP_ONLY, PACKAGE_FULL,
                                check_runtime_config, default_output_name,
                                export_app_only_ipa, find_transfer_sources,
                                make_build_environment, make_build_plan,
-                               prepare_transfer_folder, shader_chain_from_ipa,
+                               prepare_transfer_folder, shader_chain_from_ipa, verify_native_split_ipa,
+                               verified_shader_chain_from_ipa, read_host_shader_chain, oot_runtime_errors,
                                verify_build_config)
 from hooklink_portable import (SettingsStore, check_project_installation, locate_engine_root,
-                               DEFAULT_IPA_NAME)
+                               DEFAULT_IPA_NAME, DEFAULT_WORK_NAME, native_display_path)
 from hooklink_prereqs import run_prerequisite_check
+from shader_chain_flow import run_build_chain_preflight
+from hooklink_progress import parse_build_progress
+from auto_workers import logical_workers
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
-HOME = Path.home()
-DEFAULT_WORK = HOME / 'HookLinkWindowsBuild'
+DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = '0.8.0'
+GUI_VERSION = 'Alpha V1.0.0'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -70,12 +73,20 @@ class App(tk.Tk):
         if saved_bundle == 'org.example.hooklinkoot':
             saved_bundle = DEFAULT_BUNDLE_ID
         self.bundle_var = tk.StringVar(value=saved_bundle)
-        self.workers_var = tk.StringVar(value=str(prefs.get('workers', min(61, max(1, os.cpu_count() or 4)))))
+        self.auto_workers_var = tk.BooleanVar(value=prefs.get('auto_workers', True))
+        self.workers_var = tk.StringVar(value=str(logical_workers() if self.auto_workers_var.get() else prefs.get('workers', logical_workers())))
         self.allow_damaged = tk.BooleanVar(value=prefs.get('allow_damaged', True))
         self.allow_metal = tk.BooleanVar(value=prefs.get('allow_metal', True))
         self.entitlements = tk.BooleanVar(value=prefs.get('entitlements', True))
+        self.reuse_var = tk.StringVar(value=prefs.get('reuse_shader_work', ''))
+        self.native_var = tk.BooleanVar(value=prefs.get('native_app_only', False))
         self.state_var = tk.StringVar(value='Select a .nup file, then check prerequisites and build settings.')
+        self.progress_var = tk.StringVar(value='')
+        self._last_progress_stage = None
+        self._last_progress_percent = None
         self._pending_package = None
+        self._pending_build = None
+        self._verified_shader_reuse = False
         self._build_ui()
         self.package_mode.trace_add('write', self._mode_changed)
         self.work_var.trace_add('write', self._work_changed)
@@ -111,7 +122,10 @@ class App(tk.Tk):
         row = ttk.Frame(form)
         row.grid(row=5, column=1, columnspan=2, sticky='w', pady=(7, 1))
         ttk.Label(row, text='Shader split workers (1–61):').pack(side='left')
-        ttk.Spinbox(row, from_=1, to=61, width=5, textvariable=self.workers_var).pack(side='left', padx=(8, 20))
+        self.worker_spin = ttk.Spinbox(row, from_=1, to=61, width=5, textvariable=self.workers_var)
+        self.worker_spin.pack(side='left', padx=(8, 8))
+        ttk.Checkbutton(row, text='Auto (2x logical CPUs, max 61)', variable=self.auto_workers_var, command=self._update_auto_workers).pack(side='left', padx=(0, 16))
+        self._update_auto_workers()
         ttk.Checkbutton(row, text='Request increased memory entitlement', variable=self.entitlements).pack(side='left')
         checkrow = ttk.Frame(form)
         checkrow.grid(row=6, column=1, columnspan=2, sticky='w', pady=(4, 1))
@@ -124,6 +138,9 @@ class App(tk.Tk):
         self.advanced_box.columnconfigure(1, weight=1)
         self._field(self.advanced_box, 0, 'iOS Bundle ID', self.bundle_var)
         ttk.Label(self.advanced_box, text='Default: PhoenixNetwork.HookLinkWindows. Changing this may create a separate app install.', foreground='#555').grid(row=1, column=0, columnspan=3, sticky='w', pady=(0, 4))
+        self._field(self.advanced_box, 2, 'Previous shader work', self.reuse_var, self._browse_reuse)
+        ttk.Label(self.advanced_box, text='Optional: reuse only after exact shader-package and library verification; never alters the previous build.', foreground='#555').grid(row=3, column=0, columnspan=3, sticky='w', pady=(0, 4))
+        ttk.Checkbutton(self.advanced_box, text='Experimental native app-only packaging (avoids temporary full IPA)', variable=self.native_var).grid(row=4, column=0, columnspan=3, sticky='w', pady=(0, 4))
         self.advanced_visible = False
         form.columnconfigure(1, weight=1)
 
@@ -137,8 +154,9 @@ class App(tk.Tk):
         for b in (self.doctor_btn, self.guide_btn, self.preview_btn, self.build_btn, self.stop_btn):
             b.pack(side='left', padx=(0, 8))
 
-        ttk.Label(outer, textvariable=self.state_var, foreground='#163f75', wraplength=920).pack(fill='x', pady=(2, 7))
-        self.progress = ttk.Progressbar(outer, mode='indeterminate')
+        ttk.Label(outer, textvariable=self.state_var, foreground='#163f75', wraplength=920).pack(fill='x', pady=(2, 4))
+        ttk.Label(outer, textvariable=self.progress_var, foreground='#385a70', wraplength=920).pack(fill='x', pady=(0, 5))
+        self.progress = ttk.Progressbar(outer, mode='indeterminate', maximum=100)
         self.progress.pack(fill='x', pady=(0, 10))
         ttk.Label(outer, text='Build output and diagnostics', font=('Segoe UI', 10, 'bold')).pack(anchor='w')
         logs = ttk.Frame(outer)
@@ -177,25 +195,25 @@ class App(tk.Tk):
             self.state_var.set('NUP file selected — review settings, then check prerequisites.')
 
     def _browse_input(self):
-        f = filedialog.askopenfilename(title='Choose game .nup file', initialdir=str(HOME / 'Downloads'), filetypes=[('NUP game files', '*.nup')])
+        f = filedialog.askopenfilename(title='Choose game .nup file', initialdir=str(Path(self.input_var.get()).parent if Path(self.input_var.get()).is_file() else ROOT.parent), filetypes=[('NUP game files', '*.nup')])
         if f:
-            self.input_var.set(f)
+            self.input_var.set(native_display_path(f))
 
     def _browse_work(self):
         f = filedialog.askdirectory(title='Select build work folder', initialdir=self.work_var.get())
         if f:
-            self.work_var.set(f)
+            self.work_var.set(native_display_path(f))
 
     def _browse_env(self):
-        f = filedialog.askopenfilename(title='Choose runtime settings file', filetypes=[('Environment files', '*.txt *.env'), ('All files', '*.*')])
+        f = filedialog.askopenfilename(title='Choose runtime settings file', filetypes=[('Environment files', '*.txt *.env'), ('All files', '*.*')], initialdir=str(DEFAULT_ENV.parent))
         if f:
-            self.env_var.set(f)
+            self.env_var.set(native_display_path(f))
 
     def _browse_output(self):
-        f = filedialog.asksaveasfilename(title='IPA output', defaultextension='.ipa', filetypes=[('IPA', '*.ipa')], initialfile=Path(self.output_var.get()).name)
+        f = filedialog.asksaveasfilename(title='IPA output', defaultextension='.ipa', filetypes=[('IPA', '*.ipa')], initialfile=Path(self.output_var.get()).name, initialdir=str(Path(self.output_var.get()).parent))
         if f:
             self.output_auto = False
-            self.output_var.set(f)
+            self.output_var.set(native_display_path(f))
 
     def _work_changed(self, *_):
         if self.output_auto:
@@ -204,6 +222,17 @@ class App(tk.Tk):
                 self.output_var.set(str(Path(self.work_var.get()) / default_output_name(self.package_mode.get())))
             finally:
                 self._updating_output = False
+
+    def _update_auto_workers(self):
+        if self.auto_workers_var.get():
+            self.workers_var.set(str(logical_workers()))
+            self.worker_spin.configure(state='disabled')
+        else:
+            self.worker_spin.configure(state='normal')
+
+    def _browse_reuse(self):
+        folder = filedialog.askdirectory(title='Select an existing completed shader build directory', initialdir=self.reuse_var.get() or str(ROOT.parent))
+        if folder: self.reuse_var.set(native_display_path(folder))
 
     def _mode_changed(self, *_):
         if self.output_auto:
@@ -224,7 +253,7 @@ class App(tk.Tk):
         try:
             workers = int(self.workers_var.get())
         except (ValueError, TypeError):
-            workers = min(61, max(1, os.cpu_count() or 4))
+            workers = logical_workers()
         self.store.save({
             'input_path': self.input_var.get().strip(),
             'work_dir': self.work_var.get().strip(),
@@ -232,11 +261,14 @@ class App(tk.Tk):
             'output_ipa': self.output_var.get().strip(),
             'bundle_id': self.bundle_var.get().strip(),
             'workers': workers,
+            'auto_workers': self.auto_workers_var.get(),
             'allow_damaged': self.allow_damaged.get(),
             'allow_metal': self.allow_metal.get(),
             'entitlements': self.entitlements.get(),
             'output_auto': self.output_auto,
             'package_mode': self.package_mode.get(),
+            'reuse_shader_work': self.reuse_var.get().strip(),
+            'native_app_only': self.native_var.get(),
         })
 
     def _on_close(self):
@@ -252,14 +284,16 @@ class App(tk.Tk):
 
     def _config(self) -> BuildConfig:
         try:
-            n = int(self.workers_var.get())
+            n = logical_workers() if self.auto_workers_var.get() else int(self.workers_var.get())
         except ValueError as exc:
             raise ValueError('Shader worker count is not a number') from exc
         return BuildConfig(root=locate_engine_root(ROOT), input_path=Path(self.input_var.get().strip()),
                            work_dir=Path(self.work_var.get().strip()), env_file=Path(self.env_var.get().strip()),
                            output_ipa=Path(self.output_var.get().strip()), bundle_id=self.bundle_var.get().strip(),
                            workers=n, allow_damaged=self.allow_damaged.get(),
-                           allow_other_metal=self.allow_metal.get(), entitlements=self.entitlements.get())
+                           allow_other_metal=self.allow_metal.get(), entitlements=self.entitlements.get(),
+                           reuse_shader_work=Path(self.reuse_var.get().strip()) if self.reuse_var.get().strip() else None,
+                           native_app_only=self.native_var.get())
 
     def _safe_config(self) -> BuildConfig | None:
         try:
@@ -286,8 +320,13 @@ class App(tk.Tk):
             messagebox.showerror('Python required', str(exc))
             return
         self._append(subprocess.list2cmdline(plan.command) + '\n')
-        self._append(f'Environment: J={c.workers}; DMSH_PROCS=0\n')
-        if plan.mode == PACKAGE_APP_ONLY:
+        self._append(f'Environment: J={c.workers}; DMSH_PROCS=0; Windows rewrite x18 processes: up to 8 per module\n')
+        if c.reuse_shader_work is not None:
+            self._append(f'Reuse source (read-only; fail on mismatch): {c.reuse_shader_work}\n')
+        self._append('Before compilation: validate shader-chain lock/header; synchronize locally with backups only if mismatched.\n')
+        if plan.native_split:
+            self._append('Native split-data: IPA and three-file transfer directory are created directly; no full intermediate IPA.\n')
+        elif plan.mode == PACKAGE_APP_ONLY:
             self._append(f'After build: export app-only IPA to {plan.final_ipa}\n')
             self._append(f'Prepare iPhone transfer folder based on {plan.transfer_dir}\n')
             self._append('The temporary full IPA is removed after verified app-only export and transfer preparation.\n')
@@ -304,9 +343,45 @@ class App(tk.Tk):
             b.configure(state='disabled' if busy else 'normal')
         self.stop_btn.configure(state='normal' if busy else 'disabled')
         if busy:
+            self._last_progress_stage = None
+            self._last_progress_percent = None
+            self.progress.stop()
+            self.progress.configure(mode='indeterminate', value=0)
+            self.progress_var.set('Working — this step has not reported measurable progress yet')
             self.progress.start(20)
         else:
             self.progress.stop()
+
+    def _update_progress_from_log(self, text: str):
+        """Show measured progress within the CURRENT stage (never a guessed overall %)."""
+        for line in text.splitlines():
+            report = parse_build_progress(line)
+            if report is None:
+                continue
+            stage_key = (report.stage, report.stages)
+            changed = stage_key != self._last_progress_stage
+            if changed:
+                self._last_progress_stage = stage_key
+                self._last_progress_percent = None
+            if report.percent is not None:
+                self._last_progress_percent = report.percent
+                self.progress.stop()
+                self.progress.configure(mode='determinate', maximum=100, value=report.percent)
+            elif changed:
+                self.progress.stop()
+                self.progress.configure(mode='indeterminate', value=0)
+                self.progress.start(20)
+            self.state_var.set(f'Stage {report.stage} of {report.stages} — {report.label}')
+            details = []
+            if self._last_progress_percent is not None:
+                details.append(f'{self._last_progress_percent:.1f}% of this stage')
+            else:
+                details.append('stage percentage not reported')
+            if report.count:
+                details.append(report.count)
+            if report.eta:
+                details.append(f'ETA {report.eta} (estimate)')
+            self.progress_var.set('  ·  '.join(details))
 
     def _open_setup_guide(self):
         guide = ROOT / 'docs' / 'GETTING_STARTED.md'
@@ -373,6 +448,14 @@ class App(tk.Tk):
         c = self._safe_config()
         if c is None:
             return
+        runtime_errors = oot_runtime_errors(c.env_file)
+        if runtime_errors:
+            messagebox.showerror('Incompatible Ocarina of Time runtime settings',
+                                 'Build blocked: this profile previously produced a black screen.\n\n' +
+                                 '\n'.join(runtime_errors) +
+                                 '\n\nSelect or update the tested config/iphone-oot.env preset.')
+            self._append('[BLOCKED] OOT runtime settings:\n' + '\n'.join(runtime_errors) + '\n')
+            return
         warnings = check_runtime_config(c.env_file)
         mode = self.package_mode.get()
         try:
@@ -382,14 +465,21 @@ class App(tk.Tk):
             return
         msg = ('Start the HookLinkWindows build?\n\n'
                'The build can use significant CPU time and disk space. It may reuse or update files in the selected build directory.\n\n')
-        if mode == PACKAGE_APP_ONLY:
+        if plan.native_split:
+            msg += 'EXPERIMENTAL: Build app-only IPA and transfer files directly. This path is not yet proven by an end-to-end iPhone installation.\n\n'
+        elif mode == PACKAGE_APP_ONLY:
             msg += 'App-only mode temporarily creates a large full IPA, then exports the smaller IPA and prepares separate iPhone files. The temporary IPA is deleted only after success.\n\n'
+        if c.reuse_shader_work is not None:
+            msg += f'EXTERNAL REUSE: {c.reuse_shader_work} is READ ONLY. The build will refuse to proceed if its shader package or library is incompatible.\n\n'
         if c.output_ipa.is_file():
             msg += f'Existing output IPA may be replaced: {c.output_ipa}\n\n'
+        if plan.native_split and plan.transfer_dir.exists():
+            msg += f'EXISTING transfer folder may be replaced after its data is checked: {plan.transfer_dir}\n\n'
         if warnings:
             msg += 'Configuration advisory:\n' + '\n'.join(warnings[:5]) + '\n\n'
         if c.allow_damaged or c.allow_other_metal:
             msg += 'Compatibility overrides are enabled; these bypass normal validation.\n\n'
+        msg += 'Before compilation, shader-chain fingerprints will be checked. If needed, the local lock/header will be backed up and synchronized to the installed tools. Existing shader archives will not be deleted by this preflight.\n\n'
         if not messagebox.askyesno('Confirm build', msg + 'Proceed?'):
             return
         c.work_dir.mkdir(parents=True, exist_ok=True)
@@ -398,9 +488,19 @@ class App(tk.Tk):
             self._save_settings()
         except OSError as exc:
             self._append(f'Preferences not saved: {exc}\n')
-        self._pending_package = (c, plan) if mode == PACKAGE_APP_ONLY else None
-        plan.builder_ipa.parent.mkdir(parents=True, exist_ok=True)
-        self._spawn(plan.command, c.root, make_build_environment(c), 'IPA compilation')
+        self._pending_build = (c, plan)
+        self._verified_shader_reuse = False
+        self._set_busy(True)
+        self.state_var.set('Checking local shader chain before IPA compilation…')
+        self._append('\n=== Pre-build shader-chain validation ===\n')
+        def worker():
+            try:
+                result = run_build_chain_preflight(ROOT, c.root, build_python(), make_build_environment(c))
+                self.messages.put(('chain_ready', result))
+            except Exception:
+                self.messages.put(('error', traceback.format_exc()))
+        self.task_thread = threading.Thread(target=worker, daemon=True)
+        self.task_thread.start()
 
     def _spawn(self, cmd: list[str], cwd: Path, env: dict, title: str):
         self._set_busy(True)
@@ -427,16 +527,29 @@ class App(tk.Tk):
 
     def _post_build_export(self, c: BuildConfig, plan):
         self.state_var.set('Preparing app-only IPA and iPhone transfer files…')
+        self.progress.stop()
+        self.progress.configure(mode='indeterminate', value=0)
+        self.progress_var.set('Exporting app-only IPA — percentage not available')
+        self.progress.start(20)
         self._append(f'\n=== App-only packaging ===\nFull build: {plan.builder_ipa}\nFinal IPA: {plan.final_ipa}\n')
         def worker():
             try:
-                chain = shader_chain_from_ipa(plan.builder_ipa)
-                # Validate all three external files BEFORE creating an app-only IPA.
-                find_transfer_sources(c.work_dir, c.env_file, chain)
+                chain = verified_shader_chain_from_ipa(plan.builder_ipa, c.root / 'dm/gfx/nvn/dmsh_chain.h')
+                # Donor is only allowed if the completed compiler explicitly confirmed
+                # its exact CONTENT/toolchain/profile/pulling-policy/table equivalence.
+                donor = c.reuse_shader_work if self._verified_shader_reuse else None
+                find_transfer_sources(c.work_dir, c.env_file, chain,
+                                      donor_shader_work=donor, donor_verified=self._verified_shader_reuse)
                 report = export_app_only_ipa(plan.builder_ipa, plan.final_ipa,
                                              lambda m: self.messages.put(('text', m + '\n')))
                 folder = prepare_transfer_folder(c.work_dir, c.env_file, plan.transfer_dir, chain,
-                                                 lambda m: self.messages.put(('text', m + '\n')))
+                                                 lambda m: self.messages.put(('text', m + '\n')),
+                                                 donor_shader_work=donor,
+                                                 donor_verified=self._verified_shader_reuse)
+                exported_errors = oot_runtime_errors(folder / 'env.txt')
+                if exported_errors:
+                    raise ValueError('Transfer folder has incompatible runtime settings: ' + ', '.join(exported_errors))
+                verify_native_split_ipa(plan.final_ipa, folder, chain)
                 self.messages.put(('text', f"App-only IPA: {plan.final_ipa} ({report['size']/1024/1024:.1f} MiB)\n"
                                            f"iPhone files: {folder}\n"))
                 plan.builder_ipa.unlink()
@@ -455,7 +568,7 @@ class App(tk.Tk):
         if not self.busy:
             return
         if self.proc is None:
-            messagebox.showinfo('Operation', 'Packaging cannot be interrupted safely through the GUI.')
+            messagebox.showinfo('Operation', 'Preflight or packaging is in progress. No IPA compiler is currently running.')
             return
         if messagebox.askyesno('Stop build?', 'Terminate the top-level builder? Child processes may require manual cleanup. Intermediate files may remain.'):
             self.proc.terminate()
@@ -466,26 +579,71 @@ class App(tk.Tk):
             while True:
                 typ, payload = self.messages.get_nowait()
                 if typ == 'text':
+                    if '[CACHE] Verified identical shader-package CONTENT' in str(payload):
+                        self._verified_shader_reuse = True
+                    self._update_progress_from_log(str(payload))
                     self._append(str(payload))
                 elif typ == 'prereqs':
                     self._append('\n' + payload.format() + '\n')
                     self._set_busy(False)
                     self.state_var.set('Prerequisites passed (build unverified).' if payload.ready else 'Prerequisites need attention; see diagnostics and Setup guide.')
+                elif typ == 'chain_ready':
+                    self._append(payload.log)
+                    if self._pending_build is None:
+                        self._set_busy(False)
+                        self._append('[BLOCKED] Build plan was lost before compilation.\n')
+                        continue
+                    c, plan = self._pending_build
+                    self._pending_build = None
+                    archive = c.work_dir / 'shader' / 'ios' / f'b-{payload.chain}.img'
+                    if archive.is_file():
+                        self._append(f'[CACHE] Matching shader archive exists: {archive}\n')
+                    else:
+                        self._append(f'[NOTE] No matching prebuilt shader archive at {archive}; shader compilation may be necessary.\n')
+                    self._pending_package = (c, plan) if plan.mode == PACKAGE_APP_ONLY else None
+                    plan.builder_ipa.parent.mkdir(parents=True, exist_ok=True)
+                    self._spawn(plan.command, c.root, make_build_environment(c), 'IPA compilation')
                 elif typ == 'done':
                     title, exit_code = payload
                     if title == 'IPA compilation' and exit_code == 0 and self._pending_package is not None:
                         c, plan = self._pending_package
                         self._pending_package = None
-                        self._post_build_export(c, plan)
-                        continue
+                        if plan.native_split:
+                            try:
+                                # Read the synchronized host header; the native IPA has no shader payload to inspect.
+                                chain = read_host_shader_chain(c.root / 'dm/gfx/nvn/dmsh_chain.h')
+                                verify_native_split_ipa(plan.final_ipa, plan.transfer_dir, chain)
+                                errors = oot_runtime_errors(plan.transfer_dir / 'env.txt')
+                                if errors:
+                                    raise ValueError('Native output has incompatible runtime settings: ' + ', '.join(errors))
+                                self._append(f'[VERIFIED] Native app-only IPA: {plan.final_ipa}\n[VERIFIED] iPhone files: {plan.transfer_dir}\n')
+                                title = 'Build and native app-only packaging'
+                            except Exception:
+                                self._set_busy(False)
+                                self._append('Native output verification FAILED. Do not sideload this result.\n' + traceback.format_exc() + '\n')
+                                self.state_var.set('Native packaging failed verification')
+                                continue
+                        else:
+                            self._post_build_export(c, plan)
+                            continue
                     self._pending_package = None
                     self._set_busy(False)
                     self.state_var.set(f'{title}: ' + ('completed' if exit_code == 0 else f'failed (exit code {exit_code})'))
+                    if exit_code == 0:
+                        self.progress.configure(mode='determinate', maximum=100, value=100)
+                        self.progress_var.set(f'{title} complete')
+                    else:
+                        self.progress.configure(mode='determinate', value=0)
+                        self.progress_var.set('Build failed — inspect diagnostics')
                     self._append(f'=== Exit code: {exit_code} ===\n')
-                    if exit_code == 0 and title == 'Build and app-only packaging':
+                    if exit_code == 0 and title in ('Build and app-only packaging', 'Build and native app-only packaging'):
                         messagebox.showinfo('App-only IPA created', 'Build complete. The app-only IPA and its iPhone transfer folder are ready. See the build log for their locations.')
                 elif typ == 'error':
+                    self._pending_build = None
+                    self._pending_package = None
                     self._set_busy(False)
+                    self.progress.configure(mode='determinate', value=0)
+                    self.progress_var.set('Operation failed — inspect diagnostics')
                     self.state_var.set('Operation failed — inspect log')
                     self._append('ERROR:\n' + str(payload) + '\n')
                     messagebox.showerror('Operation failed', 'An error occurred. See the GUI log for details.')

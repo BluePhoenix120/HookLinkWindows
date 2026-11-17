@@ -2,6 +2,7 @@
 // is centered (black bars) and the controls are drawn over it; in portrait, or on an iPhone Duo half folded, the picture sits above the controls. With a TV connected the Metal view
 // is on the TV and the phone shows the pad (DmTVSceneDelegate).
 // The host runs on the big-stack thread started by main.m; front_run runs the guest directly on the calling thread.
+#import "mic_apple.h"
 #import <UIKit/UIKit.h>
 #include "frame_mode.h"
 #import <UserNotifications/UserNotifications.h>
@@ -9,6 +10,7 @@
 #import <Metal/Metal.h>
 #import <AVFAudio/AVFAudio.h>
 #include <errno.h>
+#include <dlfcn.h>
 #include "front.h"
 #include "hle.h"
 #include "dm.h"
@@ -32,6 +34,7 @@ static void front_ios_notify_ask(void);
 static void front_ios_power_watch(void);
 static void front_ios_audio_watch(void);
 static UILabel *front_ios_fps_label(void);
+static void front_ios_fps_heat_battery(bool on);
 
 @interface DmGameView : UIView
 @property (nonatomic) CGFloat maxPixelWidth;   // 0: the screen's own pixels; a TV caps the drawable at 1920 across (tv_attach)
@@ -162,12 +165,14 @@ static void launcher_done(void) { [g_root startGame]; }
             setenv("DM_SCREEN_ASPECT", v, 1); LOG("front end: picture shape auto: window %.0fx%.0f points (%.3f:1) → DM_SCREEN_ASPECT=%s", sz.width, sz.height, r, v);
         }
     }
-    {   // Wide view: the app window's own shape, for a window wider than 16:9 (a regular iPhone); an iPad's or an unfolded iPhone Duo's window keeps 16:9. Before the host writes the state page
+    {   // Wide view: the app window's own shape, for a window wider than 16:9 (a regular iPhone) or squarer (an unfolded iPhone Duo, an iPad). Before the host writes the state page
         const char *wv = getenv("DM_WIDE_VIEW");
         if (wv && !strcmp(wv, "1")) {
             CGSize sz = self.view.window ? self.view.window.bounds.size : UIScreen.mainScreen.bounds.size; double r = MAX(sz.width, sz.height) / MAX(MIN(sz.width, sz.height), 1);
-            if (r >= 1.8 && r <= 2.6) { char v[16]; snprintf(v, sizeof v, "%.3f", r); setenv("DM_WIDE_ASPECT", v, 1); LOG("front end: wide view: window %.0fx%.0f points (%.3f:1)", sz.width, sz.height, r); }
-            else LOG("front end: wide view: window %.0fx%.0f points (%.3f:1) is not wider than 16:9, kept 16:9", sz.width, sz.height, r);
+            // (HookLink 1.9: a window squarer than 16:9 too, 1.25 to 1.74: an unfolded iPhone Duo at about 1.43, an iPad. The picture keeps its height and is narrower,
+            // and the cameras take its ratio, so the squarer screen is filled with a taller view instead of bars above and below; untested on a device)
+            if ((r >= 1.8 && r <= 2.6) || (r >= 1.25 && r <= 1.74)) { char v[16]; snprintf(v, sizeof v, "%.3f", r); setenv("DM_WIDE_ASPECT", v, 1); LOG("front end: wide view: window %.0fx%.0f points (%.3f:1)%s", sz.width, sz.height, r, r < 1.77 ? ", squarer than 16:9" : ""); }
+            else LOG("front end: wide view: window %.0fx%.0f points (%.3f:1) is 16:9 or out of range, kept 16:9", sz.width, sz.height, r);
         }
     }
     self.fill = dm_picture_fill(getenv("DM_PICTURE_FIT"));
@@ -182,7 +187,8 @@ static void launcher_done(void) { [g_root startGame]; }
     self.pad = dm_gamepad_view(self.view.bounds);
     self.pad.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.pad];
-    const char *fps = getenv("DM_SHOW_FPS");
+    const char *fps = getenv("DM_SHOW_FPS"), *heat = getenv("DM_SHOW_HEAT_BATTERY");
+    front_ios_fps_heat_battery(heat && atoi(heat) != 0);
     [self showFPS:fps ? atoi(fps) != 0 : [[NSBundle.mainBundle objectForInfoDictionaryKey:@"DMShowFPS"] boolValue]];
     [self.view setNeedsLayout]; [self.view layoutIfNeeded];
     UIApplication.sharedApplication.idleTimerDisabled = YES;
@@ -217,7 +223,9 @@ static void launcher_done(void) { [g_root startGame]; }
     if (self.fps) {   // the top row's free stretch: right of DmGamepad.m's L3 key (102 + 17 of its units from the safe edge), level with − / + (22 units down); u is its unit
         CGRect s = CGRectIntersection(layout.controls, UIEdgeInsetsInsetRect(b, gameInsets));
         CGFloat u = layout.separated ? MIN(MIN(s.size.height / 430.0, s.size.width / 700.0), 1.3) : MIN(b.size.height / 430.0, 1.3);
-        self.fps.frame = CGRectMake(floor(CGRectGetMinX(s) + 130 * u), floor(CGRectGetMinY(s) + 22 * u - 11), 64, 22);
+        CGSize fit = [self.fps sizeThatFits:CGSizeMake(200, 60)];   // two lines: frame rate and heat, battery
+        CGFloat w = MAX(ceil(fit.width) + 12, 64), h = ceil(fit.height) + 4;
+        self.fps.frame = CGRectMake(floor(CGRectGetMinX(s) + 130 * u), floor(CGRectGetMinY(s) + 22 * u - h / 2), w, h);
     }
 }
 - (void)showFPS:(BOOL)on {   // the frame-rate counter: DM_SHOW_FPS at Play, then the in-game menu
@@ -296,6 +304,7 @@ bool dm_setting_live(const char *env, const char *value) {
         return true;
     }
     if (!strcmp(env, "DM_SHOW_FPS")) { if (value) [g_root showFPS:atoi(value) != 0]; return true; }
+    if (!strcmp(env, "DM_SHOW_HEAT_BATTERY")) { if (value) front_ios_fps_heat_battery(atoi(value) != 0); return true; }
     if (!strcmp(env, "DM_TOUCH_HAPTICS")) { if (value) dm_gamepad_touch_feedback(atoi(value) != 0); return true; }
     if (!strcmp(env, "DM_RUMBLE")) { if (value) { dm_haptics_set_enabled(atoi(value) != 0); LOG("front end: game rumble %s (in-game menu)", atoi(value) ? "on" : "off"); } return true; }
     return false;
@@ -319,8 +328,14 @@ static _Atomic double g_brightness = -1;
 int dm_thermal_now(void) { return (int)NSProcessInfo.processInfo.thermalState; }
 int dm_low_power_now(void) { return NSProcessInfo.processInfo.lowPowerModeEnabled; }   // the frame step does not probe in it (hle_nvn.c fstep_cpu_slowed)
 double dm_brightness_now(void) { return g_brightness; }
+// The screen's top rate (120 on a ProMotion iPhone, which needs CADisableMinimumFrameDurationOnPhone, set in project.yml), read on the main thread at start.
+// nvn_mtl.m's weak default returned 0 on iOS, so 60 fps + frame generation stayed on the 60 Hz display link: the generated frame had no tick of its own and took
+// the real frame's, frames dropped and the interpolation kept stopping (HookLink test33 log, frame rate mode 3). Low Power Mode caps the screen at 60 Hz, so it reads 60 there
+static _Atomic int g_screen_max_fps;
+int front_screen_max_fps(void) { int hz = g_screen_max_fps; return hz > 60 && dm_low_power_now() ? 60 : hz; }
 static void front_ios_power_watch(void) {
     g_brightness = UIScreen.mainScreen.brightness;
+    g_screen_max_fps = (int)UIScreen.mainScreen.maximumFramesPerSecond; LOG("front end: the screen shows up to %d fps", (int)g_screen_max_fps);
     [NSNotificationCenter.defaultCenter addObserverForName:UIScreenBrightnessDidChangeNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *n) { (void)n; g_brightness = UIScreen.mainScreen.brightness; }];
     [NSNotificationCenter.defaultCenter addObserverForName:NSProcessInfoThermalStateDidChangeNotification object:nil queue:nil usingBlock:^(NSNotification *n) {
         (void)n; LOG("front end: thermal state → %d (%.0f s after launch)", dm_thermal_now(), (now_ns() - g_t0_ns) / 1e9); }];
@@ -329,22 +344,85 @@ static void front_ios_power_watch(void) {
     LOG("front end: thermal state %d, brightness %.2f, Low Power Mode %s", dm_thermal_now(), g_brightness, dm_low_power_now() ? "on" : "off");
 }
 
-// Frame-rate counter: the frames put on screen in the last second (nvn_mtl.m counts them for NVN and for the Vulkan layer alike; frames the display link merged away are not counted).
+// Frame-rate counter: the frames put on screen in the last second (nvn_mtl.m counts them for NVN and for the Vulkan layer alike; frames the display link merged away are not counted),
+// the device's heat (NSProcessInfo's thermal state: Normal, Busy, Throttling, Overheat) and the battery with the play time it leaves at the rate it has fallen.
 // On when the IPA was built with it (the NSP script's SHOW_FPS / --show-fps → DMShowFPS in Info.plist); DM_SHOW_FPS=0 / 1 (the launcher, Documents/env.txt) overrides that without a rebuild,
-// and the in-game menu turns it on and off ([DmRootVC showFPS:])
+// and the in-game menu turns it on and off ([DmRootVC showFPS:]). The heat and battery line is DM_SHOW_HEAT_BATTERY's (the launcher's row under the counter's, off by default):
+// without it the counter is the frame rate alone
 uint64_t mtl_present_count(void);
+// The battery level in 1 % steps, as the status bar shows it, from IOKit's power sources (in the iOS runtime, not in its SDK, so looked up by name); UIDevice's batteryLevel moves in
+// 5 % steps on current iOS. -1 when they give nothing (the sandbox may refuse them): the caller falls back to UIDevice
+static double battery_exact(void) {
+    static CFTypeRef (*info)(void); static CFArrayRef (*list)(CFTypeRef); static CFDictionaryRef (*desc)(CFTypeRef, CFTypeRef); static bool looked;
+    if (!looked) {
+        looked = true; void *h = dlopen("/System/Library/Frameworks/IOKit.framework/IOKit", RTLD_LAZY);
+        if (h) { info = (CFTypeRef (*)(void))dlsym(h, "IOPSCopyPowerSourcesInfo"); list = (CFArrayRef (*)(CFTypeRef))dlsym(h, "IOPSCopyPowerSourcesList");
+                 desc = (CFDictionaryRef (*)(CFTypeRef, CFTypeRef))dlsym(h, "IOPSGetPowerSourceDescription"); }
+    }
+    if (!info || !list || !desc) return -1;
+    CFTypeRef i = info(); if (!i) return -1;
+    CFArrayRef a = list(i); double r = -1;
+    for (CFIndex k = 0; a && k < CFArrayGetCount(a) && r < 0; k++) {
+        CFDictionaryRef d = desc(i, CFArrayGetValueAtIndex(a, k)); int c, m;
+        CFNumberRef cn = d ? (CFNumberRef)CFDictionaryGetValue(d, CFSTR("Current Capacity")) : NULL, mn = d ? (CFNumberRef)CFDictionaryGetValue(d, CFSTR("Max Capacity")) : NULL;
+        if (cn && mn && CFNumberGetValue(cn, kCFNumberIntType, &c) && CFNumberGetValue(mn, kCFNumberIntType, &m) && m > 0) r = (double)c / m;
+    }
+    if (a) CFRelease(a);
+    CFRelease(i);
+    return r;
+}
+// "75% · 1h20 left": the rate is measured from the first step down (a known point) to the latest one; charging, a level that rose and the background start it again
+typedef struct { double t0, l0, last; } battery_fall_t;
+static NSString *battery_line(battery_fall_t *b, double now) {
+    UIDevice *dev = UIDevice.currentDevice; UIDeviceBatteryState st = dev.batteryState;
+    double level = battery_exact(); if (level < 0) level = dev.batteryLevel;
+    if (level < 0 || st == UIDeviceBatteryStateUnknown) return @"battery --";
+    int pct = (int)lround(level * 100);
+    if (st != UIDeviceBatteryStateUnplugged || (b->last >= 0 && level > b->last)) *b = (battery_fall_t){0, -1, -1};
+    if (st != UIDeviceBatteryStateUnplugged) return [NSString stringWithFormat:@"%d%% · charging", pct];
+    if (b->last >= 0 && level < b->last) {
+        if (b->l0 < 0) { b->t0 = now; b->l0 = level; }   // the first step down
+        LOG("front end: battery %d%%", pct);
+    }
+    b->last = level;
+    if (b->l0 < 0 || b->l0 - level < 0.005) return [NSString stringWithFormat:@"%d%% · …", pct];
+    int m = (int)(level / ((b->l0 - level) / (now - b->t0)) / 60);
+    return [NSString stringWithFormat:@"%d%% · %dh%02d left", pct, m / 60, m % 60];
+}
+static bool g_fps_heat_battery;            // DM_SHOW_HEAT_BATTERY; main thread
+static void (^g_fps_update)(bool restart);   // the counter's update, once it is made; restart begins the battery's measurement again
+static void front_ios_fps_heat_battery(bool on) {   // at Play (before the counter is made) and from the in-game menu
+    if (on == g_fps_heat_battery) return;
+    g_fps_heat_battery = on; LOG("front end: frame-rate counter's heat and battery %s", on ? "on" : "off");
+    if (on) UIDevice.currentDevice.batteryMonitoringEnabled = YES;
+    if (g_fps_update) g_fps_update(true);
+}
 static UILabel *front_ios_fps_label(void) {
     UILabel *l = [UILabel new];
-    l.font = [UIFont monospacedDigitSystemFontOfSize:13 weight:UIFontWeightSemibold]; l.textColor = UIColor.whiteColor; l.textAlignment = NSTextAlignmentCenter;
+    l.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightSemibold]; l.textColor = UIColor.whiteColor; l.textAlignment = NSTextAlignmentCenter; l.numberOfLines = 2;
     l.backgroundColor = [UIColor colorWithWhite:0 alpha:0.45]; l.layer.cornerRadius = 6; l.layer.masksToBounds = YES; l.userInteractionEnabled = NO;
-    l.text = @"-- fps";
-    __block uint64_t n0 = mtl_present_count(); __block double t0 = CACurrentMediaTime();
-    [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:YES block:^(NSTimer *t) {
-        (void)t; uint64_t n = mtl_present_count(); double now = CACurrentMediaTime();
-        if (now - t0 < 1.5) l.text = [NSString stringWithFormat:@"%.0f fps", (n - n0) / (now - t0)];   // a longer span is the time in the background: no reading
-        n0 = n; t0 = now;
-    }];
-    LOG("front end: frame-rate counter on");
+    static NSString *const heat[] = {@"Normal", @"Busy", @"Throttling", @"Overheat"};   // NSProcessInfoThermalState nominal, fair, serious, critical
+    __block battery_fall_t bat = {0, -1, -1};
+    __block uint64_t n0 = mtl_present_count(); __block double t0 = CACurrentMediaTime(); __block NSString *fps = @"--";
+    void (^update)(bool) = ^(bool restart) {
+        uint64_t n = mtl_present_count(); double now = CACurrentMediaTime(); int th = dm_thermal_now();
+        if (restart) bat = (battery_fall_t){0, -1, -1};   // a measurement paused while the line was off is not resumed
+        else {
+            if (now - t0 < 1.5) fps = [NSString stringWithFormat:@"%.0f", (n - n0) / (now - t0)];   // a longer span (a stall, the background): no reading
+            n0 = n; t0 = now;
+        }
+        NSString *text = g_fps_heat_battery ? [NSString stringWithFormat:@"%@ fps · %@\n%@", fps, heat[th >= 0 && th <= 3 ? th : 0], battery_line(&bat, now)]
+                                            : [NSString stringWithFormat:@"%@ fps", fps];
+        if (text.length != l.text.length) [l.superview setNeedsLayout];
+        l.text = text;
+    };
+    update(false); g_fps_update = update;
+    [NSNotificationCenter.defaultCenter addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil queue:NSOperationQueue.mainQueue
+                                                usingBlock:^(NSNotification *note) { (void)note; bat = (battery_fall_t){0, -1, -1}; }];
+    // the common modes: a default-mode timer does not fire while UIKit tracks a touch (the touch controls)
+    [NSRunLoop.mainRunLoop addTimer:[NSTimer timerWithTimeInterval:1.0 repeats:YES block:^(NSTimer *t) { (void)t; update(false); }] forMode:NSRunLoopCommonModes];
+    if (g_fps_heat_battery) LOG("front end: frame-rate counter on, with heat and battery (battery in %s steps)", battery_exact() >= 0 ? "1 %" : "UIKit's");
+    else LOG("front end: frame-rate counter on");
     return l;
 }
 
@@ -508,7 +586,13 @@ void front_save_failed(int err) {
 static int g_session_off;   // the last activation failed (another app or a call still held the session): tried again when the app becomes active
 void front_ios_audio_session(void) {
     AVAudioSession *s = AVAudioSession.sharedInstance; NSError *e = nil;
-    if (![s setCategory:AVAudioSessionCategoryPlayback error:&e]) LOG("[RED] audio session category could not be set: %s", e.localizedDescription.UTF8String);
+    // With the microphone offered to the game (DM_MIC, mic_apple.m) the category is PlayAndRecord, set here at boot so the game's sound does not change mid-play: the loudspeaker stays
+    // the output (not the receiver), Bluetooth headphones keep their music profile (A2DP; the hands-free profile would take their quality), and the silent switch still does not mute it
+    if (dm_mic_wanted()) {
+        if (![s setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionAllowBluetoothA2DP error:&e])
+            LOG("[RED] audio session category (play and record, for the microphone) could not be set: %s", e.localizedDescription.UTF8String);
+        dm_mic_prepare();
+    } else if (![s setCategory:AVAudioSessionCategoryPlayback error:&e]) LOG("[RED] audio session category could not be set: %s", e.localizedDescription.UTF8String);
     [s setPreferredSampleRate:48000 error:nil];
     if (![s setPreferredIOBufferDuration:0.005 error:&e]) LOG("[RED] audio session I/O buffer duration could not be set: %s", e.localizedDescription.UTF8String);
     g_session_off = ![s setActive:YES error:&e];

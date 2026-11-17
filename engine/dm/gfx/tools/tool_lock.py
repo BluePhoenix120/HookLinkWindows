@@ -8,11 +8,23 @@ import os, sys, hashlib, subprocess, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dmsh_chain import LOCK, XLATE_DIR, SPIRV_CROSS, xlate_source_sha
 
+# Windows uses the source-verified managed translator: the Mac-only NativeAOT
+# binary is intentionally omitted from this fork's Windows distribution.
+# The DLL is hashed as the actual executable payload, never as the upstream Mac binary.
+def _translator_binary():
+    native = os.path.join(XLATE_DIR, 'dmsh_xlate')
+    return native + '.dll' if os.name == 'nt' or os.environ.get('NXW_LINUX') == '1' else native
+
+def _translator_argv():
+    tool = _translator_binary()
+    return [shutil.which('dotnet') or 'dotnet', tool] if tool.endswith('.dll') else [tool]
+
+
 def sha16(p): return hashlib.sha256(open(p, 'rb').read()).hexdigest()[:16]
 
 def tools_now():
     """Actual tool fingerprints: the translator (a native executable that holds the Ryujinx shader library), spirv-cross, metal compiler (macOS / iOS)"""
-    xl = os.path.join(XLATE_DIR, 'dmsh_xlate')
+    xl = _translator_binary()
     t: dict = {'dmsh_xlate': sha16(xl) if os.path.isfile(xl) else 'missing'}
     t['xlate_source'] = xlate_embedded()
     sc = shutil.which(SPIRV_CROSS)
@@ -26,12 +38,16 @@ NO_RUN = 'does not run'
 def xlate_embedded():
     """The source digest the translator embeds (dmsh_xlate --source-sha), or 'does not run (<its first error line>)', so a translator that cannot start (missing, not executable, a download
     quarantined by macOS) is named as such rather than read as an empty digest and a stale translator"""
-    try: r = subprocess.run([os.path.join(XLATE_DIR, 'dmsh_xlate'), '--source-sha'], capture_output=True, text=True, errors='replace', timeout=60)
+    try: r = subprocess.run([*_translator_argv(), '--source-sha'], capture_output=True, text=True, errors='replace', timeout=60)
     except (OSError, subprocess.SubprocessError) as e: return f'{NO_RUN} ({e})'
     if r.returncode == 0 and r.stdout.strip(): return r.stdout.strip()
     return '%s (%s)' % (NO_RUN, (r.stderr.strip().splitlines() or r.stdout.strip().splitlines() or [f'exit code {r.returncode}'])[0])
 
-def no_run_message(embedded): return f'the translator {embedded}: {os.path.join(XLATE_DIR, "dmsh_xlate")} is the committed native executable (dm/tools/native_tools.sh builds it); check out the repository again if it is missing or damaged'
+def no_run_message(embedded):
+    tool = _translator_binary()
+    return (f'the translator {embedded}: {tool} is missing or cannot run. ' +
+            ('Build dm/gfx/tools/dmsh_xlate from the in-repo source as a .NET 10 DLL.' if tool.endswith('.dll')
+             else 'Check the committed native executable built with dm/tools/native_tools.sh.'))
 
 def check_tools():
     want = dict(l.rstrip('\n').split('\t', 1) for l in open(LOCK) if '\t' in l and not l.startswith('#'))
