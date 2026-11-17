@@ -4,7 +4,9 @@
 
 HookLinkWindows helps users build an **unsigned iOS application locally** from a user-supplied *The Legend of Zelda: Ocarina of Time* remake `.nup` file. It provides a Windows GUI, prerequisite diagnostics, source-build tooling, and a packaging workflow for a smaller IPA with separate game data.
 
-> **Experimental / pre-release:** A Windows-built app was tested on one iPhone, but this consolidated public fork has **not yet passed a clean-Windows, end-to-end `.nup`-to-iPhone build**. The automated Windows EXE workflow also requires validation on GitHub Actions. Expect compatibility issues. This repository does not include the game, a game-specific IPA, the iPhoneOS SDK, Metal compiler binaries, or signing credentials.
+> **Alpha V1.0.1 — GUI packaging update:** The Windows x64 release ZIP includes `HookLinkWindows.exe` in the checkout root. The standalone EXE opens the GUI without a Python installation, but compiling an IPA still requires Python and the external toolchain. Releases triggered by version tags publish both the complete Windows ZIP and the standalone EXE. Clean-Windows end-to-end builds remain unverified.
+
+**Experimental / pre-release:** A Windows-built app was tested on one iPhone, but this consolidated public fork has **not yet passed a clean-Windows, end-to-end `.nup`-to-iPhone build**. The automated Windows EXE workflow also requires validation on GitHub Actions. Expect compatibility issues. This repository does not include the game, a game-specific IPA, the iPhoneOS SDK, Metal compiler binaries, or signing credentials.
 
 ## Quick start
 
