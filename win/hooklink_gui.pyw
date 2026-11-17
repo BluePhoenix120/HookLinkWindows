@@ -33,7 +33,7 @@ from auto_workers import logical_workers
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.0.0'
+GUI_VERSION = 'Alpha V1.0.1'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
