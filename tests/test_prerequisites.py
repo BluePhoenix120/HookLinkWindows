@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'win'))
-from hooklink_prereqs import normalize_doctor_json, run_prerequisite_check
+from hooklink_prereqs import can_auto_prepare_translator, normalize_doctor_json, run_prerequisite_check
 
 
 class PrerequisiteTests(unittest.TestCase):
@@ -63,6 +63,35 @@ class PrerequisiteTests(unittest.TestCase):
                 report = run_prerequisite_check(root, sys.executable)
                 self.assertTrue(report.ready)
                 self.assertEqual(runner.call_args.kwargs['creationflags'], 0x08000000)
+
+    @staticmethod
+    def _graphics_report(*, translator=False, sdk=False, dotnet=True, spirv=True, metal=True):
+        values = (
+            ('Windows', True), ('Python 3.10+', True),
+            ('.NET SDK 10', dotnet), ('shader translator DLLs', translator),
+            ('iPhoneOS SDK 26+', sdk), ('spirv-cross', spirv),
+            ('Metal compiler (iphoneos)', metal), ('Metal compiler (macosx)', metal),
+        )
+        return normalize_doctor_json([{'name': name, 'ok': ok, 'required': True,
+                                       'detail': '', 'how': ''} for name, ok in values])
+
+    def test_graphics_setup_runs_on_missing_translator_even_without_ios_sdk(self):
+        report = self._graphics_report(translator=False, sdk=False)
+        self.assertFalse(report.ready)
+        self.assertTrue(can_auto_prepare_translator(report))
+
+    def test_graphics_setup_never_replaces_existing_dll_automatically(self):
+        self.assertFalse(can_auto_prepare_translator(self._graphics_report(translator=True)))
+
+    def test_graphics_setup_waits_until_required_tools_are_installed(self):
+        for change in ({'dotnet': False}, {'spirv': False}, {'metal': False}):
+            with self.subTest(change=change):
+                self.assertFalse(can_auto_prepare_translator(self._graphics_report(**change)))
+
+    def test_graphics_setup_respects_doctor_blockers(self):
+        report = self._graphics_report()
+        report.blockers.append('Invalid repository')
+        self.assertFalse(can_auto_prepare_translator(report))
 
     def test_unstructured_doctor_output_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
