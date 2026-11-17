@@ -46,6 +46,24 @@ class PrerequisiteTests(unittest.TestCase):
             self.assertTrue(result.ready)
             self.assertIn('Xcode.app', result.format())
 
+    def test_windows_check_suppresses_console_window(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            doctor = root / 'win' / 'doctor.py'
+            doctor.parent.mkdir(parents=True)
+            doctor.write_text('print("placeholder")')
+            payload = json.dumps([{'name': 'Python 3.10+', 'ok': True,
+                                   'required': True, 'detail': '3.12', 'how': ''}])
+            with patch('hooklink_prereqs.sys.platform', 'win32'), \
+                 patch('hooklink_prereqs.subprocess.CREATE_NO_WINDOW', 0x08000000, create=True), \
+                 patch('hooklink_prereqs.subprocess.run') as runner:
+                runner.return_value.returncode = 0
+                runner.return_value.stdout = payload
+                runner.return_value.stderr = ''
+                report = run_prerequisite_check(root, sys.executable)
+                self.assertTrue(report.ready)
+                self.assertEqual(runner.call_args.kwargs['creationflags'], 0x08000000)
+
     def test_unstructured_doctor_output_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
