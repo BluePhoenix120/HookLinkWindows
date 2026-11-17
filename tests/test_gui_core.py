@@ -24,7 +24,7 @@ class TestGui(unittest.TestCase):
         self.assertIn('build_python()', source)
         self.assertIn("ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False)", source)
         self.assertIn("kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW", source)
-        self.assertIn("GUI_VERSION = 'Alpha V1.0.1'", source)
+        self.assertIn("GUI_VERSION = 'Alpha V1.0.2'", source)
         self.assertNotIn(r'C:\\HookLinkWindowsBuild', source)
         self.assertNotIn('test0400486024dec000', source)
         self.assertNotIn('env-WORKING-1.8.5', source)
