@@ -102,7 +102,7 @@ def is_canary(head, size): return size >= len(CANARY) and head.startswith(CANARY
 
 def safe_sdk_entry(root, rel):
     """Prevent untrusted XIP/cpio entry names from escaping the extraction root."""
-    if (not isinstance(rel, str) or not rel or '\\' in rel or '\\x00' in rel
+    if (not isinstance(rel, str) or not rel or '\\' in rel or '\x00' in rel
             or rel.startswith('/') or ':' in rel.split('/')[0]):
         raise ValueError(f'Unsafe SDK archive entry: {rel!r}')
     parts = rel.split('/')
