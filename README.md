@@ -4,7 +4,9 @@
 
 HookLinkWindows helps users build an **unsigned iOS application locally** from a user-supplied *The Legend of Zelda: Ocarina of Time* remake `.nup` file. It provides a Windows GUI, prerequisite diagnostics, source-build tooling, and a packaging workflow for a smaller IPA with separate game data.
 
-> **Alpha V1.0.1 — GUI packaging update:** The Windows x64 release ZIP includes `HookLinkWindows.exe` in the checkout root. The standalone EXE opens the GUI without a Python installation, but compiling an IPA still requires Python and the external toolchain. Releases triggered by version tags publish both the complete Windows ZIP and the standalone EXE. Clean-Windows end-to-end builds remain unverified.
+> **Alpha V1.0.2 — guided GUI toolchain setup:** The **Toolchain setup…** button lets users choose an existing licensed iPhoneOS SDK folder and save it without editing JSON. The same window can compile and verify the shader translator from bundled C# source using the installed .NET 10 SDK (with an explicit warning and local chain backup). After repair, the GUI reruns its prerequisite check. A full clean-install IPA build remains unverified.
+
+**Alpha V1.0.1 — GUI packaging update:** The Windows x64 release ZIP includes `HookLinkWindows.exe` in the checkout root. The standalone EXE opens the GUI without a Python installation, but compiling an IPA still requires Python and the external toolchain. Releases triggered by version tags publish both the complete Windows ZIP and the standalone EXE. Clean-Windows end-to-end builds remain unverified.
 
 **Experimental / pre-release:** A Windows-built app was tested on one iPhone, but this consolidated public fork has **not yet passed a clean-Windows, end-to-end `.nup`-to-iPhone build**. The automated Windows EXE workflow also requires validation on GitHub Actions. Expect compatibility issues. This repository does not include the game, a game-specific IPA, the iPhoneOS SDK, Metal compiler binaries, or signing credentials.
 
@@ -12,7 +14,7 @@ HookLinkWindows helps users build an **unsigned iOS application locally** from a
 
 1. **Download the complete repository**, or (once a tested ZIP is available) its **complete Windows x64 release archive**. Extract it anywhere you can write files. A GUI-only download is not sufficient; the `engine/` directory must be present.
 2. Open `HookLinkWindows.exe` at the repository root, if present. A CI-built **standalone GUI EXE** does not require Python simply to *open the interface*, but **Python is still needed for the build pipeline**. If no EXE is available, run `python win/hooklink_gui.pyw` with Python/Tkinter installed.
-3. Click **Check prerequisites** and follow each reported installation or repair instruction.
+3. Click **Check prerequisites**. If an SDK or shader translator is missing, choose **Toolchain setup…** to browse for your existing SDK folder or build/repair the translator within the GUI. External tools still need to be obtained and installed separately.
 4. Browse for your own Ocarina of Time remake **`.nup`**. This NUP-specific interface does not require a `prod.keys` field.
 5. Select **App-only (recommended)** or **Full** packaging, review the settings with **Preview command**, and select **Build IPA**.
 6. **Sign and sideload** the generated IPA using a compatible tool. With app-only packaging, transfer the accompanying `RomFS.img`, matching `b-<shader-chain>.img`, and `env.txt` into the app's Documents folder as described in the setup guide.
