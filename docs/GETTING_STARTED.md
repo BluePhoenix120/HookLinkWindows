@@ -4,9 +4,15 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
-### NXNative upstream version shown in Alpha 1.0.8
+### NXNative upstream version shown in Alpha 1.0.9
 
 The main GUI shows **NXNative upstream base (pinned)** and its full 40-character commit SHA. The **View commit** button now constructs the link using **both** `nxnative_repo` and `nxnative_commit` from the bundled `ENGINE_PIN.json`, rather than assuming the original `seedds/nxnative` repository. The currently pinned repo is [dsi-hub/nxnative](https://github.com/dsi-hub/nxnative); this is the source of the pinned commit. The link works offline until the user chooses to open it, and the displayed value remains tied to the release's bundled metadata. A missing or malformed repository link disables the button rather than opening an unrelated website. This is the **upstream base**, not the latest upstream branch commit, and the Windows-modified `engine/` tree may differ from that base.
+
+### Alpha 1.0.9: upstream HookLink X2 metadata and Windows shader paths
+
+Alpha 1.0.9 includes the latest upstream [HookLink X2 (3.0)](https://github.com/dsi-hub/HookLink/commit/2295235c3153b087746027a22ac64c7261a274fa) **changelog and VERSION metadata** and records its commit in the fork's Git history. The upstream commit contains *no engine source files*: its release notes refer to a newer NXNative `hooklink` engine commit, `7ba845ab8`. **HookLinkWindows continues to ship its existing pinned NXNative base `3a28152fe7052c9f45ede460022d39be6c91e3cf` plus Windows-specific changes.** Accordingly, the upstream X2 feature/fix claims are **not yet verified or guaranteed in the Windows IPA**. Upgrading the bundled engine to X2 requires a separate compatibility review and Windows end-to-end testing.
+
+Alpha 1.0.9 also protects **iOS host Metal shader generation** from Windows installation paths containing spaces. When needed, the builder copies only the small host Metal source folder into a whitespace-free staging directory, generates its metallibs and header there, and publishes a successful header back to the normal checkout path. This leaves the existing game shaders and build cache untouched. The workaround was reproduced on the affected Windows installation by compiling its 16 host Metal shader files from a directory with no spaces; full IPA completion still needs to be verified.
 
 ## 1. Obtain the complete source checkout
 
@@ -62,7 +68,7 @@ Extraction may require considerable temporary disk space and take significant ti
 
 Alternatively, select an existing SDK directory using **Browse… → Save**, subject to the same licensing restrictions. Never commit SDKs, Xcode files, or private game assets to GitHub.
 
-## 4. Toolchain setup in Alpha 1.0.8
+## 4. Toolchain setup in Alpha 1.0.9
 
 **No command-line compilation or JSON editing is needed for the shader translator.** Click **Check prerequisites** in the GUI. When the `dmsh_xlate.dll` translator is absent and the required .NET 10 SDK, SPIRV-Cross and Apple Metal compilers are already available, HookLinkWindows automatically prepares graphics support from the bundled source, verifies it, and backs up the local shader-chain metadata before synchronization. The progress and any errors appear in **Build output and diagnostics**. This does not delete the game or shader caches, although a new shader-chain identity can make previously built shaders incompatible.
 
