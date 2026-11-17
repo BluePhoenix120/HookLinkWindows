@@ -3,6 +3,7 @@
 These tests do not invoke dotnet, change the shader chain, or require Apple SDKs.
 """
 import importlib.util
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -96,6 +97,89 @@ class TestAlphaTranslatorBootstrap(unittest.TestCase):
                 bootstrap.ensure_clean_tracked_state({'root': root})
                 self.assertEqual(runner.call_count, 2)
                 self.assertTrue(all(call.kwargs.get('creationflags') == 0x08000000 for call in runner.call_args_list))
+
+
+class TestPinnedEngineSourceIdentity(unittest.TestCase):
+    OLD = '3a28152fe7052c9f45ede460022d39be6c91e3cf'
+    X2 = '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'
+    REPO = 'https://github.com/dsi-hub/nxnative.git'
+
+    def make_checkout(self, root, version='3.0', sha=None, include_manifest=True):
+        sha = self.X2 if sha is None else sha
+        (root / 'VERSION').write_text(version + '\n', encoding='utf-8')
+        pin = {'hooklink_base': version, 'nxnative_repo': self.REPO,
+               'nxnative_commit': sha, 'engine_location': 'engine/'}
+        (root / 'ENGINE_PIN.json').write_text(json.dumps(pin), encoding='utf-8')
+        if include_manifest:
+            manifest = {'nxnative_repo': self.REPO, 'nxnative_commit': sha,
+                        'changed_paths': [{'path': f'engine/dm/test{i}', 'sha': 'f' * 40}
+                                          for i in range(25)]}
+            (root / 'ENGINE_PIN_FILES.json').write_text(json.dumps(manifest), encoding='utf-8')
+        return pin
+
+    def test_actual_x2_checkout_is_accepted_before_toolchain_setup(self):
+        root = BOOT.parents[1]
+        self.assertEqual(bootstrap.verify_source_identity(root), ('3.0', self.X2))
+
+    def test_x2_snapshot_passes_without_dotnet_or_metal(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.make_checkout(root)
+            with mock.patch.object(bootstrap.shutil, 'which', side_effect=AssertionError('external tools must not run')):
+                self.assertEqual(bootstrap.verify_source_identity(root), ('3.0', self.X2))
+
+    def test_legacy_hooklink_two_is_still_recognized(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.make_checkout(root, version='2.0', sha=self.OLD, include_manifest=False)
+            self.assertEqual(bootstrap.verify_source_identity(root), ('2.0', self.OLD))
+
+    def test_version_and_pin_must_identify_same_known_release(self):
+        for version, sha in (('2.0', self.X2), ('3.0', self.OLD),
+                             ('4.0', self.X2), ('3.0', 'f' * 40)):
+            with self.subTest(version=version, sha=sha), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                self.make_checkout(root, version=version, sha=sha)
+                with self.assertRaisesRegex(RuntimeError, 'Unsupported HookLink'):
+                    bootstrap.verify_source_identity(root)
+
+    def test_mismatched_hooklink_base_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            pin = self.make_checkout(root)
+            pin['hooklink_base'] = '2.0'
+            (root / 'ENGINE_PIN.json').write_text(json.dumps(pin), encoding='utf-8')
+            with self.assertRaisesRegex(RuntimeError, 'disagrees'):
+                bootstrap.verify_source_identity(root)
+
+    def test_missing_and_corrupt_x2_manifest_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.make_checkout(root, include_manifest=False)
+            with self.assertRaisesRegex(RuntimeError, 'manifest missing'):
+                bootstrap.verify_source_identity(root)
+            (root / 'ENGINE_PIN_FILES.json').write_text('{bad json', encoding='utf-8')
+            with self.assertRaisesRegex(RuntimeError, 'Invalid ENGINE_PIN_FILES.json'):
+                bootstrap.verify_source_identity(root)
+            (root / 'ENGINE_PIN_FILES.json').write_text(
+                json.dumps({'nxnative_repo': self.REPO, 'nxnative_commit': self.OLD,
+                            'changed_paths': [{}] * 25}), encoding='utf-8')
+            with self.assertRaisesRegex(RuntimeError, 'manifest does not match'):
+                bootstrap.verify_source_identity(root)
+
+    def test_untrusted_repo_and_malformed_sha_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            pin = self.make_checkout(root)
+            pin['nxnative_repo'] = 'https://github.com/other/nxnative.git'
+            (root / 'ENGINE_PIN.json').write_text(json.dumps(pin), encoding='utf-8')
+            with self.assertRaisesRegex(RuntimeError, 'Unexpected NXNative source'):
+                bootstrap.verify_source_identity(root)
+            pin['nxnative_repo'] = self.REPO
+            pin['nxnative_commit'] = ['not a SHA']
+            (root / 'ENGINE_PIN.json').write_text(json.dumps(pin), encoding='utf-8')
+            with self.assertRaisesRegex(RuntimeError, 'commit SHA string'):
+                bootstrap.verify_source_identity(root)
 
 
 if __name__ == '__main__':
