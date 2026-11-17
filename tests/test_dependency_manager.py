@@ -5,7 +5,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'win'))
-from hooklink_dependency_manager import DEPENDENCIES, dependency_statuses, missing_python_packages
+from hooklink_dependency_manager import XCODE_XIP_DOWNLOAD_URL, DEPENDENCIES, dependency_statuses, missing_python_packages
 from hooklink_prereqs import CheckReport, normalize_doctor_json
 
 
@@ -15,6 +15,10 @@ class DependencyManagerTests(unittest.TestCase):
         return normalize_doctor_json([
             {'name': name, 'ok': ok, 'detail': detail, 'required': required, 'how': ''}
             for name, ok, detail, required in items])
+
+    def test_official_xcode_xip_download_link(self):
+        self.assertEqual(XCODE_XIP_DOWNLOAD_URL,
+                         'https://download.developer.apple.com/Developer_Tools/Xcode_27.2/Xcode_27.2.xip')
 
     def test_unknown_is_not_misreported_as_missing(self):
         rows = dependency_statuses(None)
@@ -62,7 +66,7 @@ class DependencyManagerTests(unittest.TestCase):
         self.assertIn("'--no-input', 'install', *packages]", gui)
         self.assertIn('webbrowser.open_new_tab(url)', gui)
         self.assertIn('self._render_dependency_rows()', gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.0.5'", gui)
+        self.assertIn("GUI_VERSION = 'Alpha V1.0.6'", gui)
         self.assertNotIn('subprocess.run([\'powershell\'', gui)
 
 
