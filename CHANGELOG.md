@@ -1,5 +1,93 @@
 # Changelog
 
+## X1 (2.0)
+
+HookLink X1 is a new engine and a redesigned launcher. The engine is the latest nxnative with HookLink's own fixes and the best of cheemu21's kid-with-sword-remake on top, and every setting both projects offer is in the launcher.
+
+### Before you update
+
+The engine compiles the game's shaders differently again, so the first build after updating compiles every shader (about 30 minutes on an M-series Mac), and the first start on the phone prepares the game's pipelines behind the progress screen for a while. Leave the phone plugged in; later starts take seconds.
+
+### A new launcher
+
+- **Play** shows the game, Play and a **Resolution** dial in the middle of the left side: Coolest, Cool, Balanced, Sharp and Sharpest. With Dynamic resolution on it reads Auto; moving it fixes a size.
+- **Quick settings** on the right, each with a line on what it does: Frame rate, Frame generation, Cool mode, Potato mode, Wide view and the Ocarina mic.
+- **Frame generation and the frame rate mode are one choice**: turning frame generation off moves 60 + frame generation to 60 fps, and on again moves back.
+- **Settings** has Game, Controls and Performance as tabs, with real switches and sliders. **Extras** is a set of cards that say what each does.
+- The title bar says HookLink X1, and nothing sits under the Dynamic Island on either side.
+
+### New settings
+
+- **Render scale**, 25 % to 100 % (it never worked for Ocarina before: the game's render-scale hook was missing).
+- **Cool mode**: half the 3D resolution and smaller in-between frames, for less heat and longer battery. It starts on for iPhones with less than 10 GB of memory.
+- **Potato mode**: the lightest the game can run, at 25 % resolution with memory savers, for older iPhones. The settings it sets are locked while it is on.
+- **Light movies**: the title and opening movies skip a sharpening step that kept the title screen under 60 fps. A slightly softer movie; turn it off for the movies as made.
+- **Microphone**: play the ocarina by humming or whistling.
+
+### Faster and steadier
+
+- About 11 % less CPU work per object drawn, and far fewer hitches after loading an area (texture tables reused instead of made 16 times a frame; from kid-with-sword-remake).
+- Less GPU memory at scene changes: the old scene's textures are no longer made again (about 2.5 GB at the house-to-forest change). This is aimed at the crashes when loading a save on iPhones with less memory.
+- Frame generation pauses in the pause menu, where it could hang the GPU, and is switched off on iPhones whose GPU can't make in-between frames.
+- nxnative's newest work, including a faster start (the pipeline archive opens 3 to 6 times faster) and steadier frame pacing.
+
+### Known issues
+
+- Hyrule Field can still drop under 60 fps when the GPU falls behind or the phone is warm. 30 fps + frame generation, Cool mode or a lower Resolution help there.
+
+## 1.9.1
+
+- **The engine's "update available" link works.** In 1.9, clicking it at the bottom left of the window did nothing: only the Update and rebuild button in the banner at the top applied the update. The link now applies it too, never during a build.
+- The engine update also brings the phone launcher's title right: 1.9 builds said "HookLink 1.8" at the top left. Update the engine and build again to get it.
+
+## 1.9
+
+Frame generation that works at 60 fps, a newer engine, heat and battery on the frame-rate counter, and fixes for the freezes players reported. Build again from your dump after updating: HookLink's engine updates itself.
+
+### Before you update: the first launch takes longer
+
+The engine now includes nxnative's latest work, which compiles the game's shaders differently. On your Mac the first build compiles every shader again (about 2 hours on an M-series Mac, once). On the phone, the first launch prepares the game's graphics pipelines again behind the progress screen: about 13 minutes on an iPhone 18 Pro Max, and the phone gets warm. Leave it plugged in. Every launch after that takes a few seconds.
+
+### Frame generation at 60 fps
+
+- **60 fps + frame generation shows at 120 Hz** on ProMotion iPhones. Before, the display stayed at 60 Hz and no in-between frames were made.
+- **It comes back** after a slow stretch, once 30 frames in a row arrive in time, instead of staying off.
+- **Lighter is the default size** on iPhone: the in-between frames are made at 0.75 size, for about half the GPU time (5.7 ms down to 2.9 ms a frame) and a slightly softer picture. Full size is one tap away in Settings.
+- The HUD stays steady during frame generation (from cheemu21).
+
+### Smoother in Hyrule Field
+
+- **The model optimizer runs at full speed again.** A 1.9 test build moved it to a background priority, and Hyrule Field went from about 1,000 to 2,500 objects drawn a frame. It is back where 1.8.5 had it.
+- From nxnative: texture views are kept between frames, about 7% less CPU work per object drawn in Hyrule Field, and the game's frame deadline is declared on every graphics thread.
+
+### New
+
+- **Heat and battery** (Settings, under Frame-rate counter, by Mars-Mah3r): the counter shows the phone's heat and the play time the battery has left, as "60 fps · Busy" over "75% · 1h20 left".
+- **Inventory manager** (Extras): OOT SW2SE's editor, now built into the launcher instead of a web page.
+- **Custom touch layout** (Mobile): move and resize the Mobile layout's buttons yourself, from the in-game menu.
+- **Save backups at each start**: your saves are copied to save-backups when they changed, and the five newest are kept (a switch in Extras).
+- **More launcher settings**: dynamic resolution, the QoS map and the thermal cap are choices now, not fixed in the build.
+- **Export game log** sends the last game session, which is the one to share when reporting a problem.
+- Notes on the Play tab when Low Power Mode is on or the phone is hot.
+- Wide view on screens squarer than 16:9 (untested).
+- The A19 and A18 Pro iPhones start in 30 fps + frame generation at the Lighter size; all others start at 60 fps. Your own choice in the launcher still wins.
+- A fallback app icon, and an option that leaves the 4.1 GB pipeline archive out of the IPA for AltStore, SideStore and LiveContainer.
+
+### Fixed
+
+- **A freeze followed by a phone restart** (HookLink issue 4): the game's files under GPU buffers are now loaded before the GPU needs them (from seedds).
+- **A freeze at the Spider House**: the memory cutoff counts the app's own memory only, and is off on the Mac.
+- Pipelines that Apple's compiler cannot build no longer cost the whole pipeline archive.
+
+### Changed: Skip hidden objects is off
+
+This setting reuses the previous frame's hidden-object results. In Ocarina of Time those results can belong to other objects, and Link, horses and grass in plain view were drawn as pale-blue blocks. It now starts off, and its description says so. Turn it on only if you want the speed and accept the glitches.
+
+### Known issues
+
+- Hyrule Field can still drop well under 60 fps for a while when the GPU falls behind, more often since the engine update. We are working on it; 30 fps + frame generation runs steadier there.
+- When the phone gets warm, iOS slows the CPU and 60 fps drops to about 50 in Hyrule Field.
+
 ## 1.8.5
 
 A hotfix for 1.8's frame rate. Players found 1.5.1 ran better: the main reason was ours, and it is fixed. 60 fps is the default again. This update also brings the 1.9 work that was ready: a save editor, Wide view with the HUD kept in place, better frame generation, and a fix for a crash about 11 minutes in. **This build has been compiled and checked on our Mac, but not yet played on a phone**, so please share your game log (**Extras → Export game log**) if something looks or runs wrong.

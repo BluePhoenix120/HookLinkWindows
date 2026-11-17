@@ -1,0 +1,78 @@
+"""Dependency report contract tests; all tools simulated, no installers invoked."""
+from pathlib import Path
+import json
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'win'))
+from hooklink_prereqs import normalize_doctor_json, run_prerequisite_check
+
+
+class PrerequisiteTests(unittest.TestCase):
+    def test_missing_doctor_reports_full_checkout_requirement(self):
+        with tempfile.TemporaryDirectory() as td:
+            result = run_prerequisite_check(Path(td), sys.executable)
+            self.assertFalse(result.ready)
+            self.assertIn('win/doctor.py', result.format())
+
+    def test_normalizes_required_and_optional_items(self):
+        result = normalize_doctor_json([
+            {'name': 'Python 3.10+', 'ok': True, 'required': True, 'detail': '3.12.2', 'how': ''},
+            {'name': '.NET SDK 10', 'ok': False, 'required': True, 'detail': 'missing', 'how': 'https://dotnet.microsoft.com/'},
+            {'name': 'glslangValidator', 'ok': False, 'required': False, 'detail': 'not found', 'how': 'optional tool'},
+        ])
+        self.assertFalse(result.ready)
+        self.assertIn('[MISSING] .NET SDK 10', result.format())
+        self.assertIn('[OPTIONAL] glslangValidator', result.format())
+        self.assertIn('https://dotnet.microsoft.com/', result.format())
+
+    def test_wrong_clang_version_is_not_a_pass(self):
+        result = normalize_doctor_json([
+            {'name': 'LLVM clang (20+)', 'ok': True, 'required': True, 'detail': 'clang version 19.1.7', 'how': ''}
+        ])
+        self.assertFalse(result.ready)
+        self.assertIn('LLVM 20 or later', result.format())
+
+    def test_doctor_json_invocation_and_failure_status(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / 'win' / 'doctor.py'
+            path.parent.mkdir(parents=True)
+            path.write_text('import json,sys; print(json.dumps([{"name":"Python 3.10+","ok":True,"detail":"3.12","how":"","required":True}]))')
+            result = run_prerequisite_check(root, sys.executable)
+            self.assertTrue(result.ready)
+            self.assertIn('Xcode.app', result.format())
+
+    def test_unstructured_doctor_output_fails_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / 'win' / 'doctor.py'
+            path.parent.mkdir(parents=True)
+            path.write_text('print("looks good (unstructured)")')
+            result = run_prerequisite_check(root, sys.executable)
+            self.assertFalse(result.ready)
+            self.assertIn('Unable to parse', result.format())
+
+    def test_doctor_missing_import_reported_not_pretended_ok(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / 'win' / 'doctor.py'
+            path.parent.mkdir(parents=True)
+            path.write_text('import definitely_missing_library_98765')
+            result = run_prerequisite_check(root, sys.executable)
+            self.assertFalse(result.ready)
+            self.assertIn('ModuleNotFoundError', result.format())
+
+    def test_gui_has_visible_prerequisites_button_and_setup_link(self):
+        source = (ROOT / 'win' / 'hooklink_gui.pyw').read_text(encoding='utf-8')
+        self.assertIn("text='Check prerequisites'", source)
+        self.assertIn("text='Setup guide'", source)
+        self.assertIn("elif typ == 'prereqs'", source)
+        self.assertTrue((ROOT / 'docs' / 'GETTING_STARTED.md').exists())
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,0 +1,89 @@
+name: Build HookLinkWindows for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows-gui:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout complete HookLinkWindows source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python for GUI packaging
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'x64'
+      - name: Verify source layout and check private artifacts
+        shell: pwsh
+        run: |
+          $required = @('win/hooklink_gui.pyw', 'win/hooklink_portable.py', 'config/iphone-oot.env', 'engine/win/build_ipa_windows.py', 'engine/win/build_app.py', 'engine/win/doctor.py', 'engine/win/sdk/extract_xip.py', 'engine/dm/host/Makefile', 'LICENSE', 'engine/LICENSE')
+          foreach ($path in $required) { if (!(Test-Path -LiteralPath $path)) { throw "Missing required source file: $path" } }
+          python -B tools/release_audit.py .
+          if ($LASTEXITCODE -ne 0) { throw 'Source-only filename audit failed' }
+      - name: Test Windows GUI source
+        shell: pwsh
+        run: |
+          python -B -m unittest discover -s tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'GUI tests failed' }
+      - name: Build standalone GUI EXE
+        shell: pwsh
+        run: ./tools/build_windows_gui_exe.ps1
+      - name: Verify Windows GUI EXE
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'dist/HookLinkWindows.exe'
+          if (!(Test-Path -LiteralPath $exe)) { throw 'Standalone EXE was not generated' }
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          if ($bytes.Length -lt 100000 -or $bytes[0] -ne 77 -or $bytes[1] -ne 90) { throw 'Invalid Windows EXE' }
+          Write-Host "GUI EXE: $([Math]::Round($bytes.Length/1MB, 1)) MiB"
+      - name: Package complete source checkout and GUI into one ZIP
+        shell: pwsh
+        run: |
+          $zip = Join-Path $PWD 'dist/HookLinkWindows-Windows-x64.zip'
+          if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
+          & git archive --format=zip "--output=$zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Could not archive source files from the checked-out commit' }
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::Open($zip, [System.IO.Compression.ZipArchiveMode]::Update)
+          try { [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, (Join-Path $PWD 'dist/HookLinkWindows.exe'), 'HookLinkWindows.exe', [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null } finally { $archive.Dispose() }
+          $verify = [System.IO.Compression.ZipFile]::OpenRead($zip)
+          try {
+            foreach ($entry in @('HookLinkWindows.exe','LICENSE','engine/LICENSE','win/hooklink_gui.pyw','engine/win/build_ipa_windows.py','engine/win/sdk/extract_xip.py','config/iphone-oot.env')) { if (!$verify.GetEntry($entry)) { throw "Incomplete release archive: $entry" } }
+            Write-Host "Complete release ZIP: $zip ($([Math]::Round((Get-Item $zip).Length/1MB, 1)) MiB)"
+          } finally { $verify.Dispose() }
+      - name: Upload complete Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: HookLinkWindows-Windows-x64
+          path: dist/HookLinkWindows-Windows-x64.zip
+          if-no-files-found: error
+      - name: Publish Windows release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $repo = '${{ github.repository }}'
+          $zip = 'dist/HookLinkWindows-Windows-x64.zip'
+          $exe = 'dist/HookLinkWindows.exe'
+          foreach ($file in @($zip, $exe)) { if (!(Test-Path -LiteralPath $file)) { throw "Missing release asset: $file" } }
+          & gh release view $tag --repo $repo --json name *> $null
+          if ($LASTEXITCODE -eq 0) {
+            & gh release upload $tag $zip $exe --repo $repo --clobber
+          } else {
+            & gh release create $tag $zip $exe --repo $repo --verify-tag --title "HookLinkWindows $tag" --notes 'Experimental Windows GUI release. Windows x64 ZIP contains the full source tree and standalone GUI EXE. Building an IPA still requires external tools and user-provided inputs. Clean-install end-to-end reproducibility is not yet verified.' --prerelease
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Failed to publish release assets for $tag" }

@@ -29,3 +29,37 @@ build/
 pso_archive/
 res_overlay/
 .swiftpm/
+
+# Local SDKs, credentials and generated launchers
+/engine/win/toolchain.json
+/engine/win/sdk/out/
+/win/toolchain.json
+/win/sdk/out/
+*.xip
+*.p12
+*.pfx
+*.p8
+*.mobileprovision
+/HookLinkWindows.exe
+
+# Third-party game artwork excluded pending redistribution review
+/engine/docs/images/
+
+# Precompiled macOS tools excluded from Windows source release
+/engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate
+/engine/dm/gfx/tools/spirv_cross_bin/spirv-cross
+
+# Precompiled upstream tools excluded from Windows source distribution
+/engine/dm/tools/nx_extract_bin/nx_extract
+
+# Private development records
+/docs/HOOKLINKWINDOWS_PORT_ISSUES.md
+
+# Locally generated shader translator binaries
+/engine/dm/gfx/tools/dmsh_xlate_bin/
+/engine/dm/gfx/tools/dmsh_xlate/bin/
+/engine/dm/gfx/tools/dmsh_xlate/obj/
+
+# Locally generated shader profile tables
+/engine/dm/games/**/c1_full.tsv
+/engine/dm/games/**/cb_extent.tsv
