@@ -100,6 +100,20 @@ CANARY = b'NULLcanary'   # the data of a hard link whose bytes another entry of 
 def is_canary(head, size): return size >= len(CANARY) and head.startswith(CANARY) and not head[len(CANARY):].strip(b'\0')
 
 
+def safe_sdk_entry(root, rel):
+    """Prevent untrusted XIP/cpio entry names from escaping the extraction root."""
+    if (not isinstance(rel, str) or not rel or '\\' in rel or '\\x00' in rel
+            or rel.startswith('/') or ':' in rel.split('/')[0]):
+        raise ValueError(f'Unsafe SDK archive entry: {rel!r}')
+    parts = rel.split('/')
+    if any(part in ('', '.', '..') for part in parts):
+        raise ValueError(f'Unsafe SDK archive entry: {rel!r}')
+    dest = root.joinpath(*parts)
+    if not dest.resolve(strict=False).is_relative_to(root.resolve(strict=False)):
+        raise ValueError(f'SDK archive entry escapes extraction folder: {rel!r}')
+    return dest
+
+
 def scan(f, start, length):
     """Pass 1: for each SDK file whose data is a canary, the inode key (ino, size) it needs, and which keys some entry carries real bytes for"""
     need, have, r = {}, set(), Reader(stream(f, start, length, os.cpu_count() or 4))
@@ -108,7 +122,10 @@ def scan(f, start, length):
             head = r.read(min(size, 64)); r.skip(size - len(head))
             i = name.find(WANT)
             if is_canary(head, size):
-                if i >= 0: need.setdefault((ino, size), []).append(name[i + len(WANT):])
+                if i >= 0:
+                    rel = name[i + len(WANT):]
+                    safe_sdk_entry(Path('sdk-root'), rel)
+                    need.setdefault((ino, size), []).append(rel)
             else: have.add((ino, size))
         else: r.skip(size)
         r.skip(pad)
@@ -121,9 +138,11 @@ def materialize(out, links):
     while True:
         left = []
         for rel, target in todo:
-            dst = out / rel
-            src = (dst.parent / target) if not target.startswith('/') else None
-            if src is None: print(f'  link {rel} → {target}: absolute, skipped'); continue
+            dst = safe_sdk_entry(out, rel)
+            src = (dst.parent / target).resolve(strict=False) if not target.startswith('/') else None
+            if src is None or not src.is_relative_to(out.resolve(strict=False)):
+                print(f'  link {rel} → {target}: target outside SDK, skipped')
+                continue
             if dst.exists(): continue
             if not src.exists(): left.append((rel, target)); continue
             if src.is_dir(): shutil.copytree(src, dst)
@@ -150,14 +169,18 @@ def main():
         for name, mode, ino, size, pad in entries(r):
             i = name.find(WANT)
             rel = name[i + len(WANT):] if i >= 0 else None
+            if rel:
+                safe_sdk_entry(out, rel)
             kind, key = mode & 0o170000, (ino, size)
             if rel and kind == 0o120000:   # symlink: its target is the data
                 links.append((rel, r.read(size).decode('utf-8', 'surrogateescape')))
             elif kind == 0o100000:
                 head = r.read(min(size, 64))
                 canary = is_canary(head, size)
-                dsts = [out / rel] if rel and not canary else []
-                if not canary and key in need and key not in done: dsts += [out / p for p in need[key]]; done.add(key)   # the carrier: also every canary link of this inode
+                dsts = [safe_sdk_entry(out, rel)] if rel and not canary else []
+                if not canary and key in need and key not in done:
+                    dsts += [safe_sdk_entry(out, p) for p in need[key]]
+                    done.add(key)   # the carrier: also every canary link of this inode
                 if dsts:
                     for d in dsts: d.parent.mkdir(parents=True, exist_ok=True)
                     for d in dsts: d.write_bytes(head)
@@ -175,7 +198,7 @@ def main():
                     n += len(dsts)
                 else: r.skip(size - len(head))
             else:
-                if rel and kind == 0o040000: (out / rel).mkdir(parents=True, exist_ok=True)
+                if rel and kind == 0o040000: safe_sdk_entry(out, rel).mkdir(parents=True, exist_ok=True)
                 r.skip(size)
             r.skip(pad)
             if time.time() - last > 10: last = time.time(); print(f'  {r.total / 2**30:.1f} GB read, {n} SDK files', flush=True)
