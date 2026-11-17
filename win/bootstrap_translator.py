@@ -36,13 +36,32 @@ def need(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
+def hidden_process_options() -> dict:
+    """Keep CLI children silent when the application is launched by pythonw/PyInstaller."""
+    if os.name != 'nt':
+        return {}
+    startup = subprocess.STARTUPINFO()
+    startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startup.wShowWindow = subprocess.SW_HIDE
+    return {'creationflags': subprocess.CREATE_NO_WINDOW, 'startupinfo': startup}
+
+
+def isolated_dotnet_build_environment() -> dict[str, str]:
+    """Prevent MSBuild/Roslyn background servers from opening their own consoles.
+
+    Only applies to the shader translator build, not system-wide settings.
+    """
+    env = os.environ.copy()
+    env['DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER'] = '1'
+    env['MSBUILDDISABLENODEREUSE'] = '1'
+    return env
+
+
 def execute(args, *, env=None, timeout=180, cwd=None, verbose=False) -> str:
     argv = list(map(str, args))
     if verbose:
         print('RUN:', ' '.join(argv), flush=True)
-    opts = {}
-    if os.name == 'nt':
-        opts['creationflags'] = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+    opts = hidden_process_options()
     result = subprocess.run(argv, env=env, cwd=cwd, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True, errors='replace',
                             timeout=timeout, **opts)
@@ -177,7 +196,8 @@ def ensure_clean_tracked_state(p: dict) -> None:
     for args in (['diff', '--quiet', '--'] + target,
                  ['diff', '--cached', '--quiet', '--'] + target):
         result = subprocess.run([git, '-C', str(p['root'])] + args,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                **hidden_process_options())
         need(result.returncode == 0,
              'Shader lock/header already have local Git changes; preserve them before bootstrapping')
 
@@ -206,8 +226,9 @@ def install(root: Path, explicit_spirv: str | None, consent: bool) -> None:
         cmd = [info['dotnet'], 'publish', p['project'] / 'dmsh_xlate.csproj',
                '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false',
                '-p:PublishAot=false', '-p:PublishSingleFile=false',
-               '-p:PublishTrimmed=false', '-o', output, '-nologo']
-        execute(cmd, timeout=600, verbose=True)
+               '-p:PublishTrimmed=false', '-p:UseSharedCompilation=false',
+               '-o', output, '-nologo']
+        execute(cmd, env=isolated_dotnet_build_environment(), timeout=600, verbose=True)
         for name in OUTPUTS:
             need((output / name).is_file(), f'Publish missing dependency: {name}')
         embedded = execute([info['dotnet'], output / 'dmsh_xlate.dll', '--source-sha'])
