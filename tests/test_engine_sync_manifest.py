@@ -50,7 +50,7 @@ class PinnedEngineDeltaTests(unittest.TestCase):
                 # tree, while the committed upstream Git blob retains LF.
                 # Validate the canonical bytes as well, without weakening
                 # the test for any content changes other than line endings.
-                committed_hash = git_blob_sha(raw_bytes.replace(b'\\r\\n', b'\\n'))
+                committed_hash = git_blob_sha(raw_bytes.replace(b'\r\n', b'\n'))
             self.assertEqual(committed_hash, row['sha'], path)
 
     def test_launcher_uses_live_engine_pin_for_commit_button(self):
