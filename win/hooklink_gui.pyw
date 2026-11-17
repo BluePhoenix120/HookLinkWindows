@@ -32,12 +32,12 @@ from hooklink_progress import parse_build_progress
 from auto_workers import logical_workers
 from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
 from hooklink_sdk_import import validate_xip_archive
-from hooklink_dependency_manager import dependency_statuses, missing_python_packages
+from hooklink_dependency_manager import XCODE_XIP_DOWNLOAD_URL, dependency_statuses, missing_python_packages
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.0.5'
+GUI_VERSION = 'Alpha V1.0.6'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -498,8 +498,10 @@ class App(tk.Tk):
         sdk_import_row = ttk.Frame(sdk_frame)
         sdk_import_row.pack(fill='x', pady=(8, 0))
         ttk.Button(sdk_import_row, text='Import SDK from Xcode .xip…', command=self._import_xcode_sdk).pack(side='left', padx=(0, 10))
+        ttk.Button(sdk_import_row, text='Download .xip', command=lambda: webbrowser.open_new_tab(XCODE_XIP_DOWNLOAD_URL)).pack(side='left', padx=(0, 10))
         ttk.Button(sdk_import_row, text='Official Apple downloads', command=lambda: webbrowser.open_new_tab('https://developer.apple.com/download/all/')).pack(side='left')
-        ttk.Label(sdk_frame, text='Local import: reads your archive, extracts only the SDK, verifies version 26+, and saves its location. Allow several GB of free disk space; your archive is preserved.', wraplength=960, foreground='#555').pack(anchor='w', pady=(6, 0))
+        ttk.Label(sdk_frame, text='Download .xip opens Apple\'s Xcode 27.2 archive in your browser (Apple Developer sign-in may be required). If the direct link is unavailable, use Official Apple downloads. Then choose Import SDK from Xcode .xip… to extract and configure it.', wraplength=960, foreground='#555').pack(anchor='w', pady=(6, 0))
+        ttk.Label(sdk_frame, text='Local import: reads your archive, extracts only the SDK, verifies version 26+, and saves its location. Allow several GB of free disk space; your archive is preserved.', wraplength=960, foreground='#555').pack(anchor='w', pady=(4, 0))
         graphics = ttk.Frame(frame)
         graphics.pack(fill='x', pady=(8, 0))
         ttk.Label(graphics, text='Graphics support is automatically prepared from bundled source when its tools are available.').pack(side='left')
