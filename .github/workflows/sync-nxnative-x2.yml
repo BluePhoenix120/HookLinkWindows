@@ -1,0 +1,105 @@
+name: Import pinned NXNative X2 into HookLinkWindows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/sync-nxnative-x2.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-nxnative-x2-main
+  cancel-in-progress: false
+
+jobs:
+  sync-engine:
+    if: github.repository == 'BluePhoenix120/HookLinkWindows' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    outputs:
+      synced_sha: \${{ steps.publish.outputs.synced_sha }}
+    steps:
+      - name: Checkout complete Windows fork
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Import only the exact NXNative X2 delta
+        run: |
+          python3 -B tools/sync_nxnative_engine.py --target 7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf
+      - name: Inspect engine pin and staged import
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_engine_pin.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_engine_sync_manifest.py' -v
+          git diff --cached --check
+          git diff --cached --stat
+          test "$(git show :ENGINE_PIN.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["nxnative_commit"])')" = 7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf
+      - name: Commit and push pinned X2 engine files
+        id: publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --cached --quiet; then
+            git commit -m "engine: transplant NXNative HookLink X2 at 7ba845ab8 and update displayed engine pin"
+            git push origin HEAD:main
+          fi
+          printf 'synced_sha=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Pinned engine source revision: $(git rev-parse HEAD)"
+
+  verify-windows:
+    name: Validate X2 engine under Windows and package GUI
+    needs: sync-engine
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout imported X2 engine source
+        uses: actions/checkout@v4
+        with:
+          ref: \${{ needs.sync-engine.outputs.synced_sha }}
+      - name: Install Python for GUI validation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Check X2 blob provenance and Windows regression suite
+        shell: pwsh
+        run: |
+          python -B -m unittest discover -s tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned X2 engine regression tests failed' }
+          python -B tools/release_audit.py .
+          if ($LASTEXITCODE -ne 0) { throw 'Release audit failed' }
+      - name: Build Windows GUI executable
+        shell: pwsh
+        run: ./tools/build_windows_gui_exe.ps1
+      - name: Package complete pinned X2 source and executable
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'dist/HookLinkWindows.exe'
+          if (!(Test-Path -LiteralPath $exe)) { throw 'Windows executable missing' }
+          $zip = Join-Path $PWD 'dist/HookLinkWindows-Windows-x64.zip'
+          & git archive --format=zip "--output=$zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot archive pinned X2 checkout' }
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::Open($zip, [System.IO.Compression.ZipArchiveMode]::Update)
+          try { [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $exe, 'HookLinkWindows.exe', [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null } finally { $archive.Dispose() }
+          $verify = [System.IO.Compression.ZipFile]::OpenRead($zip)
+          try {
+            foreach ($entry in @('HookLinkWindows.exe','ENGINE_PIN.json','ENGINE_PIN_FILES.json','engine/dm/host/hle_svc.c','engine/dm/gfx/nvn/nvn_mtl.m','engine/win/build_app.py','win/hooklink_gui.pyw')) {
+              if (!$verify.GetEntry($entry)) { throw "Missing pinned X2 release content: $entry" }
+            }
+          } finally { $verify.Dispose() }
+          Write-Host "Validated X2 Windows package: $zip"
+      - name: Upload test-built X2 Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: HookLinkWindows-X2-Windows-x64
+          path: dist/HookLinkWindows-Windows-x64.zip
+          if-no-files-found: error
