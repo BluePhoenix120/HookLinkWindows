@@ -31,12 +31,13 @@ from shader_chain_flow import run_build_chain_preflight
 from hooklink_progress import parse_build_progress
 from auto_workers import logical_workers
 from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
+from hooklink_sdk_import import validate_xip_archive
 from hooklink_dependency_manager import dependency_statuses, missing_python_packages
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.0.4'
+GUI_VERSION = 'Alpha V1.0.5'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -430,7 +431,7 @@ class App(tk.Tk):
         window = tk.Toplevel(self)
         self._deps_window = window
         window.title('HookLinkWindows — Windows dependency manager')
-        window.geometry('1050x750')
+        window.geometry('1050x810')
         window.minsize(800, 580)
         window.transient(self)
         frame = ttk.Frame(window, padding=14)
@@ -462,7 +463,7 @@ class App(tk.Tk):
         self._render_dependency_rows()
         sdk_frame = ttk.LabelFrame(frame, text='iPhoneOS SDK (not bundled)', padding=9)
         sdk_frame.pack(fill='x', pady=(8, 5))
-        ttk.Label(sdk_frame, text='Apple does not provide a Windows SDK installer. Apple SDK licensing restricts use on non-Apple computers. Review the terms before selecting an SDK.', wraplength=960, foreground='#555').pack(anchor='w', pady=(0, 6))
+        ttk.Label(sdk_frame, text='Apple does not provide a Windows SDK installer. Import an archive you obtained yourself from Apple, or select an existing SDK folder. Review Apple licensing restrictions before use on non-Apple hardware.', wraplength=960, foreground='#555').pack(anchor='w', pady=(0, 6))
         try:
             current_sdk = configured_ios_sdk(ROOT)
         except ValueError as exc:
@@ -494,11 +495,47 @@ class App(tk.Tk):
 
         ttk.Button(sdk_row, text='Browse…', command=browse_sdk).pack(side='left', padx=(0, 5))
         ttk.Button(sdk_row, text='Save', command=save_sdk).pack(side='left')
+        sdk_import_row = ttk.Frame(sdk_frame)
+        sdk_import_row.pack(fill='x', pady=(8, 0))
+        ttk.Button(sdk_import_row, text='Import SDK from Xcode .xip…', command=self._import_xcode_sdk).pack(side='left', padx=(0, 10))
+        ttk.Button(sdk_import_row, text='Official Apple downloads', command=lambda: webbrowser.open_new_tab('https://developer.apple.com/download/all/')).pack(side='left')
+        ttk.Label(sdk_frame, text='Local import: reads your archive, extracts only the SDK, verifies version 26+, and saves its location. Allow several GB of free disk space; your archive is preserved.', wraplength=960, foreground='#555').pack(anchor='w', pady=(6, 0))
         graphics = ttk.Frame(frame)
         graphics.pack(fill='x', pady=(8, 0))
         ttk.Label(graphics, text='Graphics support is automatically prepared from bundled source when its tools are available.').pack(side='left')
         ttk.Button(graphics, text='Retry graphics setup', command=lambda: self._retry_graphics_setup(window)).pack(side='right')
         ttk.Button(frame, text='Close', command=window.destroy).pack(anchor='e', pady=(8, 0))
+
+    def _import_xcode_sdk(self):
+        """Import user-selected Xcode archive without a terminal or hidden downloads."""
+        if self.busy:
+            messagebox.showwarning('Operation in progress', 'Finish the current operation before importing an SDK.')
+            return
+        archive = filedialog.askopenfilename(
+            parent=self._deps_window if self._deps_window is not None and self._deps_window.winfo_exists() else self,
+            title='Choose your downloaded Xcode .xip archive',
+            filetypes=[('Xcode XIP archives', '*.xip'), ('All files', '*.*')])
+        if not archive:
+            return
+        try:
+            checked = validate_xip_archive(Path(archive))
+            interpreter = build_python()
+        except (ValueError, OSError) as exc:
+            messagebox.showerror('SDK import cannot start', str(exc))
+            return
+        if not messagebox.askyesno(
+                'Import iPhoneOS SDK from archive?',
+                'HookLinkWindows will extract only the iPhoneOS SDK from the selected Xcode archive and configure it automatically.\n\n'
+                'Source: ' + str(checked) + '\n\n'
+                'Apple SDK files are subject to Apple license restrictions, including restrictions on use on non-Apple-branded hardware. '
+                'Confirm that you have the necessary rights before proceeding. This tool does not grant any license.\n\n'
+                'Extraction requires substantial disk space and can take a while. The archive and existing SDKs will not be overwritten.\n\n'
+                'Do you confirm that you are authorized to proceed?'):
+            return
+        self._append('[SDK] Beginning local import from the selected Xcode archive. No Apple files are downloaded or redistributed.\n')
+        self._spawn([interpreter, '-u', '-B', str(ROOT / 'win' / 'hooklink_sdk_import.py'),
+                     '--root', str(ROOT), '--archive', str(checked)],
+                    ROOT, os.environ.copy(), 'iPhoneOS SDK import')
 
     def _render_dependency_rows(self):
         rows = self._deps_rows_frame
@@ -814,6 +851,12 @@ class App(tk.Tk):
                         self.progress.configure(mode='determinate', value=0)
                         self.progress_var.set('Build failed — inspect diagnostics')
                     self._append(f'=== Exit code: {exit_code} ===\n')
+                    if title == 'iPhoneOS SDK import':
+                        if exit_code == 0:
+                            self._append('[SDK] SDK import completed; rechecking prerequisites.\n')
+                            self._doctor()
+                        else:
+                            self._append('[SDK] Import failed or was interrupted. Existing SDK settings were not intentionally changed. Check diagnostics and retry through Toolchain setup.\n')
                     if title == 'Python package setup' and exit_code == 0:
                         self._append('[SETUP] Python packages installed; checking prerequisites again.\n')
                         self._doctor()
