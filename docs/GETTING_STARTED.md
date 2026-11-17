@@ -4,9 +4,9 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
-### NXNative upstream version shown in Alpha 1.0.7
+### NXNative upstream version shown in Alpha 1.0.8
 
-The main GUI shows **NXNative upstream base (pinned)** and its full 40-character commit SHA, with a **View commit** button linking to the corresponding commit in [seedds/nxnative](https://github.com/seedds/nxnative). This value is read directly from the bundled `ENGINE_PIN.json` file in the current local checkout, so it works offline and remains tied to the version shipped in that release. It does **not** show the latest upstream branch commit, and it does **not** mean that the Windows-modified `engine/` tree is identical to that upstream commit. An absent or invalid pin is clearly shown as unknown rather than guessing.
+The main GUI shows **NXNative upstream base (pinned)** and its full 40-character commit SHA. The **View commit** button now constructs the link using **both** `nxnative_repo` and `nxnative_commit` from the bundled `ENGINE_PIN.json`, rather than assuming the original `seedds/nxnative` repository. The currently pinned repo is [dsi-hub/nxnative](https://github.com/dsi-hub/nxnative); this is the source of the pinned commit. The link works offline until the user chooses to open it, and the displayed value remains tied to the release's bundled metadata. A missing or malformed repository link disables the button rather than opening an unrelated website. This is the **upstream base**, not the latest upstream branch commit, and the Windows-modified `engine/` tree may differ from that base.
 
 ## 1. Obtain the complete source checkout
 
@@ -62,7 +62,7 @@ Extraction may require considerable temporary disk space and take significant ti
 
 Alternatively, select an existing SDK directory using **Browse… → Save**, subject to the same licensing restrictions. Never commit SDKs, Xcode files, or private game assets to GitHub.
 
-## 4. Toolchain setup in Alpha 1.0.7
+## 4. Toolchain setup in Alpha 1.0.8
 
 **No command-line compilation or JSON editing is needed for the shader translator.** Click **Check prerequisites** in the GUI. When the `dmsh_xlate.dll` translator is absent and the required .NET 10 SDK, SPIRV-Cross and Apple Metal compilers are already available, HookLinkWindows automatically prepares graphics support from the bundled source, verifies it, and backs up the local shader-chain metadata before synchronization. The progress and any errors appear in **Build output and diagnostics**. This does not delete the game or shader caches, although a new shader-chain identity can make previously built shaders incompatible.
 
