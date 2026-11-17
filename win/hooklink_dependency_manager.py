@@ -9,6 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
+# Direct Apple-hosted Xcode 27.2 archive. Opening this URL may require an Apple
+# Developer sign-in; the GUI never downloads or redistributes Apple files itself.
+XCODE_XIP_DOWNLOAD_URL = 'https://download.developer.apple.com/Developer_Tools/Xcode_27.2/Xcode_27.2.xip'
+
 
 @dataclass(frozen=True)
 class Dependency:
