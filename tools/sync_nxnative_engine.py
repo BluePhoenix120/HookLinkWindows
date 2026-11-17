@@ -126,7 +126,8 @@ def sync(target: str) -> None:
 
     settings['nxnative_commit'] = target
     settings['hooklink_base'] = '3.0'
-    settings['release'] = 'Alpha V1.0.9'
+    # Preserve the GUI release identity: importing an engine should not silently
+    # reset the Windows application's version metadata.
     PIN.write_text(json.dumps(settings, indent=4) + '\n', encoding='utf-8')
     MANIFEST.write_text(json.dumps({
         'nxnative_repo': UPSTREAM_URL,
