@@ -61,13 +61,14 @@ class ToolchainSetupTests(unittest.TestCase):
     def test_gui_exposes_setup_and_repair_controls(self):
         gui = (ROOT / 'win' / 'hooklink_gui.pyw').read_text(encoding='utf-8')
         self.assertIn("text='Toolchain setup…'", gui)
-        self.assertIn("text='Save SDK directory'", gui)
+        self.assertIn("text='Browse…'", gui)
+        self.assertIn("text='Save', command=save_sdk", gui)
         self.assertIn("text='Retry graphics setup'", gui)
         self.assertIn("'--install', '--accept-new-chain'", gui)
         self.assertIn("can_auto_prepare_translator(payload)", gui)
         self.assertIn("self._start_graphics_setup(automatic=True)", gui)
         self.assertIn("self._auto_translator_attempted = True", gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.0.3'", gui)
+        self.assertIn("GUI_VERSION = 'Alpha V1.0.4'", gui)
         self.assertIn('configured_ios_sdk(ROOT)', gui)
         self.assertIn('save_ios_sdk(ROOT, sdk_var.get())', gui)
 
