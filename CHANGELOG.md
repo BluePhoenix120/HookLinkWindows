@@ -1,5 +1,35 @@
 # Changelog
 
+## X2 (3.0)
+
+HookLink X2 fixes the Master Sword white screen, crashes after long play, and stutter on iPhones with an A19 chip. It also adds GPU occlusion and a Shadow map setting.
+
+### Before you update
+
+Shaders don't need recompiling, so the build after updating takes minutes, not half an hour. The first start on the phone prepares more pipelines than before behind the progress screen, so it takes a little longer once.
+
+### Fixes
+
+- **The Master Sword works again.** Pulling it could leave a white screen for good, because the game ran out of address space for the cutscene. iPhones now get 16 GB of it instead of 8.
+- **Fewer crashes after long play and many area changes.** Freeing a memory pool now frees the textures made on it (from nxnative), idle per-frame memory blocks are released (from nxnative), and unused textures are freed earlier on iPhone.
+- **Less stutter on iPhones with an A19 chip.** HookLink's real-time threads no longer take up both performance cores, so the game's own threads keep running at full speed (from kid-with-sword-remake).
+- **No hitch every second after loading an area.** Unused render targets are freed in small batches (from kid-with-sword-remake).
+- **No more long freezes while a pipeline compiles.** A frame now waits at most 50 ms for one (from kid-with-sword-remake).
+- **The storage check no longer closes the game early.** When it does close the game, the next start explains why and what to do.
+- **Smoother first visits.** 12,188 pipelines that players recorded in X1 are prepared at the first start. Thanks to S44K and JHoogendijk for sending their lists.
+
+### New
+
+- **GPU occlusion** (Settings → Performance, on): the phone's GPU skips objects hidden behind others, such as the grass and trees behind Hyrule Field's hills, even when the answer hasn't reached the CPU in time. If objects flicker or vanish, turn it off.
+- **Shadow map** (Settings → Game: Full, Half or Quarter): Half is the iPhone default. It takes a quarter of the shadow map's memory and GPU time, for slightly softer shadows. Potato mode uses Quarter.
+- **60 fps on the 120 Hz display:** on a ProMotion iPhone, a frame that runs late shows after 25 ms instead of 33.
+
+### Known issues
+
+- With GPU occlusion on, a little flicker can show in places.
+- An iPhone 17 Pro on iOS 26 can show a black or garbled picture. Updating iOS is the best bet for now.
+- Hyrule Field can still drop under 60 fps when the phone is warm. 30 fps + frame generation, Cool mode or a lower Resolution help there.
+
 ## X1 (2.0)
 
 HookLink X1 is a new engine and a redesigned launcher. The engine is the latest nxnative with HookLink's own fixes and the best of cheemu21's kid-with-sword-remake on top, and every setting both projects offer is in the launcher.
