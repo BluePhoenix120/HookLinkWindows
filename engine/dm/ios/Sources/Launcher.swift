@@ -300,7 +300,7 @@ private struct LauncherView: View {
     @State private var cheatsOn: Set<String> = Set((UserDefaults.standard.string(forKey: "hooklink.cheats") ?? "").split(separator: "\n").map(String.init))
 
     private var docs: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0] }
-    private var version: String { (info("HookLinkVersion") as? String) ?? "X1" }   // no build sets HookLinkVersion: this is the version shown (HookLink X1, the VX1 line); raise it with each HookLink release
+    private var version: String { (info("HookLinkVersion") as? String) ?? "X2" }   // no build sets HookLinkVersion: this is the version shown (HookLink X2, the VX2 line); raise it with each HookLink release
     private var playRows: [Setting] {
         let want = ["DM_FRAME_MODE", "DM_RENDER_SCALE", "DM_DYNAMIC_RESOLUTION", "DM_WIDE_VIEW", "DM_PAD_THEME"]
         return want.compactMap { e in m.settings.first { $0.env == e } }
@@ -417,7 +417,7 @@ private struct LauncherView: View {
                         Text((info("CFBundleDisplayName") as? String) ?? "Game").font(HL.serif(19)).foregroundStyle(.white).multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.7)
                         Text("Version \((info("CFBundleShortVersionString") as? String) ?? "") · Ready to play").font(HL.body(12, .semibold)).foregroundStyle(HL.muted)
                     }
-                    Button(action: { applyCheats(); autoBackup(); start() }) {
+                    Button(action: { UserDefaults.standard.removeObject(forKey: "dm.stopped.storage"); applyCheats(); autoBackup(); start() }) {
                         HStack(spacing: 10) { Image(systemName: "play.fill").font(.system(size: 17, weight: .heavy)); Text("Play").font(HL.body(22, .heavy)) }
                             .foregroundStyle(HL.ground).frame(maxWidth: .infinity).frame(height: 52)
                             .background(LinearGradient(colors: [Color(red: 0.945, green: 0.824, blue: 0.494), Color(red: 0.851, green: 0.690, blue: 0.310), Color(red: 0.725, green: 0.549, blue: 0.173)], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 14))
@@ -474,7 +474,11 @@ private struct LauncherView: View {
     }
     private var playNotes: [String] {
         var n: [String] = []
-        if lowDisk { n.append("Less than 25 GB free: the game keeps up to about 10 GB of memory on the disk, and it stops when space runs out. Free some space first.") }
+        // The disk guard stopped the last game (hle_svc.c guest_file_thread, exit 87), which looks like a crash to the player: why, until the next Play. Space iOS can purge does
+        // not count there, so lowDisk (which counts it) can stay quiet on a phone the guard stops
+        if let gb = UserDefaults.standard.object(forKey: "dm.stopped.storage") as? Double {
+            n.append(String(format: "The game closed last time because the iPhone had only %.1f GB really free. It keeps up to about 10 GB of its memory on the phone. Settings can show more free space than that, as it counts caches iOS clears only later: restarting the iPhone clears them, or delete or offload something big, then play.", gb))
+        } else if lowDisk { n.append("Less than 25 GB free: the game keeps up to about 10 GB of memory on the disk, and it stops when space runs out. Free some space first.") }
         if ProcessInfo.processInfo.isLowPowerModeEnabled { n.append("Low Power Mode is on: iOS slows the phone, and the game will drop frames. Turn it off in Settings \u{2192} Battery.") }
         switch ProcessInfo.processInfo.thermalState.rawValue {
         case 2...: n.append("The phone is hot: the game will run slower until it cools. A short break helps.")

@@ -1,0 +1,108 @@
+{
+    "nxnative_repo": "https://github.com/dsi-hub/nxnative.git",
+    "from_commit": "3a28152fe7052c9f45ede460022d39be6c91e3cf",
+    "nxnative_commit": "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf",
+    "changed_paths": [
+        {
+            "path": "engine/dm/games/010056B015FE8000/README.md",
+            "sha": "67351dca56e5089b6c69a32b2691c97474aacef5"
+        },
+        {
+            "path": "engine/dm/games/0400486024DEC000/README.md",
+            "sha": "5fef1f8bccd9f2e083176c2053d421cb338c302b"
+        },
+        {
+            "path": "engine/dm/games/0400486024DEC000/game.tsv",
+            "sha": "ca4299d952b97185730300cc3c7d24846a05c5d7"
+        },
+        {
+            "path": "engine/dm/games/0400486024DEC000/pso_manifest.tsv",
+            "sha": "7c5d6cd2e04ef5ac6a269516b1b0f897cbd41507"
+        },
+        {
+            "path": "engine/dm/games/settings.tsv",
+            "sha": "b512bf8559f677c8d332301e421753308c6df754"
+        },
+        {
+            "path": "engine/dm/gfx/nvn/hle_nvn.c",
+            "sha": "ba77a60041b59c5bc191f3d9a1d886b7b59c50a4"
+        },
+        {
+            "path": "engine/dm/gfx/nvn/nvn_geometry.inc",
+            "sha": "04d49f40a95b9900ae2bbc687bab29cdb0d04bd1"
+        },
+        {
+            "path": "engine/dm/gfx/nvn/nvn_mtl.m",
+            "sha": "42b1233c68cabf30cd0951ebbcb5e68124d92a7c"
+        },
+        {
+            "path": "engine/dm/gfx/nvn/nvn_owner.h",
+            "sha": "cc5ba87f9359b7855d43554a15b78fd4c21392a0"
+        },
+        {
+            "path": "engine/dm/gfx/nvn/nvn_owner.m",
+            "sha": "afa05e2834672fe8e0cf610458aeaf959c2963c2"
+        },
+        {
+            "path": "engine/dm/gfx/tests/Makefile",
+            "sha": "f18947b8e4bda5901d862dd7cfed2df52241b8b5"
+        },
+        {
+            "path": "engine/dm/gfx/tests/t_arena_trim.m",
+            "sha": "c162f3fb811446044c57f1eb2a8afa6c18f83bcc"
+        },
+        {
+            "path": "engine/dm/gfx/tests/t_dead_targets.m",
+            "sha": "02a8c7ec24f44d64a2963e2f06d43e7af559f6a5"
+        },
+        {
+            "path": "engine/dm/gfx/tests/t_readback.m",
+            "sha": "1811005e7a70a03e623192e945eb8482234585ef"
+        },
+        {
+            "path": "engine/dm/gfx/tests/t_render_enable_queue.m",
+            "sha": "cecb4f241c28e5a9a39e2049cd7b1e070cfb89c2"
+        },
+        {
+            "path": "engine/dm/gfx/tests/t_rt_recycle.m",
+            "sha": "b2942c2b5ba9c459ba72e5a7599c29e78a4f4a98"
+        },
+        {
+            "path": "engine/dm/gfx/tests/t_serial_owner.m",
+            "sha": "c8cc289cf7ca7c3d21b6aef9bd9a6f4964207242"
+        },
+        {
+            "path": "engine/dm/host/hle_svc.c",
+            "sha": "50fef0c0c131adf34874b89c70be1085aca2d4b7"
+        },
+        {
+            "path": "engine/dm/host/tests/t_svc_memory.c",
+            "sha": "fb27a03b484c23b465a722d53974497a9d21c860"
+        },
+        {
+            "path": "engine/dm/ios/Sources/Launcher.swift",
+            "sha": "bc374c4e1b5dae488392f78f046171cb295c6733"
+        },
+        {
+            "path": "engine/dm/tools/tests/test_launcher_settings.py",
+            "sha": "e9a99a69b8c03d759aeb19cd2b33699b532e4d35"
+        },
+        {
+            "path": "engine/docs/agents/symptoms.md",
+            "sha": "0bb1d7a301f80591717c2d4aacd411c87ced2cda"
+        },
+        {
+            "path": "engine/docs/env_switches.tsv",
+            "sha": "debd2686aa56ac3ae8e6ae33e11d0a02a08f8bd1"
+        },
+        {
+            "path": "engine/docs/reference/memory.md",
+            "sha": "110935d8b961193b5626db73a0ced87ec6348679"
+        },
+        {
+            "path": "engine/docs/reference/nvn-objects.md",
+            "sha": "e56feb682bd3987ab9146b2cdf3bac76d6cf4396"
+        }
+    ],
+    "notes": "Exact upstream Git blob hashes for files transplanted into engine/. Windows-only additions remain separate."
+}

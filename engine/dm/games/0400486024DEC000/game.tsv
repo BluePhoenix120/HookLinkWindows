@@ -31,8 +31,11 @@ zip_store	.zs:.bwav:.webm:.metallib
 # it had mapped up to +3.75 GB and the next scene's movie and files had no room, so it waited on a white screen for good (mem_map_limit on) or aborted in its loader
 # (main+0x34fc290, the limit off). On an iPhone 18 Pro Max with 8 GB it went on, mapped up to +6.00 GB and held 4.75 GB mapped, more than the 2.74 GB the limit left it
 # beside its 6.2 GB heap, so the limit is off (2026-11-10). mem_reserve grows by the same 4 GB: the heap region stays 8 GB.
-mem_reserve	0x420000000
-mem_alias	0x200000000
+# HookLink VX1rc_6: 16 GB. After long sessions of area changes (teleporting) the game had mapped up to +7.75 GB of the 8 GB on an iPhone 18 Pro Max (VX1rc_4, rc_5: 6.5-7.25 GB
+# held), and the Master Sword's cutscene waited on its white screen again with nothing refused: the address space, not the memory, ran out. Addresses cost nothing until mapped (the
+# guest files are sparse); mem_reserve grows by the same 8 GB, so the heap region stays 8 GB
+mem_reserve	0x620000000
+mem_alias	0x400000000
 mem_map_limit	off
 mem_stack	0x10000000
 app_pool	0x240000000
@@ -97,4 +100,4 @@ pool_skip_retired	on
 # a kept prewarm held about 1.2 GB on an iPhone), and the idle shared textures let go from 60 % of Metal's working set down to 50 % (85 / 75 by default). kid-with-sword's other memory
 # savers (the GPU memory guard, the texture recycle bin, lazy textures, big pools in the guest files) were written on an engine whose memory code nxnative has since rewritten: main's
 # own render-target release, pool chunks, stand-ins and HookLink's idle retirement and pool_skip_retired stand for them here
-potato	DM_RENDER_SCALE=0.25,DM_FRAMEGEN_SCALE=0.5,DM_PSO_WARM_ONLY=1,DM_NVN_ALIAS_HI=60,DM_NVN_ALIAS_LO=50
+potato	DM_RENDER_SCALE=0.25,DM_FRAMEGEN_SCALE=0.5,DM_PSO_WARM_ONLY=1,DM_NVN_ALIAS_HI=60,DM_NVN_ALIAS_LO=50,DM_SHADOW_SCALE=0.25

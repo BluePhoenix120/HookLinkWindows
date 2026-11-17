@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / 'win'))
 from hooklink_engine_pin import github_repository_url, read_engine_pin
 
 
-PIN = '3a28152fe7052c9f45ede460022d39be6c91e3cf'
+PIN = '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'
 FORK = 'https://github.com/dsi-hub/nxnative'
 ORIGINAL = 'https://github.com/seedds/nxnative'
 
