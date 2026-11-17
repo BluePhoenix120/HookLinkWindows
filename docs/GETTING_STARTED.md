@@ -4,6 +4,10 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### NXNative upstream version shown in Alpha 1.0.7
+
+The main GUI shows **NXNative upstream base (pinned)** and its full 40-character commit SHA, with a **View commit** button linking to the corresponding commit in [seedds/nxnative](https://github.com/seedds/nxnative). This value is read directly from the bundled `ENGINE_PIN.json` file in the current local checkout, so it works offline and remains tied to the version shipped in that release. It does **not** show the latest upstream branch commit, and it does **not** mean that the Windows-modified `engine/` tree is identical to that upstream commit. An absent or invalid pin is clearly shown as unknown rather than guessing.
+
 ## 1. Obtain the complete source checkout
 
 Use the project's GitHub **Code → Download ZIP**, extract it to any writable folder (for example `D:\Projects\HookLinkWindows`), or clone the future published repository with Git. No special installation directory or administrator-level path is required. **Keep the EXE in the checkout root beside the `win`, `engine`, `config`, `Sources`, and `docs` directories. The Windows engine lives under `engine/`; a GUI-only ZIP cannot compile.** Do not run the GUI from a separate archive containing only the GUI add-on.
@@ -58,7 +62,7 @@ Extraction may require considerable temporary disk space and take significant ti
 
 Alternatively, select an existing SDK directory using **Browse… → Save**, subject to the same licensing restrictions. Never commit SDKs, Xcode files, or private game assets to GitHub.
 
-## 4. Toolchain setup in Alpha 1.0.6
+## 4. Toolchain setup in Alpha 1.0.7
 
 **No command-line compilation or JSON editing is needed for the shader translator.** Click **Check prerequisites** in the GUI. When the `dmsh_xlate.dll` translator is absent and the required .NET 10 SDK, SPIRV-Cross and Apple Metal compilers are already available, HookLinkWindows automatically prepares graphics support from the bundled source, verifies it, and backs up the local shader-chain metadata before synchronization. The progress and any errors appear in **Build output and diagnostics**. This does not delete the game or shader caches, although a new shader-chain identity can make previously built shaders incompatible.
 
