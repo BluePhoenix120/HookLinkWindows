@@ -46,10 +46,10 @@ After manually installing an external Windows tool through its official download
 
 **Xcode.app is a macOS application, not a Windows installer.** On Windows this experimental project needs a locally available **iPhoneOS SDK 26+** folder and separate **Metal Developer Tools for Windows**. Apple's Xcode and Apple SDKs Agreement restricts SDK use, including on non-Apple-branded computers. The app does not grant rights to use Apple files, and users are responsible for confirming their usage complies with Apple's terms.
 
-The only supported source for the Xcode archive link is Apple's official Developer Downloads page: https://developer.apple.com/download/all/ . Users obtain the Xcode `.xip` archive themselves. **Alpha 1.0.5 adds an experimental local SDK import workflow in the Windows GUI:**
+The only supported source for the Xcode archive link is Apple's official Developer Downloads page: https://developer.apple.com/download/all/ . Users obtain the Xcode `.xip` archive themselves. **Alpha 1.0.6 adds a direct Download .xip button next to the existing SDK importer:**
 
-1. In **Toolchain setup…**, choose **Import SDK from Xcode .xip…**. (An **Official Apple downloads** button opens Apple's official portal.)
-2. Select an already downloaded local Xcode `.xip`. Review the authorization/licensing warning and explicitly approve import only if your use is permitted.
+1. In **Toolchain setup…**, choose **Download .xip** to open Apple's direct [Xcode 27.2 archive](https://download.developer.apple.com/Developer_Tools/Xcode_27.2/Xcode_27.2.xip) in the default browser. Apple Developer sign-in or agreement acceptance may be required. If the direct download is unavailable, use **Official Apple downloads** to locate the archive.
+2. After obtaining the archive, choose **Import SDK from Xcode .xip…**, select the downloaded file, review the authorization/licensing warning, and explicitly approve import only if your use is permitted.
 3. The app runs its bundled Windows extractor `engine/win/sdk/extract_xip.py` in a hidden background operation. The GUI streams the extractor's progress and errors; it does not install Xcode, download anything, or bundle Apple files.
 4. The importer extracts to a new, private directory under `engine/win/sdk/out/`, validates that exactly one complete iPhoneOS 26+ SDK was produced, and registers that directory automatically without overwriting an existing SDK or unrelated toolchain settings. It then reruns **Check prerequisites**.
 5. If the import fails, it discards its temporary extraction and preserves the previously configured SDK. The original `.xip` archive is never changed.
@@ -58,7 +58,7 @@ Extraction may require considerable temporary disk space and take significant ti
 
 Alternatively, select an existing SDK directory using **Browse… → Save**, subject to the same licensing restrictions. Never commit SDKs, Xcode files, or private game assets to GitHub.
 
-## 4. Toolchain setup in Alpha 1.0.5
+## 4. Toolchain setup in Alpha 1.0.6
 
 **No command-line compilation or JSON editing is needed for the shader translator.** Click **Check prerequisites** in the GUI. When the `dmsh_xlate.dll` translator is absent and the required .NET 10 SDK, SPIRV-Cross and Apple Metal compilers are already available, HookLinkWindows automatically prepares graphics support from the bundled source, verifies it, and backs up the local shader-chain metadata before synchronization. The progress and any errors appear in **Build output and diagnostics**. This does not delete the game or shader caches, although a new shader-chain identity can make previously built shaders incompatible.
 
