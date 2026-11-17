@@ -1,5 +1,6 @@
 name: Import pinned NXNative X2 into HookLinkWindows
 # Imports the 25 changed upstream files at the fixed 7ba845ab8 revision.
+# Re-running this workflow validates an already imported revision without updating the pin.
 
 on:
   workflow_dispatch:
