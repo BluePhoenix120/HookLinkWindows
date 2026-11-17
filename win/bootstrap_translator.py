@@ -57,6 +57,7 @@ def verify_source_identity(root: Path) -> tuple[str, str]:
         raise RuntimeError(f'Invalid ENGINE_PIN.json: {exc}') from exc
     need(isinstance(meta, dict), 'ENGINE_PIN.json must contain an object')
     engine_sha = meta.get('nxnative_commit')
+    need(isinstance(engine_sha, str), 'NXNative pin must be a commit SHA string')
     need(meta.get('nxnative_repo') == _PINNED_REPO,
          'Unexpected NXNative source repository in ENGINE_PIN.json')
     need(meta.get('engine_location') == 'engine/',
