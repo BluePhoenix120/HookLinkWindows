@@ -150,7 +150,7 @@ def sync(target: str) -> None:
         'Upgrading the bundled engine to X2 requires a separate compatibility review and Windows end-to-end testing.',
         f'**HookLinkWindows now bundles the X2 NXNative engine revision '
         f'{chr(96)}{target}{chr(96)} plus Windows-specific changes.** '
-        'All 26 changed upstream files were imported from the pinned base after checking their original blob hashes, '
+        'All 25 changed upstream files were imported from the pinned base after checking their original blob hashes, '
         'and the exact target hashes were verified. The Windows-specific UIKit launcher and build toolchain remain '
         'separate from the upstream SwiftUI launcher. Windows end-to-end IPA and device tests are still required '
         'before treating every X2 feature or fix as verified.')
