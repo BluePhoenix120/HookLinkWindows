@@ -15,6 +15,7 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import traceback
+import webbrowser
 
 from hooklink_gui_core import (BuildConfig, PACKAGE_APP_ONLY, PACKAGE_FULL,
                                check_runtime_config, default_output_name,
@@ -30,11 +31,12 @@ from shader_chain_flow import run_build_chain_preflight
 from hooklink_progress import parse_build_progress
 from auto_workers import logical_workers
 from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
+from hooklink_dependency_manager import dependency_statuses, missing_python_packages
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.0.3'
+GUI_VERSION = 'Alpha V1.0.4'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -89,6 +91,10 @@ class App(tk.Tk):
         self._pending_build = None
         self._verified_shader_reuse = False
         self._auto_translator_attempted = False
+        self._dependency_report = None
+        self._deps_window = None
+        self._deps_rows_frame = None
+        self._deps_pip_button = None
         self._build_ui()
         self.package_mode.trace_add('write', self._mode_changed)
         self.work_var.trace_add('write', self._work_changed)
@@ -416,26 +422,57 @@ class App(tk.Tk):
         ttk.Button(frame, text='Close', command=window.destroy).pack(anchor='e', pady=(10, 0))
 
     def _open_toolchain_setup(self):
-        """Configure the local toolchain without asking users to edit files or run a shell."""
+        """Display a first-run dependency manager with vendor downloads and live statuses."""
+        if self._deps_window is not None and self._deps_window.winfo_exists():
+            self._deps_window.lift()
+            self._render_dependency_rows()
+            return
         window = tk.Toplevel(self)
-        window.title('HookLinkWindows — Toolchain setup')
-        window.geometry('890x400')
-        window.minsize(690, 350)
+        self._deps_window = window
+        window.title('HookLinkWindows — Windows dependency manager')
+        window.geometry('1050x750')
+        window.minsize(800, 580)
         window.transient(self)
-        frame = ttk.Frame(window, padding=18)
+        frame = ttk.Frame(window, padding=14)
         frame.pack(fill='both', expand=True)
         ttk.Label(frame, text='Set up Windows build tools', font=('Segoe UI', 15, 'bold')).pack(anchor='w')
-        ttk.Label(frame, text='Select an iPhoneOS 26+ SDK obtained separately under its applicable license. The SDK is never copied into this project.', wraplength=820).pack(anchor='w', pady=(7, 12))
+        ttk.Label(frame, text='Install missing tools using their official download pages. Return here and choose Check again. Downloads and installers are never run without your action.', wraplength=980).pack(anchor='w', pady=(6, 10))
+        toolbar = ttk.Frame(frame)
+        toolbar.pack(fill='x', pady=(0, 8))
+        ttk.Button(toolbar, text='Check again', command=self._doctor).pack(side='left', padx=(0, 8))
+        ttk.Label(toolbar, text='Results come from Check prerequisites; Not checked does not mean Missing.', foreground='#555').pack(side='left')
+        listing = ttk.LabelFrame(frame, text='Required and optional dependencies', padding=(6, 5))
+        listing.pack(fill='both', expand=True)
+        canvas = tk.Canvas(listing, highlightthickness=0, borderwidth=0)
+        scrollbar = ttk.Scrollbar(listing, orient='vertical', command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='right', fill='y')
+        canvas.pack(side='left', fill='both', expand=True)
+        rows = ttk.Frame(canvas)
+        self._deps_rows_frame = rows
+        inner_id = canvas.create_window((0, 0), window=rows, anchor='nw')
+        rows.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+        canvas.bind('<Configure>', lambda e: canvas.itemconfigure(inner_id, width=e.width))
+        self._render_dependency_rows()
+        actions = ttk.Frame(frame)
+        actions.pack(fill='x', pady=(8, 4))
+        self._deps_pip_button = ttk.Button(actions, text='Install missing Python packages', command=self._install_python_packages)
+        self._deps_pip_button.pack(side='left')
+        ttk.Label(actions, text='Uses the selected Python interpreter and public PyPI; confirmation required.', foreground='#555').pack(side='left', padx=8)
+        self._render_dependency_rows()
+        sdk_frame = ttk.LabelFrame(frame, text='iPhoneOS SDK (not bundled)', padding=9)
+        sdk_frame.pack(fill='x', pady=(8, 5))
+        ttk.Label(sdk_frame, text='Apple does not provide a Windows SDK installer. Apple SDK licensing restricts use on non-Apple computers. Review the terms before selecting an SDK.', wraplength=960, foreground='#555').pack(anchor='w', pady=(0, 6))
         try:
             current_sdk = configured_ios_sdk(ROOT)
         except ValueError as exc:
             messagebox.showerror('Toolchain settings error', str(exc), parent=window)
             current_sdk = ''
         sdk_var = tk.StringVar(value=current_sdk)
-        sdk_row = ttk.Frame(frame)
-        sdk_row.pack(fill='x', pady=(0, 7))
-        ttk.Label(sdk_row, text='iPhoneOS SDK directory:', width=24).pack(side='left')
-        ttk.Entry(sdk_row, textvariable=sdk_var).pack(side='left', fill='x', expand=True, padx=(0, 8))
+        sdk_row = ttk.Frame(sdk_frame)
+        sdk_row.pack(fill='x')
+        ttk.Label(sdk_row, text='Existing iPhoneOS 26+ SDK:').pack(side='left', padx=(0, 8))
+        ttk.Entry(sdk_row, textvariable=sdk_var).pack(side='left', fill='x', expand=True, padx=(0, 6))
 
         def browse_sdk():
             initial = sdk_var.get()
@@ -444,8 +481,6 @@ class App(tk.Tk):
             if folder:
                 sdk_var.set(folder)
 
-        ttk.Button(sdk_row, text='Browse…', command=browse_sdk).pack(side='left')
-
         def save_sdk():
             try:
                 sdk = save_ios_sdk(ROOT, sdk_var.get())
@@ -453,29 +488,69 @@ class App(tk.Tk):
                 messagebox.showerror('Invalid SDK directory', str(exc), parent=window)
                 return
             self._append(f'[SETUP] Validated iPhoneOS SDK saved: {sdk}\n')
-            messagebox.showinfo('SDK saved', 'iPhoneOS SDK path saved. Use Check prerequisites to verify the full toolchain.', parent=window)
             if os.environ.get('NXW_IOS_SDK'):
-                messagebox.showwarning('SDK environment override', 'NXW_IOS_SDK is set and takes precedence over the saved directory.', parent=window)
+                messagebox.showwarning('SDK environment override', 'NXW_IOS_SDK takes precedence over the saved directory.', parent=window)
+            self._doctor()
 
-        ttk.Button(frame, text='Save SDK directory', command=save_sdk).pack(anchor='w', pady=(0, 14))
-        ttk.Separator(frame, orient='horizontal').pack(fill='x', pady=(4, 12))
-        ttk.Label(frame, text='Graphics support', font=('Segoe UI', 11, 'bold')).pack(anchor='w')
-        ttk.Label(frame, text='HookLinkWindows prepares its graphics support automatically during Check prerequisites, once the required tools are installed. No manual compilation is needed. If automatic setup fails, you can retry here. Shader-chain metadata is backed up before changes.', wraplength=820).pack(anchor='w', pady=(5, 9))
-
-        def start_repair():
-            if self.busy:
-                messagebox.showwarning('Operation already running', 'Finish the current operation before retrying setup.', parent=window)
-                return
-            if not messagebox.askyesno('Retry graphics setup?',
-                                       'HookLinkWindows will prepare its graphics support using the installed developer tools. If the shader chain changes, old shader caches may not be reusable; existing game data and shader archives will not be deleted. A backup of the previous chain metadata will be saved.\n\nContinue?',
-                                       parent=window):
-                return
-            window.destroy()
-            self._start_graphics_setup(automatic=False)
-
-        ttk.Button(frame, text='Retry graphics setup', command=start_repair).pack(anchor='w', pady=(0, 10))
-        ttk.Label(frame, text='Other prerequisites are detected by Check prerequisites. The app does not download Apple SDKs or game files.', wraplength=820, foreground='#555').pack(anchor='w')
+        ttk.Button(sdk_row, text='Browse…', command=browse_sdk).pack(side='left', padx=(0, 5))
+        ttk.Button(sdk_row, text='Save', command=save_sdk).pack(side='left')
+        graphics = ttk.Frame(frame)
+        graphics.pack(fill='x', pady=(8, 0))
+        ttk.Label(graphics, text='Graphics support is automatically prepared from bundled source when its tools are available.').pack(side='left')
+        ttk.Button(graphics, text='Retry graphics setup', command=lambda: self._retry_graphics_setup(window)).pack(side='right')
         ttk.Button(frame, text='Close', command=window.destroy).pack(anchor='e', pady=(8, 0))
+
+    def _render_dependency_rows(self):
+        rows = self._deps_rows_frame
+        if rows is None or not rows.winfo_exists():
+            return
+        for widget in rows.winfo_children():
+            widget.destroy()
+        rows.columnconfigure(0, weight=1)
+        rows.columnconfigure(1, minsize=110)
+        rows.columnconfigure(2, weight=2)
+        rows.columnconfigure(3, minsize=105)
+        for i, (dep, status, detail) in enumerate(dependency_statuses(self._dependency_report)):
+            ttk.Label(rows, text=dep.label).grid(row=i, column=0, sticky='w', padx=(5, 8), pady=3)
+            ttk.Label(rows, text=status).grid(row=i, column=1, sticky='w', padx=5, pady=3)
+            ttk.Label(rows, text=detail, wraplength=365).grid(row=i, column=2, sticky='w', padx=5, pady=3)
+            if dep.url:
+                ttk.Button(rows, text='Download / info', command=lambda url=dep.url: webbrowser.open_new_tab(url)).grid(row=i, column=3, sticky='e', padx=5, pady=3)
+            elif dep.key == 'shader translator DLLs':
+                ttk.Label(rows, text='Automatic', foreground='#555').grid(row=i, column=3, sticky='e', padx=5, pady=3)
+        if self._deps_pip_button is not None and self._deps_pip_button.winfo_exists():
+            missing = missing_python_packages(self._dependency_report)
+            self._deps_pip_button.configure(state='normal' if missing and not self.busy else 'disabled')
+
+    def _install_python_packages(self):
+        if self.busy:
+            return
+        packages = missing_python_packages(self._dependency_report)
+        if not packages:
+            messagebox.showinfo('Python packages', 'No required missing Python packages were detected. Click Check again if you recently installed Python.')
+            return
+        try:
+            python = build_python()
+        except ValueError as exc:
+            messagebox.showerror('Python required', str(exc))
+            return
+        if not messagebox.askyesno('Install missing Python packages?',
+                                   'Install the following packages from public PyPI into the active Python environment?\n\n'
+                                   + ', '.join(packages)
+                                   + '\n\nThis modifies that Python environment and may require network access. Nothing will be installed without this confirmation.'):
+            return
+        self._spawn([python, '-m', 'pip', '--disable-pip-version-check', '--no-input', 'install', *packages],
+                    ROOT, os.environ.copy(), 'Python package setup')
+
+    def _retry_graphics_setup(self, parent):
+        if self.busy:
+            messagebox.showwarning('Operation in progress', 'Finish the current operation first.', parent=parent)
+            return
+        if not messagebox.askyesno('Retry graphics setup?',
+                                   'HookLinkWindows will prepare graphics support from bundled source. A new shader chain may require shader recompilation. Existing game files and shader archives will not be deleted, and chain metadata is backed up.\n\nContinue?',
+                                   parent=parent):
+            return
+        self._start_graphics_setup(automatic=False)
 
     def _start_graphics_setup(self, *, automatic: bool):
         """Prepare local graphics support inside the GUI; never require shell commands."""
@@ -669,7 +744,9 @@ class App(tk.Tk):
                     self._append(str(payload))
                 elif typ == 'prereqs':
                     self._append('\n' + payload.format() + '\n')
+                    self._dependency_report = payload
                     self._set_busy(False)
+                    self._render_dependency_rows()
                     self.state_var.set('Prerequisites passed (build unverified).' if payload.ready else 'Prerequisites need attention; see diagnostics and Toolchain setup.')
                     if not self._auto_translator_attempted and can_auto_prepare_translator(payload):
                         self._start_graphics_setup(automatic=True)
@@ -685,8 +762,9 @@ class App(tk.Tk):
                                       'Graphics setup could not be completed automatically. Open Toolchain setup to retry or inspect the missing developer tools.'
                                       if missing_graphics and not missing_sdk else
                                       'An iPhoneOS SDK and graphics support are still missing. Open Toolchain setup for instructions or retry.')
-                            if messagebox.askyesno('Build tools need setup', detail):
-                                self._open_toolchain_setup()
+                            if self._deps_window is None or not self._deps_window.winfo_exists():
+                                if messagebox.askyesno('Build tools need setup', detail):
+                                    self._open_toolchain_setup()
                 elif typ == 'chain_ready':
                     self._append(payload.log)
                     if self._pending_build is None:
@@ -736,6 +814,9 @@ class App(tk.Tk):
                         self.progress.configure(mode='determinate', value=0)
                         self.progress_var.set('Build failed — inspect diagnostics')
                     self._append(f'=== Exit code: {exit_code} ===\n')
+                    if title == 'Python package setup' and exit_code == 0:
+                        self._append('[SETUP] Python packages installed; checking prerequisites again.\n')
+                        self._doctor()
                     if title == 'Graphics support setup':
                         if exit_code == 0:
                             self._append('[SETUP] Graphics support is ready; checking prerequisites again.\n')
