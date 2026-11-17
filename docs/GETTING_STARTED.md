@@ -4,6 +4,12 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.0: X2-compatible graphics setup
+
+**Alpha 1.1.0 fixes an Alpha 1.0.9 regression** where `Check prerequisites` or `Toolchain setup… → Retry graphics setup` could report `Expected HookLink 2.0 source tree` before attempting to build the shader translator. The previous bootstrap hardcoded both HookLink `VERSION=2.0` and the X1 NXNative pin. The bootstrap now checks consistent **HookLink 3.0 + NXNative X2 `7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf`** metadata and validates the accompanying 25-file X2 provenance manifest. The earlier 2.0/pinned-engine pair is also recognized for older source checkouts; unknown or inconsistent engine pins remain rejected. This check runs before the external toolchain build and does not reset, download or rewrite the engine.
+
+**Test on Windows:** Use the complete Alpha 1.1.0 ZIP rather than only replacing the executable. In the same extracted tree, choose **Check prerequisites** to let graphics support build automatically, or **Toolchain setup… → Retry graphics setup** if earlier checks failed. The application must still have the required .NET, Metal, SPIRV-Cross and SDK components for their respective stages. The new validation is regression-tested in CI; a complete IPA build on the user's machine remains to be validated.
+
 ### NXNative upstream version shown in Alpha 1.0.9
 
 The main GUI shows **NXNative upstream base (pinned)** and its full 40-character commit SHA. The **View commit** button now constructs the link using **both** `nxnative_repo` and `nxnative_commit` from the bundled `ENGINE_PIN.json`, rather than assuming the original `seedds/nxnative` repository. The currently pinned repo is [dsi-hub/nxnative](https://github.com/dsi-hub/nxnative); this is the source of the pinned commit. The link works offline until the user chooses to open it, and the displayed value remains tied to the release's bundled metadata. A missing or malformed repository link disables the button rather than opening an unrelated website. This is the **upstream base**, not the latest upstream branch commit, and the Windows-modified `engine/` tree may differ from that base.
