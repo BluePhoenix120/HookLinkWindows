@@ -44,19 +44,27 @@ After manually installing an external Windows tool through its official download
 
 ## 3. Apple SDK and Metal tools — important distinction
 
-**Xcode.app is a macOS application. You cannot install and run the entire Xcode IDE on Windows.** For this Windows build you need an **iPhoneOS SDK folder** and Apple's **Metal Developer Tools for Windows**. The upstream Windows port documents a script `win/sdk/extract_xip.py` that can extract SDK files from an Xcode `.xip`; it also supports pointing to an SDK acquired on a Mac. Consult Apple's license terms before obtaining or using these files, particularly on non-Apple hardware; this project does not include or redistribute them.
+**Xcode.app is a macOS application, not a Windows installer.** On Windows this experimental project needs a locally available **iPhoneOS SDK 26+** folder and separate **Metal Developer Tools for Windows**. Apple's Xcode and Apple SDKs Agreement restricts SDK use, including on non-Apple-branded computers. The app does not grant rights to use Apple files, and users are responsible for confirming their usage complies with Apple's terms.
 
-Official sources: https://developer.apple.com/download/all/ and https://developer.apple.com/xcode/system-requirements/ . For the release tested here, an SDK from Xcode **27.2** was used; the upstream Windows doctor requires **26+**. The project's local `win/toolchain.json` or environment variables may point to a different SDK directory.
+The only supported source for the Xcode archive link is Apple's official Developer Downloads page: https://developer.apple.com/download/all/ . Users obtain the Xcode `.xip` archive themselves. **Alpha 1.0.5 adds an experimental local SDK import workflow in the Windows GUI:**
 
-**Do not copy the full Xcode application into the project or commit an SDK folder to GitHub.** Keep local SDK/compiler paths in ignored local config. The GUI checks that `win/toolchain.json` is readable but does not download or manage these files.
+1. In **Toolchain setup…**, choose **Import SDK from Xcode .xip…**. (An **Official Apple downloads** button opens Apple's official portal.)
+2. Select an already downloaded local Xcode `.xip`. Review the authorization/licensing warning and explicitly approve import only if your use is permitted.
+3. The app runs its bundled Windows extractor `engine/win/sdk/extract_xip.py` in a hidden background operation. The GUI streams the extractor's progress and errors; it does not install Xcode, download anything, or bundle Apple files.
+4. The importer extracts to a new, private directory under `engine/win/sdk/out/`, validates that exactly one complete iPhoneOS 26+ SDK was produced, and registers that directory automatically without overwriting an existing SDK or unrelated toolchain settings. It then reruns **Check prerequisites**.
+5. If the import fails, it discards its temporary extraction and preserves the previously configured SDK. The original `.xip` archive is never changed.
 
-## 4. Toolchain setup in Alpha 1.0.4
+Extraction may require considerable temporary disk space and take significant time because the Xcode archive itself is large and the upstream extractor scans it. Cancellation by forcibly terminating a process can leave a temporary folder to clean up. A real Xcode 27.x import on a clean Windows installation still requires end-to-end testing; the offline tests do **not** exercise Apple's proprietary archive bytes.
+
+Alternatively, select an existing SDK directory using **Browse… → Save**, subject to the same licensing restrictions. Never commit SDKs, Xcode files, or private game assets to GitHub.
+
+## 4. Toolchain setup in Alpha 1.0.5
 
 **No command-line compilation or JSON editing is needed for the shader translator.** Click **Check prerequisites** in the GUI. When the `dmsh_xlate.dll` translator is absent and the required .NET 10 SDK, SPIRV-Cross and Apple Metal compilers are already available, HookLinkWindows automatically prepares graphics support from the bundled source, verifies it, and backs up the local shader-chain metadata before synchronization. The progress and any errors appear in **Build output and diagnostics**. This does not delete the game or shader caches, although a new shader-chain identity can make previously built shaders incompatible.
 
 If automatic graphics setup fails, open **Toolchain setup… → Retry graphics setup**. For an existing translator, automatic setup never overwrites it: any manual retry that may regenerate a shader chain requires confirmation.
 
-The **iPhoneOS 26+ SDK is a separate prerequisite**; it is *not* needed for preparing the translator. It is not bundled with HookLinkWindows. Obtain it from an authorized Apple Xcode distribution and comply with the applicable Apple license. The GUI provides **Toolchain setup… → Browse… → Save** to register an already extracted SDK. **Download / info** for this item opens Apple's information/download portal, not a Windows SDK installer; Apple's licensing rules remain applicable. Automatic SDK acquisition and extraction are not yet implemented.
+The **iPhoneOS 26+ SDK is a separate prerequisite**; it is *not* needed for preparing the translator. It is not bundled with HookLinkWindows. Obtain it from an authorized Apple Xcode distribution and comply with the applicable Apple license. The GUI provides **Toolchain setup… → Browse… → Save** for an existing SDK, or **Import SDK from Xcode .xip…** to import a locally selected archive without using command-line tools. **Download / info** for this item opens Apple's information/download portal, not a Windows SDK installer; Apple's licensing rules remain applicable. The user-controlled Xcode archive importer handles extraction and registration locally; the application does not automatically obtain Xcode or Apple SDK files.
 
 The advanced developer path `engine/win/toolchain.json` also supports nonstandard paths (`ios_sdk`, `llvm`, `metal_tools`, `spirv_cross_dir`, `zstd_dir`), but everyday users should not need to edit this file for SDK selection or graphics setup. Python 3 and the separately installed compiler/SDK tools remain required for actual IPA compilation.
 
