@@ -42,8 +42,15 @@ def host_sources(game_h_dir):
     msl.parent.mkdir(parents=True, exist_ok=True)
     shim_env = dict(os.environ)
     shim_env['PYTHONPATH'] = str(WIN / 'pyshim') + os.pathsep + shim_env.get('PYTHONPATH', '')
-    msl_cmd = [sys.executable, str(DM / 'gfx/tools/host_msl.py'), '--sdk', 'iphoneos', '--min', str(tc.setting('ios_deployment', tc.IOS_DEPLOYMENT)), str(msl)] + [str(p) for p in sorted((DM / 'gfx/msl').glob('*.metal'))]
-    if run_host_msl(msl_cmd, shim_env): die('iOS host Metal shader generation failed; see compiler diagnostics above in build_ipa.log')
+    msl_sources = sorted((DM / 'gfx/msl').glob('*.metal'))
+    msl_cmd = [sys.executable, str(DM / 'gfx/tools/host_msl.py'), '--sdk', 'iphoneos', '--min', str(tc.setting('ios_deployment', tc.IOS_DEPLOYMENT)), str(msl)] + [str(p) for p in msl_sources]
+    # Apple's Windows Metal compiler can reject paths with spaces, even when
+    # Python supplies properly separated argv arguments. Stage only these small
+    # host shader sources, the output header and temporary metallibs in a
+    # whitespace-free directory, then publish the header back to the checkout.
+    staging = Path(os.environ['W']) / 'build' / 'ios' / 'host_msl_stage' if os.environ.get('W') else None
+    if run_host_msl(msl_cmd, shim_env, output_path=msl, source_paths=msl_sources, staging_parent=staging):
+        die('iOS host Metal shader generation failed; see compiler diagnostics above in build_ipa.log')
     want_src = 'SRC=main.c loader.c hle.c crash.c probe.c thread.c save_sync.c memstat.m haptics_apple.m mic_apple.m pad_switch2_apple.m $(sort $(wildcard hle_*.c)) front_mac.m web_apple.m entry.S'
     want_gfx = 'GFX=$(sort $(wildcard ../gfx/*.c ../gfx/nvn/*.c ../gfx/nvn/*.m ../gfx/nvn/*.S ../gfx/tex/*.c ../gfx/tex/*.m ../gfx/vk/*.m ../gfx/gl/*.m))'
     for w in (want_src, want_gfx):
