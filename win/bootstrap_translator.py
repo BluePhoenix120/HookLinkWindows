@@ -30,6 +30,60 @@ OUTPUTS = (
     'Ryujinx.Common.dll', 'Ryujinx.Graphics.Shader.dll', 'Spv.Generator.dll',
 )
 
+# The original Alpha 1.0.0 bootstrap recognized only HookLink 2.0.
+# Keep the check strict, but also accept the explicitly imported X2 engine.
+# No branch HEAD or Git checkout is used to infer the engine version.
+_SUPPORTED_ENGINE_BASES = {
+    ('2.0', '3a28152fe7052c9f45ede460022d39be6c91e3cf'),
+    ('3.0', '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'),
+}
+_PINNED_REPO = 'https://github.com/dsi-hub/nxnative.git'
+
+
+def verify_source_identity(root: Path) -> tuple[str, str]:
+    """Validate the HookLink release and recorded NXNative revision as a pair.
+
+    Deliberately fail closed when metadata is missing, mismatched or unknown,
+    rather than treating any VERSION or arbitrary engine SHA as approved.
+    """
+    version_file = root / 'VERSION'
+    need(version_file.is_file(), 'Missing HookLink VERSION file')
+    version = version_file.read_text(encoding='utf-8-sig').strip()
+    pin_file = root / 'ENGINE_PIN.json'
+    need(pin_file.is_file(), 'Missing ENGINE_PIN.json: cannot verify the bundled NXNative engine')
+    try:
+        meta = json.loads(pin_file.read_text(encoding='utf-8-sig'))
+    except (ValueError, UnicodeError, OSError) as exc:
+        raise RuntimeError(f'Invalid ENGINE_PIN.json: {exc}') from exc
+    need(isinstance(meta, dict), 'ENGINE_PIN.json must contain an object')
+    engine_sha = meta.get('nxnative_commit')
+    need(meta.get('nxnative_repo') == _PINNED_REPO,
+         'Unexpected NXNative source repository in ENGINE_PIN.json')
+    need(meta.get('engine_location') == 'engine/',
+         'Unexpected NXNative engine directory in ENGINE_PIN.json')
+    need(meta.get('hooklink_base') == version,
+         f'HookLink VERSION {version!r} disagrees with ENGINE_PIN.json hooklink_base')
+    need((version, engine_sha) in _SUPPORTED_ENGINE_BASES,
+         f'Unsupported HookLink {version!r} / NXNative {str(engine_sha)[:12]!r} pair; '
+         'use an unmodified complete HookLinkWindows release')
+
+    if version == '3.0':
+        manifest = root / 'ENGINE_PIN_FILES.json'
+        need(manifest.is_file(), 'X2 engine provenance manifest missing (ENGINE_PIN_FILES.json)')
+        try:
+            record = json.loads(manifest.read_text(encoding='utf-8-sig'))
+        except (ValueError, UnicodeError, OSError) as exc:
+            raise RuntimeError(f'Invalid ENGINE_PIN_FILES.json: {exc}') from exc
+        need(isinstance(record, dict)
+             and record.get('nxnative_commit') == engine_sha
+             and record.get('nxnative_repo') == _PINNED_REPO
+             and isinstance(record.get('changed_paths'), list)
+             and len(record['changed_paths']) == 25,
+             'X2 engine manifest does not match pinned revision; use the complete release')
+    print(f'PASS: HookLink {version}, pinned NXNative {engine_sha}', flush=True)
+    return version, engine_sha
+
+
 
 def need(condition: bool, message: str) -> None:
     if not condition:
@@ -128,13 +182,7 @@ def inspect(root: Path, explicit_spirv: str | None) -> tuple[dict, dict]:
     for f in ('Program.cs', 'dmsh_xlate.csproj'):
         need((p['project'] / f).is_file(), f'Missing translator source: {f}')
     need((p['shim'] / 'sitecustomize.py').is_file(), 'Windows compatibility shim missing')
-    need((root / 'VERSION').is_file() and (root / 'VERSION').read_text().strip() == '2.0',
-         'Expected HookLink 2.0 source tree')
-    manifest = root / 'ENGINE_PIN.json'
-    if manifest.is_file():
-        meta = json.loads(manifest.read_text(encoding='utf-8'))
-        need(meta.get('nxnative_commit') == '3a28152fe7052c9f45ede460022d39be6c91e3cf',
-             'Unexpected engine release pin')
+    verify_source_identity(root)
     expected = source_sha(p['project'])
     print('Translator source fingerprint:', expected)
     dotnet = shutil.which('dotnet')
