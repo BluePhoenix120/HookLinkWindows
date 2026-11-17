@@ -14,6 +14,7 @@ from pathlib import Path
 WIN = Path(__file__).resolve().parent
 sys.path.insert(0, str(WIN))
 import toolchain as tc
+from metal_host_diagnostics import run_host_msl
 
 REPO = tc.REPO
 DM = REPO / 'dm'
@@ -42,7 +43,7 @@ def host_sources(game_h_dir):
     shim_env = dict(os.environ)
     shim_env['PYTHONPATH'] = str(WIN / 'pyshim') + os.pathsep + shim_env.get('PYTHONPATH', '')
     msl_cmd = [sys.executable, str(DM / 'gfx/tools/host_msl.py'), '--sdk', 'iphoneos', '--min', str(tc.setting('ios_deployment', tc.IOS_DEPLOYMENT)), str(msl)] + [str(p) for p in sorted((DM / 'gfx/msl').glob('*.metal'))]
-    if subprocess.run(msl_cmd, env=shim_env).returncode: die('iOS host Metal shader generation failed')
+    if run_host_msl(msl_cmd, shim_env): die('iOS host Metal shader generation failed; see compiler diagnostics above in build_ipa.log')
     want_src = 'SRC=main.c loader.c hle.c crash.c probe.c thread.c save_sync.c memstat.m haptics_apple.m mic_apple.m pad_switch2_apple.m $(sort $(wildcard hle_*.c)) front_mac.m web_apple.m entry.S'
     want_gfx = 'GFX=$(sort $(wildcard ../gfx/*.c ../gfx/nvn/*.c ../gfx/nvn/*.m ../gfx/nvn/*.S ../gfx/tex/*.c ../gfx/tex/*.m ../gfx/vk/*.m ../gfx/gl/*.m))'
     for w in (want_src, want_gfx):
