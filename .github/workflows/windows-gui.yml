@@ -27,7 +27,7 @@ jobs:
       - name: Verify source layout and check private artifacts
         shell: pwsh
         run: |
-          $required = @('win/hooklink_gui.pyw', 'win/hooklink_portable.py', 'config/iphone-oot.env', 'engine/win/build_ipa_windows.py', 'engine/win/build_app.py', 'engine/win/doctor.py', 'engine/win/sdk/extract_xip.py', 'engine/dm/host/Makefile', 'LICENSE', 'engine/LICENSE')
+          $required = @('ENGINE_PIN.json', 'win/hooklink_engine_pin.py', 'win/hooklink_gui.pyw', 'win/hooklink_portable.py', 'config/iphone-oot.env', 'engine/win/build_ipa_windows.py', 'engine/win/build_app.py', 'engine/win/doctor.py', 'engine/win/sdk/extract_xip.py', 'engine/dm/host/Makefile', 'LICENSE', 'engine/LICENSE')
           foreach ($path in $required) { if (!(Test-Path -LiteralPath $path)) { throw "Missing required source file: $path" } }
           python -B tools/release_audit.py .
           if ($LASTEXITCODE -ne 0) { throw 'Source-only filename audit failed' }
@@ -60,7 +60,7 @@ jobs:
           try { [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, (Join-Path $PWD 'dist/HookLinkWindows.exe'), 'HookLinkWindows.exe', [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null } finally { $archive.Dispose() }
           $verify = [System.IO.Compression.ZipFile]::OpenRead($zip)
           try {
-            foreach ($entry in @('HookLinkWindows.exe','LICENSE','engine/LICENSE','win/hooklink_gui.pyw','engine/win/build_ipa_windows.py','engine/win/sdk/extract_xip.py','config/iphone-oot.env')) { if (!$verify.GetEntry($entry)) { throw "Incomplete release archive: $entry" } }
+            foreach ($entry in @('HookLinkWindows.exe','LICENSE','engine/LICENSE','ENGINE_PIN.json','win/hooklink_engine_pin.py','win/hooklink_gui.pyw','engine/win/build_ipa_windows.py','engine/win/sdk/extract_xip.py','config/iphone-oot.env')) { if (!$verify.GetEntry($entry)) { throw "Incomplete release archive: $entry" } }
             Write-Host "Complete release ZIP: $zip ($([Math]::Round((Get-Item $zip).Length/1MB, 1)) MiB)"
           } finally { $verify.Dispose() }
       - name: Upload complete Windows package
