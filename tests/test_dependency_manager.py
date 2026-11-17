@@ -66,7 +66,7 @@ class DependencyManagerTests(unittest.TestCase):
         self.assertIn("'--no-input', 'install', *packages]", gui)
         self.assertIn('webbrowser.open_new_tab(url)', gui)
         self.assertIn('self._render_dependency_rows()', gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.0.8'", gui)
+        self.assertIn("GUI_VERSION = 'Alpha V1.0.9'", gui)
         self.assertNotIn('subprocess.run([\'powershell\'', gui)
 
 
