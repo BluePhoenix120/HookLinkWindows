@@ -41,7 +41,7 @@ class SDKImportTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'not a valid'):
                 validate_xip_archive(file)
             file.write_bytes(b'xar!test')
-            self.assertEqual(validate_xip_archive(file), file)
+            self.assertEqual(validate_xip_archive(file), file.resolve(strict=False))
             with self.assertRaisesRegex(ValueError, 'Select a downloaded'):
                 validate_xip_archive(root / 'not-here.xip')
 
