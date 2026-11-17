@@ -10,7 +10,7 @@ Use the project's GitHub **Code → Download ZIP**, extract it to any writable f
 
 Double-click `HookLinkWindows.exe`. For the compact native launcher, Python must be installed; the separate PyInstaller EXE distributed by a successful Windows GitHub Actions build can open the GUI without Python, but compiling a game still requires Python and the toolchain. If Windows SmartScreen warns about an unsigned new application, verify the release's source and download origin before deciding whether to run it.
 
-The single **Check prerequisites** action first inspects the repository layout and reports missing files with the reason and fix. If the checkout is complete, it then checks compilers and SDKs. The **Setup guide** remains available from the GUI.
+The single **Check prerequisites** action first checks the repository layout, then checks compilers and SDKs. Open **Toolchain setup…** for the Alpha 1.0.4 dependency manager, which displays each actual installed/missing/optional status with official tool download/info links and a **Check again** button. The **Setup guide** remains available from the GUI.
 
 ## 2. Windows build prerequisites
 
@@ -36,15 +36,11 @@ Most tools must be installed separately. After each installation, restart the GU
 
 The prerequisite checker tests what is present and compatible enough to attempt a build; it does **not** install anything, verify Apple license rights, confirm user game ownership, sign an IPA, or promise device compatibility.
 
-### Verify Python packages (one command)
+### Install Python packages without a terminal (Alpha 1.0.4)
 
-Run in PowerShell or Windows Terminal if the checker reports missing Python modules:
+Open **Toolchain setup…** and click **Check again** to refresh the dependency list. When required Python modules are missing, **Install missing Python packages** installs only the missing packages from the explicit project allowlist after the user confirms the package names and the change to the active Python environment. No command-line instructions or JSON edits are necessary. Optional Pillow is not automatically installed. The operation uses public PyPI and needs an internet connection. A failed pip operation is reported in the existing GUI diagnostics; no third-party executables or Apple SDKs are downloaded silently.
 
-```powershell
-python -m pip install --upgrade lz4 capstone fonttools pillow backports.zstd
-```
-
-For Python 3.14+, `compression.zstd` is expected; the extra backport may not be needed. Use a Python interpreter supported by the engine. This single command installs only Python packages, not external SDKs or compilers.
+After manually installing an external Windows tool through its official download page, reopen or restart HookLinkWindows if needed so PATH changes take effect and click **Check again**. A green dependency result is based on the actual doctor check, not simply on the presence of an installation directory.
 
 ## 3. Apple SDK and Metal tools — important distinction
 
@@ -54,13 +50,13 @@ Official sources: https://developer.apple.com/download/all/ and https://develope
 
 **Do not copy the full Xcode application into the project or commit an SDK folder to GitHub.** Keep local SDK/compiler paths in ignored local config. The GUI checks that `win/toolchain.json` is readable but does not download or manage these files.
 
-## 4. Toolchain setup in Alpha 1.0.3
+## 4. Toolchain setup in Alpha 1.0.4
 
 **No command-line compilation or JSON editing is needed for the shader translator.** Click **Check prerequisites** in the GUI. When the `dmsh_xlate.dll` translator is absent and the required .NET 10 SDK, SPIRV-Cross and Apple Metal compilers are already available, HookLinkWindows automatically prepares graphics support from the bundled source, verifies it, and backs up the local shader-chain metadata before synchronization. The progress and any errors appear in **Build output and diagnostics**. This does not delete the game or shader caches, although a new shader-chain identity can make previously built shaders incompatible.
 
 If automatic graphics setup fails, open **Toolchain setup… → Retry graphics setup**. For an existing translator, automatic setup never overwrites it: any manual retry that may regenerate a shader chain requires confirmation.
 
-The **iPhoneOS 26+ SDK is a separate prerequisite**; it is *not* needed for preparing the translator. It is not bundled with HookLinkWindows. Obtain it from an authorized Apple Xcode distribution and comply with the applicable Apple license. The GUI currently provides **Toolchain setup… → Browse… → Save SDK directory** to register an already extracted SDK. Automatic SDK acquisition and extraction are not yet implemented.
+The **iPhoneOS 26+ SDK is a separate prerequisite**; it is *not* needed for preparing the translator. It is not bundled with HookLinkWindows. Obtain it from an authorized Apple Xcode distribution and comply with the applicable Apple license. The GUI provides **Toolchain setup… → Browse… → Save** to register an already extracted SDK. **Download / info** for this item opens Apple's information/download portal, not a Windows SDK installer; Apple's licensing rules remain applicable. Automatic SDK acquisition and extraction are not yet implemented.
 
 The advanced developer path `engine/win/toolchain.json` also supports nonstandard paths (`ios_sdk`, `llvm`, `metal_tools`, `spirv_cross_dir`, `zstd_dir`), but everyday users should not need to edit this file for SDK selection or graphics setup. Python 3 and the separately installed compiler/SDK tools remain required for actual IPA compilation.
 
