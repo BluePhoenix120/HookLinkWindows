@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     outputs:
-      synced_sha: \${{ steps.publish.outputs.synced_sha }}
+      synced_sha: ${{ steps.publish.outputs.synced_sha }}
     steps:
       - name: Checkout complete Windows fork
         uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
       - name: Checkout imported X2 engine source
         uses: actions/checkout@v4
         with:
-          ref: \${{ needs.sync-engine.outputs.synced_sha }}
+          ref: ${{ needs.sync-engine.outputs.synced_sha }}
       - name: Install Python for GUI validation
         uses: actions/setup-python@v5
         with:
