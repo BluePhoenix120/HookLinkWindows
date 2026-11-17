@@ -29,11 +29,12 @@ from hooklink_prereqs import run_prerequisite_check
 from shader_chain_flow import run_build_chain_preflight
 from hooklink_progress import parse_build_progress
 from auto_workers import logical_workers
+from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.0.1'
+GUI_VERSION = 'Alpha V1.0.2'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -151,7 +152,8 @@ class App(tk.Tk):
         self.build_btn = ttk.Button(actions, text='Build IPA', command=self._start_build)
         self.stop_btn = ttk.Button(actions, text='Stop', command=self._stop, state='disabled')
         self.guide_btn = ttk.Button(actions, text='Setup guide', command=self._open_setup_guide)
-        for b in (self.doctor_btn, self.guide_btn, self.preview_btn, self.build_btn, self.stop_btn):
+        self.toolchain_btn = ttk.Button(actions, text='Toolchain setup…', command=self._open_toolchain_setup)
+        for b in (self.doctor_btn, self.toolchain_btn, self.guide_btn, self.preview_btn, self.build_btn, self.stop_btn):
             b.pack(side='left', padx=(0, 8))
 
         ttk.Label(outer, textvariable=self.state_var, foreground='#163f75', wraplength=920).pack(fill='x', pady=(2, 4))
@@ -339,7 +341,7 @@ class App(tk.Tk):
 
     def _set_busy(self, busy: bool):
         self.busy = busy
-        for b in (self.doctor_btn, self.preview_btn, self.build_btn):
+        for b in (self.doctor_btn, self.toolchain_btn, self.preview_btn, self.build_btn):
             b.configure(state='disabled' if busy else 'normal')
         self.stop_btn.configure(state='normal' if busy else 'disabled')
         if busy:
@@ -411,6 +413,75 @@ class App(tk.Tk):
         scrollbar.configure(command=viewer.yview)
         viewer.pack(side='left', fill='both', expand=True)
         ttk.Button(frame, text='Close', command=window.destroy).pack(anchor='e', pady=(10, 0))
+
+    def _open_toolchain_setup(self):
+        """Configure the local toolchain without asking users to edit files or run a shell."""
+        window = tk.Toplevel(self)
+        window.title('HookLinkWindows — Toolchain setup')
+        window.geometry('890x400')
+        window.minsize(690, 350)
+        window.transient(self)
+        frame = ttk.Frame(window, padding=18)
+        frame.pack(fill='both', expand=True)
+        ttk.Label(frame, text='Set up Windows build tools', font=('Segoe UI', 15, 'bold')).pack(anchor='w')
+        ttk.Label(frame, text='Select an iPhoneOS 26+ SDK obtained separately under its applicable license. The SDK is never copied into this project.', wraplength=820).pack(anchor='w', pady=(7, 12))
+        try:
+            current_sdk = configured_ios_sdk(ROOT)
+        except ValueError as exc:
+            messagebox.showerror('Toolchain settings error', str(exc), parent=window)
+            current_sdk = ''
+        sdk_var = tk.StringVar(value=current_sdk)
+        sdk_row = ttk.Frame(frame)
+        sdk_row.pack(fill='x', pady=(0, 7))
+        ttk.Label(sdk_row, text='iPhoneOS SDK directory:', width=24).pack(side='left')
+        ttk.Entry(sdk_row, textvariable=sdk_var).pack(side='left', fill='x', expand=True, padx=(0, 8))
+
+        def browse_sdk():
+            initial = sdk_var.get()
+            folder = filedialog.askdirectory(parent=window, title='Select the iPhoneOS.sdk directory',
+                                             initialdir=initial if Path(initial).is_dir() else str(ROOT.parent))
+            if folder:
+                sdk_var.set(folder)
+
+        ttk.Button(sdk_row, text='Browse…', command=browse_sdk).pack(side='left')
+
+        def save_sdk():
+            try:
+                sdk = save_ios_sdk(ROOT, sdk_var.get())
+            except (ValueError, OSError) as exc:
+                messagebox.showerror('Invalid SDK directory', str(exc), parent=window)
+                return
+            self._append(f'[SETUP] Validated iPhoneOS SDK saved: {sdk}\n')
+            messagebox.showinfo('SDK saved', 'iPhoneOS SDK path saved. Use Check prerequisites to verify the full toolchain.', parent=window)
+            if os.environ.get('NXW_IOS_SDK'):
+                messagebox.showwarning('SDK environment override', 'NXW_IOS_SDK is set and takes precedence over the saved directory.', parent=window)
+
+        ttk.Button(frame, text='Save SDK directory', command=save_sdk).pack(anchor='w', pady=(0, 14))
+        ttk.Separator(frame, orient='horizontal').pack(fill='x', pady=(4, 12))
+        ttk.Label(frame, text='Shader translator', font=('Segoe UI', 11, 'bold')).pack(anchor='w')
+        ttk.Label(frame, text='If Check prerequisites reports dmsh_xlate.dll missing, compile it from the bundled source using .NET 10. The app verifies it and backs up shader-chain metadata before synchronizing.', wraplength=820).pack(anchor='w', pady=(5, 9))
+
+        def start_repair():
+            if self.busy:
+                messagebox.showwarning('Operation already running', 'Finish the current operation before repairing the translator.', parent=window)
+                return
+            if not messagebox.askyesno('Repair shader translator?',
+                                       'Compile the translator from bundled source and synchronize its local shader chain? A new chain may require shader recompilation. Existing game files and shader archives will not be deleted. The old chain metadata will be backed up.\n\nProceed?',
+                                       parent=window):
+                return
+            try:
+                python = build_python()
+            except ValueError as exc:
+                messagebox.showerror('Python required', str(exc), parent=window)
+                return
+            window.destroy()
+            self._spawn([python, '-B', str(ROOT / 'win' / 'bootstrap_translator.py'),
+                         '--root', str(ROOT), '--install', '--accept-new-chain'],
+                        ROOT, os.environ.copy(), 'Shader translator setup')
+
+        ttk.Button(frame, text='Build / repair shader translator', command=start_repair).pack(anchor='w', pady=(0, 10))
+        ttk.Label(frame, text='Other prerequisites are detected by Check prerequisites. The app does not download Apple SDKs or game files.', wraplength=820, foreground='#555').pack(anchor='w')
+        ttk.Button(frame, text='Close', command=window.destroy).pack(anchor='e', pady=(8, 0))
 
     def _doctor(self):
         if self.busy:
@@ -586,7 +657,12 @@ class App(tk.Tk):
                 elif typ == 'prereqs':
                     self._append('\n' + payload.format() + '\n')
                     self._set_busy(False)
-                    self.state_var.set('Prerequisites passed (build unverified).' if payload.ready else 'Prerequisites need attention; see diagnostics and Setup guide.')
+                    self.state_var.set('Prerequisites passed (build unverified).' if payload.ready else 'Prerequisites need attention; use Toolchain setup for SDK or translator repair.')
+                    if not payload.ready and any(('iPhoneOS SDK' in item['name'] or 'shader translator' in item['name'].lower())
+                                                  and item['required'] and not item['ok'] for item in payload.entries):
+                        if messagebox.askyesno('Build tools need setup',
+                                               'An iPhoneOS SDK or shader translator is missing. Open Toolchain setup to select the SDK folder or repair the translator inside HookLinkWindows?'):
+                            self._open_toolchain_setup()
                 elif typ == 'chain_ready':
                     self._append(payload.log)
                     if self._pending_build is None:
@@ -636,6 +712,9 @@ class App(tk.Tk):
                         self.progress.configure(mode='determinate', value=0)
                         self.progress_var.set('Build failed — inspect diagnostics')
                     self._append(f'=== Exit code: {exit_code} ===\n')
+                    if exit_code == 0 and title == 'Shader translator setup':
+                        self._append('[SETUP] Translator repair completed; checking prerequisites again.\n')
+                        self._doctor()
                     if exit_code == 0 and title in ('Build and app-only packaging', 'Build and native app-only packaging'):
                         messagebox.showinfo('App-only IPA created', 'Build complete. The app-only IPA and its iPhone transfer folder are ready. See the build log for their locations.')
                 elif typ == 'error':
