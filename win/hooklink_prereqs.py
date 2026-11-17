@@ -78,8 +78,11 @@ def run_prerequisite_check(root: Path, python: str, timeout: int = 150) -> Check
     if not doctor.is_file():
         return CheckReport(blockers=['Complete Windows port missing: win/doctor.py. Extract or clone the full HookLinkWindows source tree, not only its GUI add-on.'])
     try:
+        # The GUI must not flash a console window each time prerequisites are checked.
+        # This flag is Windows-only; subprocess.CREATE_NO_WINDOW is absent on POSIX.
+        kwargs = {'creationflags': subprocess.CREATE_NO_WINDOW} if sys.platform == 'win32' else {}
         p = subprocess.run([str(python), str(doctor), '--json'], cwd=str(root), text=True,
-                           errors='replace', capture_output=True, timeout=timeout, check=False)
+                           errors='replace', capture_output=True, timeout=timeout, check=False, **kwargs)
     except (OSError, subprocess.TimeoutExpired) as exc:
         return CheckReport(blockers=[f'Cannot start dependency checker using {python}: {exc}. Verify Python 3.10+ and the launcher configuration.'])
     stdout = p.stdout.strip()
