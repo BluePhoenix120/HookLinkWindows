@@ -25,7 +25,7 @@ from hooklink_gui_core import (BuildConfig, PACKAGE_APP_ONLY, PACKAGE_FULL,
                                verify_build_config)
 from hooklink_portable import (SettingsStore, check_project_installation, locate_engine_root,
                                DEFAULT_IPA_NAME, DEFAULT_WORK_NAME, native_display_path)
-from hooklink_prereqs import run_prerequisite_check
+from hooklink_prereqs import can_auto_prepare_translator, run_prerequisite_check
 from shader_chain_flow import run_build_chain_preflight
 from hooklink_progress import parse_build_progress
 from auto_workers import logical_workers
@@ -34,7 +34,7 @@ from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.0.2'
+GUI_VERSION = 'Alpha V1.0.3'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -88,6 +88,7 @@ class App(tk.Tk):
         self._pending_package = None
         self._pending_build = None
         self._verified_shader_reuse = False
+        self._auto_translator_attempted = False
         self._build_ui()
         self.package_mode.trace_add('write', self._mode_changed)
         self.work_var.trace_add('write', self._work_changed)
@@ -458,30 +459,42 @@ class App(tk.Tk):
 
         ttk.Button(frame, text='Save SDK directory', command=save_sdk).pack(anchor='w', pady=(0, 14))
         ttk.Separator(frame, orient='horizontal').pack(fill='x', pady=(4, 12))
-        ttk.Label(frame, text='Shader translator', font=('Segoe UI', 11, 'bold')).pack(anchor='w')
-        ttk.Label(frame, text='If Check prerequisites reports dmsh_xlate.dll missing, compile it from the bundled source using .NET 10. The app verifies it and backs up shader-chain metadata before synchronizing.', wraplength=820).pack(anchor='w', pady=(5, 9))
+        ttk.Label(frame, text='Graphics support', font=('Segoe UI', 11, 'bold')).pack(anchor='w')
+        ttk.Label(frame, text='HookLinkWindows prepares its graphics support automatically during Check prerequisites, once the required tools are installed. No manual compilation is needed. If automatic setup fails, you can retry here. Shader-chain metadata is backed up before changes.', wraplength=820).pack(anchor='w', pady=(5, 9))
 
         def start_repair():
             if self.busy:
-                messagebox.showwarning('Operation already running', 'Finish the current operation before repairing the translator.', parent=window)
+                messagebox.showwarning('Operation already running', 'Finish the current operation before retrying setup.', parent=window)
                 return
-            if not messagebox.askyesno('Repair shader translator?',
-                                       'Compile the translator from bundled source and synchronize its local shader chain? A new chain may require shader recompilation. Existing game files and shader archives will not be deleted. The old chain metadata will be backed up.\n\nProceed?',
+            if not messagebox.askyesno('Retry graphics setup?',
+                                       'HookLinkWindows will prepare its graphics support using the installed developer tools. If the shader chain changes, old shader caches may not be reusable; existing game data and shader archives will not be deleted. A backup of the previous chain metadata will be saved.\n\nContinue?',
                                        parent=window):
                 return
-            try:
-                python = build_python()
-            except ValueError as exc:
-                messagebox.showerror('Python required', str(exc), parent=window)
-                return
             window.destroy()
-            self._spawn([python, '-B', str(ROOT / 'win' / 'bootstrap_translator.py'),
-                         '--root', str(ROOT), '--install', '--accept-new-chain'],
-                        ROOT, os.environ.copy(), 'Shader translator setup')
+            self._start_graphics_setup(automatic=False)
 
-        ttk.Button(frame, text='Build / repair shader translator', command=start_repair).pack(anchor='w', pady=(0, 10))
+        ttk.Button(frame, text='Retry graphics setup', command=start_repair).pack(anchor='w', pady=(0, 10))
         ttk.Label(frame, text='Other prerequisites are detected by Check prerequisites. The app does not download Apple SDKs or game files.', wraplength=820, foreground='#555').pack(anchor='w')
         ttk.Button(frame, text='Close', command=window.destroy).pack(anchor='e', pady=(8, 0))
+
+    def _start_graphics_setup(self, *, automatic: bool):
+        """Prepare local graphics support inside the GUI; never require shell commands."""
+        if self.busy:
+            return
+        self._auto_translator_attempted = True
+        try:
+            interpreter = build_python()
+        except ValueError as exc:
+            self._append('[SETUP] Cannot prepare graphics support: ' + str(exc) + '\n')
+            self.state_var.set('Graphics setup requires Python; see prerequisites.')
+            return
+        if automatic:
+            self._append('[SETUP] Graphics support is missing; preparing it automatically. The existing game data and shader archives will be preserved.\n')
+        else:
+            self._append('[SETUP] Retrying graphics support setup from the GUI.\n')
+        self._spawn([interpreter, '-B', str(ROOT / 'win' / 'bootstrap_translator.py'),
+                     '--root', str(ROOT), '--install', '--accept-new-chain'],
+                    ROOT, os.environ.copy(), 'Graphics support setup')
 
     def _doctor(self):
         if self.busy:
@@ -657,12 +670,23 @@ class App(tk.Tk):
                 elif typ == 'prereqs':
                     self._append('\n' + payload.format() + '\n')
                     self._set_busy(False)
-                    self.state_var.set('Prerequisites passed (build unverified).' if payload.ready else 'Prerequisites need attention; use Toolchain setup for SDK or translator repair.')
-                    if not payload.ready and any(('iPhoneOS SDK' in item['name'] or 'shader translator' in item['name'].lower())
-                                                  and item['required'] and not item['ok'] for item in payload.entries):
-                        if messagebox.askyesno('Build tools need setup',
-                                               'An iPhoneOS SDK or shader translator is missing. Open Toolchain setup to select the SDK folder or repair the translator inside HookLinkWindows?'):
-                            self._open_toolchain_setup()
+                    self.state_var.set('Prerequisites passed (build unverified).' if payload.ready else 'Prerequisites need attention; see diagnostics and Toolchain setup.')
+                    if not self._auto_translator_attempted and can_auto_prepare_translator(payload):
+                        self._start_graphics_setup(automatic=True)
+                        continue
+                    if not payload.ready:
+                        missing_sdk = any('iPhoneOS SDK' in item['name'] and item['required'] and not item['ok']
+                                          for item in payload.entries)
+                        missing_graphics = any(item['name'] == 'shader translator DLLs' and item['required'] and not item['ok']
+                                               for item in payload.entries)
+                        if missing_sdk or missing_graphics:
+                            detail = ('An iPhoneOS SDK is required. Open Toolchain setup to select an existing SDK folder.'
+                                      if missing_sdk and not missing_graphics else
+                                      'Graphics setup could not be completed automatically. Open Toolchain setup to retry or inspect the missing developer tools.'
+                                      if missing_graphics and not missing_sdk else
+                                      'An iPhoneOS SDK and graphics support are still missing. Open Toolchain setup for instructions or retry.')
+                            if messagebox.askyesno('Build tools need setup', detail):
+                                self._open_toolchain_setup()
                 elif typ == 'chain_ready':
                     self._append(payload.log)
                     if self._pending_build is None:
@@ -712,9 +736,12 @@ class App(tk.Tk):
                         self.progress.configure(mode='determinate', value=0)
                         self.progress_var.set('Build failed — inspect diagnostics')
                     self._append(f'=== Exit code: {exit_code} ===\n')
-                    if exit_code == 0 and title == 'Shader translator setup':
-                        self._append('[SETUP] Translator repair completed; checking prerequisites again.\n')
-                        self._doctor()
+                    if title == 'Graphics support setup':
+                        if exit_code == 0:
+                            self._append('[SETUP] Graphics support is ready; checking prerequisites again.\n')
+                            self._doctor()
+                        else:
+                            self._append('[SETUP] Graphics support could not be prepared. Check the diagnostics above; use Toolchain setup to retry after resolving missing tools.\n')
                     if exit_code == 0 and title in ('Build and app-only packaging', 'Build and native app-only packaging'):
                         messagebox.showinfo('App-only IPA created', 'Build complete. The app-only IPA and its iPhone transfer folder are ready. See the build log for their locations.')
                 elif typ == 'error':
