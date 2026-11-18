@@ -109,7 +109,7 @@ own_dead_stats own_alias_dead_locked(uint32_t now, uint32_t idle, own_use_fn use
 uint32_t own_pool_finalize_locked(const void *pool, CFSetRef also);
 void own_alias_at_locked(const void *pool, int64_t off, void (^fn)(const alias_key *k, id o));   // the entries that start at off in the pool (its cell of the index)
 void own_alias_each_locked(void (^fn)(const alias_key *k, id o));
-typedef struct { uint32_t n, cap, cells; uint64_t evicted, taken, pool_entries; } own_alias_stats;   // entries, capacity, index cells, evicted with pools / on takeover in total, serial entries that went with their pools
+typedef struct { uint32_t n, cap, cells; uint64_t evicted, taken, pool_entries, looks; } own_alias_stats;   // entries, capacity, index cells, evicted with pools / on takeover in total, serial entries that went with their pools, entries takeovers looked at
 own_alias_stats own_alias_stats_locked(void);
 uint32_t own_alias_retire_idle_locked(uint64_t bytes, uint64_t lo, uint64_t idle, uint64_t *freed);   // HookLink (PR #1455): unreferenced idle shared textures under memory pressure
 int own_alias_gone(uint64_t serial, const alias_key *k);   // HookLink: 1 retired (no live object), 2 retired but live again (made anew), 0 not

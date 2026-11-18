@@ -180,7 +180,7 @@ static void alias_index(const alias_key *k, int add) {
 static nvn_hmap g_alias_lseen = {.klen = sizeof(alias_key)}, g_alias_gone = {.klen = sizeof(alias_key)}; static uint64_t g_alias_idle;
 static nvn_hmap g_alias_seen = {.klen = sizeof(alias_key)};   // key → the submission of its last lookup or creation (own_hook_submission; alias_take_over spares entries looked up lately)
 static CFMutableSetRef g_alias_set;                           // the textures in the sharing table (non-owning; "is this shared")
-static uint64_t g_alias_evicted, g_alias_taken, g_alias_pool_entries;   // shared textures evicted on pool Finalize / when another texture took over their storage, and serial entries that went with their pool, in total (the memory report)
+static uint64_t g_alias_evicted, g_alias_taken, g_alias_pool_entries, g_alias_looks;   // shared textures evicted on pool Finalize / when another texture took over their storage, serial entries that went with their pool, and entries takeovers looked at, in total (the memory report)
 int own_shared_locked(id o) { return g_alias_set && o && CFSetContainsValue(g_alias_set, (__bridge const void *)o); }
 int own_keeps_locked(id o) { return tex_object_pinned(o) || own_shared_locked(o); }
 static void obj_drop(id o) { own_hook_drop(o, own_keeps_locked(o)); }   // caller holds g_smu
@@ -206,6 +206,29 @@ id own_alias_get_locked(const alias_key *k) { return hm_get_id(&g_alias, k); }
 id own_alias_peek(const alias_key *k) { pthread_mutex_lock(&g_smu); id o = hm_get_id(&g_alias, k); pthread_mutex_unlock(&g_smu); return o; }
 void own_alias_put_locked(const alias_key *k, id o, uint64_t seen) { alias_put(k, o, seen); }
 int own_alias_del_locked(const alias_key *k) { return alias_del(k); }
+// On memory pool Finalize, the textures built on that pool leave the sharing table (the keys collected first, then deleted: deletion shifts entries back). The sharing table used not to
+// evict: Mario's pools stay for good, so entries are bounded; Engage frees pools on scene changes and rebuilds on new ones, so the old pools' render targets and other private textures
+// stayed in the table forever (about 0.8 GB more GPU memory over 850 s of the title demo), and linear textures built directly on a pool also kept the whole pool buffer alive. Also, when a
+// pool object's address is reused, old entries would hand a texture on the old storage to the new pool's texture at the same offset and description. Evicted textures go through deferred
+// release; if a serial entry still holds one, that is just one more reference
+uint32_t own_alias_drop_pool_locked(const void *pool) {
+    uint32_t n = 0; alias_key *ks = NULL;
+    for (uint32_t i = 0; i < g_alias.cap; i++) {
+        if (!g_alias.vals[i]) continue;
+        alias_key k; memcpy(&k, g_alias.keys + (size_t)i * g_alias.klen, sizeof k);
+        if (k.pool != (uint64_t)(uintptr_t)pool) continue;
+        alias_key *nk = realloc(ks, (n + 1) * sizeof *ks); if (!nk) break; ks = nk; ks[n++] = k;
+    }
+    for (uint32_t j = 0; j < n; j++) alias_del(&ks[j]);
+    free(ks); g_alias_evicted += n;
+    for (uint32_t i = 0; i < g_alias_gone.cap;) {   // HookLink: the retired keys of the pool go with its storage (deletion shifts entries: this slot is examined again)
+        alias_key k; if (!g_alias_gone.vals[i]) { i++; continue; }
+        memcpy(&k, g_alias_gone.keys + (size_t)i * g_alias_gone.klen, sizeof k);
+        if (k.pool == (uint64_t)(uintptr_t)pool) nvn_hm_del(&g_alias_gone, &k); else i++;
+    }
+    if (n) own_epoch();   // no note: the IDs of the pool's textures are many, and its finalize marks them gone besides
+    return n;
+}
 // A new shared texture takes over storage: entries of the same pool whose storage overlaps the new texture's under another description go, unless a live texture object still resolves
 // to them (an object rebuilt over the same storage with the same description must keep finding it: SMBW's transient render targets) or a lookup found them in the last ALIAS_IDLE submissions
 // (Breath of the Wild finalizes its transient render targets before it submits and makes them again the next frame: targets sharing storage would evict each other every frame). On NVN
@@ -227,9 +250,13 @@ static uint32_t alias_take_over(const alias_key *nk, uint64_t now) {
         uint64_t ck[2] = {nk->pool, (uint64_t)c}; const alias_cell *v = nvn_hm_get(&g_alias_cells, ck);
         for (uint32_t i = 0; v && i < v->n && n < 16; i++) {
             const alias_key *k = &v->e[i].k;
-            if (!memcmp(k, nk, sizeof *k) || k->off >= hi || v->e[i].end <= lo) continue;
-            uint32_t j = 0; while (j < n && memcmp(&ks[j], k, sizeof *k)) j++;
-            if (j < n) continue;   // met in an earlier cell
+            if (k->off >= hi || v->e[i].end <= lo) continue;
+            // An entry is indexed in every cell its storage reaches, so it is met in each cell of the overlap: it is looked at in the first one alone. Looked at in each, an entry
+            // spared (looked up lately, or held) cost a key compare and two hash lookups per 64 KB cell: a 16 MB render target made again over storage that others share
+            // repeated that hundreds of times per new texture (Ocarina of Time, iPhone 17 and Mac: alias_take_over 6% of the submit thread's busy time)
+            if (c != (k->off > lo ? k->off : lo) >> ALIAS_CELL) continue;
+            if (!memcmp(k, nk, sizeof *k)) continue;
+            g_alias_looks++;
             void *val = nvn_hm_get(&g_alias, k); if (!val) continue;
             uint64_t seen = (uint64_t)(uintptr_t)nvn_hm_get(&g_alias_seen, k);
             if ((seen && now - seen < ALIAS_IDLE) || serial_table_holds(val)) continue;
@@ -251,7 +278,7 @@ void own_alias_at_locked(const void *pool, int64_t off, void (^fn)(const alias_k
 void own_alias_each_locked(void (^fn)(const alias_key *k, id o)) {
     for (uint32_t i = 0; i < g_alias.cap; i++) if (g_alias.vals[i]) fn((const alias_key *)(const void *)(g_alias.keys + (size_t)i * g_alias.klen), (__bridge id)g_alias.vals[i]);
 }
-own_alias_stats own_alias_stats_locked(void) { return (own_alias_stats){.n = g_alias.n, .cap = g_alias.cap, .cells = g_alias_cells.n, .evicted = g_alias_evicted, .taken = g_alias_taken, .pool_entries = g_alias_pool_entries}; }
+own_alias_stats own_alias_stats_locked(void) { return (own_alias_stats){.n = g_alias.n, .cap = g_alias.cap, .cells = g_alias_cells.n, .evicted = g_alias_evicted, .taken = g_alias_taken, .pool_entries = g_alias_pool_entries, .looks = g_alias_looks}; }
 
 const void *own_live_ref_locked(uint64_t k) { return nvn_hm_get(&g_by_serial, &k); }
 const void *own_live_ref(uint64_t k) { pthread_mutex_lock(&g_smu); const void *o = nvn_hm_get(&g_by_serial, &k); pthread_mutex_unlock(&g_smu); return o; }
@@ -272,6 +299,7 @@ void own_tex_live_put_locked(const tex_t *t) {
     if (!t->pool) return;
     uintptr_t pk = (uintptr_t)t->pool; CFMutableSetRef set = nvn_hm_get(&g_pool_tex, &pk);
     if (!set) { set = CFSetCreateMutable(NULL, 0, NULL); if (!set) ODIE("the pool's texture index"); nvn_hm_put(&g_pool_tex, &pk, (void *)set); }
+    // NOLINTNEXTLINE(clang-analyzer-osx.cocoa.RetainCount): g_pool_tex owns set until pool_tex_del or own_pool_finalize_locked releases it.
     CFSetAddValue(set, (const void *)(uintptr_t)t->serial); nvn_hm_put(&g_tex_pool, &t->serial, (void *)t->pool);
 }
 int own_tex_live_locked(uint64_t serial) { return nvn_hm_get(&g_tex_live, &serial) != NULL; }
@@ -508,11 +536,6 @@ uint32_t own_pool_finalize_locked(const void *pool, CFSetRef also) {
     CFRelease(gone);
     for (uint32_t j = 0; j < n; j++) alias_del(&ks[j]);
     free(ks); g_alias_evicted += n; g_alias_pool_entries += dropped;
-    for (uint32_t i = 0; i < g_alias_gone.cap;) {   // HookLink: the retired keys of the pool go with its storage (deletion shifts entries: this slot is examined again)
-        alias_key k; if (!g_alias_gone.vals[i]) { i++; continue; }
-        memcpy(&k, g_alias_gone.keys + (size_t)i * g_alias_gone.klen, sizeof k);
-        if (k.pool == (uint64_t)(uintptr_t)pool) nvn_hm_del(&g_alias_gone, &k); else i++;
-    }
     if (n) own_epoch();   // no note for the sharing table: the IDs of the pool's textures are many, and its finalize marks them gone besides (each serial entry that went has its note)
     return n;
 }

@@ -30,6 +30,12 @@ Alpha 1.0.9 includes the latest upstream [HookLink X2 (3.0)](https://github.com/
 
 Alpha 1.0.9 also protects **iOS host Metal shader generation** from Windows installation paths containing spaces. When needed, the builder copies only the small host Metal source folder into a whitespace-free staging directory, generates its metallibs and header there, and publishes a successful header back to the normal checkout path. This leaves the existing game shaders and build cache untouched. The workaround was reproduced on the affected Windows installation by compiling its 16 host Metal shader files from a directory with no spaces; full IPA completion still needs to be verified.
 
+### Alpha 1.1.2: original NXNative plus HookLink's engine changes (experimental candidate)
+
+This candidate merges original [seedds/nxnative](https://github.com/seedds/nxnative) commit `0b5fd6020093407af8bb5ad166e78e00bd2b7242` with HookLink's custom [dsi-hub/nxnative](https://github.com/dsi-hub/nxnative) commit `698b46bc5b14510fffc0a4b8fd4bf78309004e4c`. Overlapping merge hunks favor HookLink to preserve its game-specific fixes. The source is **not byte-identical to original NXNative**. A manifest records the upstream SHA, HookLink parent, exact merged-source commit, imported blob hashes, and Windows-specific overlay paths. The GUI's primary commit link points to **original NXNative**, not HookLink.
+
+This is a **test candidate**, not a verified iPhone build. Build it using the GUI's **New clean…** button, which clears shader reuse and creates an empty sibling work folder. The reported earlier black screen was resolved by selecting the correct output file; no speculative graphics setting changes are included.
+
 ## 1. Obtain the complete source checkout
 
 Use the project's GitHub **Code → Download ZIP**, extract it to any writable folder (for example `D:\Projects\HookLinkWindows`), or clone the future published repository with Git. No special installation directory or administrator-level path is required. **Keep the EXE in the checkout root beside the `win`, `engine`, `config`, `Sources`, and `docs` directories. The Windows engine lives under `engine/`; a GUI-only ZIP cannot compile.** Do not run the GUI from a separate archive containing only the GUI add-on.

@@ -1,108 +1,2412 @@
 {
-    "nxnative_repo": "https://github.com/dsi-hub/nxnative.git",
-    "from_commit": "3a28152fe7052c9f45ede460022d39be6c91e3cf",
-    "nxnative_commit": "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf",
-    "changed_paths": [
-        {
-            "path": "engine/dm/games/010056B015FE8000/README.md",
-            "sha": "67351dca56e5089b6c69a32b2691c97474aacef5"
-        },
-        {
-            "path": "engine/dm/games/0400486024DEC000/README.md",
-            "sha": "5fef1f8bccd9f2e083176c2053d421cb338c302b"
-        },
-        {
-            "path": "engine/dm/games/0400486024DEC000/game.tsv",
-            "sha": "ca4299d952b97185730300cc3c7d24846a05c5d7"
-        },
-        {
-            "path": "engine/dm/games/0400486024DEC000/pso_manifest.tsv",
-            "sha": "7c5d6cd2e04ef5ac6a269516b1b0f897cbd41507"
-        },
-        {
-            "path": "engine/dm/games/settings.tsv",
-            "sha": "b512bf8559f677c8d332301e421753308c6df754"
-        },
-        {
-            "path": "engine/dm/gfx/nvn/hle_nvn.c",
-            "sha": "ba77a60041b59c5bc191f3d9a1d886b7b59c50a4"
-        },
-        {
-            "path": "engine/dm/gfx/nvn/nvn_geometry.inc",
-            "sha": "04d49f40a95b9900ae2bbc687bab29cdb0d04bd1"
-        },
-        {
-            "path": "engine/dm/gfx/nvn/nvn_mtl.m",
-            "sha": "42b1233c68cabf30cd0951ebbcb5e68124d92a7c"
-        },
-        {
-            "path": "engine/dm/gfx/nvn/nvn_owner.h",
-            "sha": "cc5ba87f9359b7855d43554a15b78fd4c21392a0"
-        },
-        {
-            "path": "engine/dm/gfx/nvn/nvn_owner.m",
-            "sha": "afa05e2834672fe8e0cf610458aeaf959c2963c2"
-        },
-        {
-            "path": "engine/dm/gfx/tests/Makefile",
-            "sha": "f18947b8e4bda5901d862dd7cfed2df52241b8b5"
-        },
-        {
-            "path": "engine/dm/gfx/tests/t_arena_trim.m",
-            "sha": "c162f3fb811446044c57f1eb2a8afa6c18f83bcc"
-        },
-        {
-            "path": "engine/dm/gfx/tests/t_dead_targets.m",
-            "sha": "02a8c7ec24f44d64a2963e2f06d43e7af559f6a5"
-        },
-        {
-            "path": "engine/dm/gfx/tests/t_readback.m",
-            "sha": "1811005e7a70a03e623192e945eb8482234585ef"
-        },
-        {
-            "path": "engine/dm/gfx/tests/t_render_enable_queue.m",
-            "sha": "cecb4f241c28e5a9a39e2049cd7b1e070cfb89c2"
-        },
-        {
-            "path": "engine/dm/gfx/tests/t_rt_recycle.m",
-            "sha": "b2942c2b5ba9c459ba72e5a7599c29e78a4f4a98"
-        },
-        {
-            "path": "engine/dm/gfx/tests/t_serial_owner.m",
-            "sha": "c8cc289cf7ca7c3d21b6aef9bd9a6f4964207242"
-        },
-        {
-            "path": "engine/dm/host/hle_svc.c",
-            "sha": "50fef0c0c131adf34874b89c70be1085aca2d4b7"
-        },
-        {
-            "path": "engine/dm/host/tests/t_svc_memory.c",
-            "sha": "fb27a03b484c23b465a722d53974497a9d21c860"
-        },
-        {
-            "path": "engine/dm/ios/Sources/Launcher.swift",
-            "sha": "bc374c4e1b5dae488392f78f046171cb295c6733"
-        },
-        {
-            "path": "engine/dm/tools/tests/test_launcher_settings.py",
-            "sha": "e9a99a69b8c03d759aeb19cd2b33699b532e4d35"
-        },
-        {
-            "path": "engine/docs/agents/symptoms.md",
-            "sha": "0bb1d7a301f80591717c2d4aacd411c87ced2cda"
-        },
-        {
-            "path": "engine/docs/env_switches.tsv",
-            "sha": "debd2686aa56ac3ae8e6ae33e11d0a02a08f8bd1"
-        },
-        {
-            "path": "engine/docs/reference/memory.md",
-            "sha": "110935d8b961193b5626db73a0ced87ec6348679"
-        },
-        {
-            "path": "engine/docs/reference/nvn-objects.md",
-            "sha": "e56feb682bd3987ab9146b2cdf3bac76d6cf4396"
-        }
-    ],
-    "notes": "Exact upstream Git blob hashes for files transplanted into engine/. Windows-only additions remain separate."
+  "nxnative_repo": "https://github.com/seedds/nxnative.git",
+  "from_commit": "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf",
+  "nxnative_commit": "0b5fd6020093407af8bb5ad166e78e00bd2b7242",
+  "hooklink_engine_commit": "698b46bc5b14510fffc0a4b8fd4bf78309004e4c",
+  "engine_integration_commit": "19528cf1e3115e64ecc8f02ab555ed0341579c09",
+  "changed_paths": [
+    {
+      "path": "engine/README.md",
+      "sha": "c892a3b2f95fb77135941f95fc6074b58689a9f1"
+    },
+    {
+      "path": "engine/dm/games/0100000000010000/README.md",
+      "sha": "cf31df9eded496614d7f0a462e2c392515886bf9"
+    },
+    {
+      "path": "engine/dm/games/0100000000010000/shader_map.tsv",
+      "sha": "a5e26c9a70980f04e694ca44416bed38825987a9"
+    },
+    {
+      "path": "engine/dm/games/010015100B514000/README.md",
+      "sha": "ef3b3966357f83bf1ef1c779865b1e4bedda240c"
+    },
+    {
+      "path": "engine/dm/games/010015100B514000/shader_map.tsv",
+      "sha": "9d8da157c032537dd5c4f676da8b453a3898a47e"
+    },
+    {
+      "path": "engine/dm/games/0100217023F6C000/README.md",
+      "sha": "5924e913e09b487a2c9a6f550d5abd7d9dcc058c"
+    },
+    {
+      "path": "engine/dm/games/0100217023F6C000/smoke.tsv",
+      "sha": "c216bd30357fc33540a79205a3fa943288d20b97"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/README.md",
+      "sha": "ce6ccdd971f81f219ab585a44a4296fd14452131"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/game.tsv",
+      "sha": "cfc1fe2eae20aab67632d3ba9c310958f14cf773"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/gl_capture.tsv",
+      "sha": "198169a54ca81dde6eaedaea85d51adf6e1a4d41"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/pso_manifest.tsv",
+      "sha": "f2a94033a3523160f03f289d0143a9e9704785db"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/shader_facts.tsv",
+      "sha": "e665d364f085a82c81df76cd72761e2ef0812fed"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/shader_map.tsv",
+      "sha": "bfe051586a72e2bd6fd1dd90cf7432053a85745e"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/shader_pairs.tsv",
+      "sha": "ac32dd3e8e7de6b9e9141a8f83214dc650cb8206"
+    },
+    {
+      "path": "engine/dm/games/010029D00E740000/smoke.tsv",
+      "sha": "6a1236f143b3f3ca6fcfb5ed9be8f938732892f8"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/README.md",
+      "sha": "4aaf85f4ef2f2f89e2b05ff37a11f8d71e0791f5"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/game.tsv",
+      "sha": "197a305e701adbce042fc2cc719dc86084fcb682"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/pso_manifest.tsv",
+      "sha": "f2a94033a3523160f03f289d0143a9e9704785db"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/shader_facts.tsv",
+      "sha": "e665d364f085a82c81df76cd72761e2ef0812fed"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/shader_map.tsv",
+      "sha": "0c1b687efd8ffc4f932d2e6db9b56224f00929ac"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/01002D4007AE0000/shader_pairs.tsv",
+      "sha": "ac32dd3e8e7de6b9e9141a8f83214dc650cb8206"
+    },
+    {
+      "path": "engine/dm/games/01002DA013484000/README.md",
+      "sha": "8fc0976fcd2c919ca25cccf3246d3bfb0e0caf56"
+    },
+    {
+      "path": "engine/dm/games/01002E7016C46000/README.md",
+      "sha": "febb1794105ed534dd58f54df56be166a1c02f70"
+    },
+    {
+      "path": "engine/dm/games/010035F022078000/README.md",
+      "sha": "8e9f33238948dc7af13b41063c3680055f96ab68"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/README.md",
+      "sha": "93580d0ef6c7c85ee2dffdb4752aed57de76ca46"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/dual_want.tsv",
+      "sha": "29730aadbdfdb15505a7d12437bc5016ebf19fb5"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/game.tsv",
+      "sha": "0f45528086a1e3b981dff0be04215f99fcf5456f"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/pso_manifest.tsv",
+      "sha": "2b7a3a4573391aa6c952884d85ddd9ef7d32ebf0"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/shader_facts.tsv",
+      "sha": "8c3ff7387e1499aaa863c56b631ee28b0ac96ddc"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/shader_map.tsv",
+      "sha": "a85e63f1c120d8dbdd30d6932b6f1413ad89f0fc"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/shader_pairs.tsv",
+      "sha": "1dd503c757714e073a71a865855364e391f587cd"
+    },
+    {
+      "path": "engine/dm/games/010044500C182000/shader_seen.tsv",
+      "sha": "2ceafd01ce48e2d092f86124d92786e397ad1bcb"
+    },
+    {
+      "path": "engine/dm/games/010049900F546002/README.md",
+      "sha": "eef98988e6e12f7247fe0a581e22048378373ece"
+    },
+    {
+      "path": "engine/dm/games/01004A4010FEA000/README.md",
+      "sha": "944b920d1bfed4533a47eb3e04bf8a365b1c01a2"
+    },
+    {
+      "path": "engine/dm/games/01004D300C5AE000/README.md",
+      "sha": "69b7a726d055bc30866b149ccabecb017a152729"
+    },
+    {
+      "path": "engine/dm/games/0100535012974000/README.md",
+      "sha": "5e8bffe5eadc0032d1b3a2847330cd1791a98f35"
+    },
+    {
+      "path": "engine/dm/games/010055D009F78000/README.md",
+      "sha": "efcbcbd3ddeb5c34f7d8c83b212881cd17d98136"
+    },
+    {
+      "path": "engine/dm/games/010056B015FE8000/README.md",
+      "sha": "0b7ee11c24c9d6212583b14e417b96c1f0b2629b"
+    },
+    {
+      "path": "engine/dm/games/010056B015FE8000/smoke.tsv",
+      "sha": "3ab62e941f47e2a15d4f8bcf6e62c0e1aed11b59"
+    },
+    {
+      "path": "engine/dm/games/01005CA01580E000/README.md",
+      "sha": "23e8fe89986c1266f6a0509f911ef69a9c25c6de"
+    },
+    {
+      "path": "engine/dm/games/0100606026F12000/README.md",
+      "sha": "59e800027e22f957ef9ad1b2da2d4edfd59cbd54"
+    },
+    {
+      "path": "engine/dm/games/0100606026F12000/shader_facts.tsv",
+      "sha": "158f613dd5651411b1a419717e61b89eb64800f7"
+    },
+    {
+      "path": "engine/dm/games/01006A800016E000/README.md",
+      "sha": "f8faf87d6603a840e3e23f326919ca810e1c3907"
+    },
+    {
+      "path": "engine/dm/games/01006BB00C6F0000/README.md",
+      "sha": "b0715a382c5c1424706059d45d2a772b8108bcf9"
+    },
+    {
+      "path": "engine/dm/games/01006C300E9F0000/README.md",
+      "sha": "f71cfbd362ad88f8cddfb32e22779f601d635281"
+    },
+    {
+      "path": "engine/dm/games/01006F8002326000/README.md",
+      "sha": "c260f36fc72599f6bb177574427c22001ed018e1"
+    },
+    {
+      "path": "engine/dm/games/0100726014352000/README.md",
+      "sha": "78b1fe133aef5a82e5fbfd4a36a8b957ab82e265"
+    },
+    {
+      "path": "engine/dm/games/01007300020FA000/README.md",
+      "sha": "7111eb52c91866850e5dc1e05bb47651551e91d0"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/README.md",
+      "sha": "585bdf83de2ca8925b1407cb300c5dac916e1252"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/game.tsv",
+      "sha": "31177da9880ce3b244b5a2b13188dff51ff580e9"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/pso_manifest.tsv",
+      "sha": "4620515f1088edd80157c5015babdc91f5e48217"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/shader_facts.tsv",
+      "sha": "cdf59312949999219c7118ea61cb5a358ab781e1"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/shader_map.tsv",
+      "sha": "dd16f39e83cec60fcdfcfc485e36ee20a78bf832"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100777022394000/shader_pairs.tsv",
+      "sha": "86694a8ee74d1baba83368bddb0b48ddabe56cc0"
+    },
+    {
+      "path": "engine/dm/games/01007EF00011E000/README.md",
+      "sha": "d10d14e7535bdbb114001403121687be805dec86"
+    },
+    {
+      "path": "engine/dm/games/01007EF00011E000/shader_facts.tsv",
+      "sha": "ffbc7b7bda61fed5bbd4e0c8f3399e95ee88eaef"
+    },
+    {
+      "path": "engine/dm/games/01007EF00011E000/shader_map.tsv",
+      "sha": "1b58ba6a128229d9d23f3697ee817d157f410d71"
+    },
+    {
+      "path": "engine/dm/games/01007EF00011E000/validated.tsv",
+      "sha": "96f827aa19a16171b2bc2aff0b05bd9f9095a88d"
+    },
+    {
+      "path": "engine/dm/games/01008BC024FDE000/README.md",
+      "sha": "09b7c8ba390e140198a23220e0824fc560078077"
+    },
+    {
+      "path": "engine/dm/games/01008CF01BAAC000/README.md",
+      "sha": "8d0e2b4c0105d8aeb62983b2b951011e360cbf09"
+    },
+    {
+      "path": "engine/dm/games/01008F6008C5E000/README.md",
+      "sha": "310b07cfdad15c6131e1fd1810c1e08d0754efae"
+    },
+    {
+      "path": "engine/dm/games/0100A00019DE0000/README.md",
+      "sha": "5227d6a74b240e197191f8b731921cb585fd9af5"
+    },
+    {
+      "path": "engine/dm/games/0100A3501946E000/README.md",
+      "sha": "588dd2554ec2b0374720d738ff7d70fefaeb677d"
+    },
+    {
+      "path": "engine/dm/games/0100A3D008C5C000/README.md",
+      "sha": "df46a6b23ec17f597bd55b6051565d7b7e7f5e98"
+    },
+    {
+      "path": "engine/dm/games/0100A3D008C5C000/shader_map.tsv",
+      "sha": "8a4db5cbb40b6f90ccae4371462792e94e04d620"
+    },
+    {
+      "path": "engine/dm/games/0100A5C00D162000/README.md",
+      "sha": "c497f78781df9dc4798acbc62cfc2d265e66fb92"
+    },
+    {
+      "path": "engine/dm/games/0100A5C00D162000/smoke.tsv",
+      "sha": "42771a1c9ca0555de28669eac8d3aa130957ec15"
+    },
+    {
+      "path": "engine/dm/games/0100A7C01B792000/README.md",
+      "sha": "ab343f65505062cb2d619c4c2dc538043d12e4cc"
+    },
+    {
+      "path": "engine/dm/games/0100A83022A22000/README.md",
+      "sha": "198b3266c9e0d3c1f778601a159cdef75e974896"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/README.md",
+      "sha": "6f0583bb2551c564dc71ee3f94bfc15da92a5b80"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/game.tsv",
+      "sha": "128414974e1ff1499f10e23a82c9c6fc66411a9f"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/patches.py",
+      "sha": "7c36055fdc861f022895a7a362d1378a6c18f3d7"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/pso_manifest.tsv",
+      "sha": "0ca5ca600d01d9c34fd08eebd0b67a729ee8c37b"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/shader_facts.tsv",
+      "sha": "1e80c108f73b3b6927720904eaae8005a1ceb96f"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/shader_map.tsv",
+      "sha": "2be3e9f11997f11aa3c6a4c4b515f35567a37bcb"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/shader_pairs.tsv",
+      "sha": "97b912042f08f7d2273c2bdb5633e02db002c433"
+    },
+    {
+      "path": "engine/dm/games/0100A8E016236000/smoke.tsv",
+      "sha": "c6b0b1f17a37aaf2b3fb4094c90599db0d4315df"
+    },
+    {
+      "path": "engine/dm/games/0100A9D01C446000/README.md",
+      "sha": "d273f43d12ced83a501b93703fa04aa7eec4ff1f"
+    },
+    {
+      "path": "engine/dm/games/0100A9D01C446000/shader_facts.tsv",
+      "sha": "af433f0b84a0d0183158f7e84579334c4ad33bd8"
+    },
+    {
+      "path": "engine/dm/games/0100B04011742000/README.md",
+      "sha": "cb47d4de12c0052f8f2364c6a9c5dba8cfba23ce"
+    },
+    {
+      "path": "engine/dm/games/0100B7C00933A000/README.md",
+      "sha": "2d5506502d481db883a55122bab8027e7857dffa"
+    },
+    {
+      "path": "engine/dm/games/0100B8A026F14000/README.md",
+      "sha": "bb7564240f4da12296765780a4ca2e45134421cd"
+    },
+    {
+      "path": "engine/dm/games/0100B8A026F14000/shader_facts.tsv",
+      "sha": "6c938769fd247073ff14d96707da6939a3042d75"
+    },
+    {
+      "path": "engine/dm/games/0100B8A026F14000/shader_facts_manual.tsv",
+      "sha": "9ab7cfaf59e24ede4331f09bae8d4fd3a879ec25"
+    },
+    {
+      "path": "engine/dm/games/0100BF00112C0000/README.md",
+      "sha": "a3e4855acdae28ddceffa87d1d3262fe4435c2ec"
+    },
+    {
+      "path": "engine/dm/games/0100C1F0051B6000/README.md",
+      "sha": "c246408b2b53d6fe39a2b950cb4c90becaaacbcb"
+    },
+    {
+      "path": "engine/dm/games/0100C1F0051B6000/game.tsv",
+      "sha": "2bc4568e2d21923cfaac786085af807542b6c314"
+    },
+    {
+      "path": "engine/dm/games/0100C1F0051B6000/shader_map.tsv",
+      "sha": "330633b36938869b1cacacd47ee86ffb3513c457"
+    },
+    {
+      "path": "engine/dm/games/0100C1F0051B6000/shader_pairs.tsv",
+      "sha": "6a123f54941b812085f1cce45079909dbfb455b4"
+    },
+    {
+      "path": "engine/dm/games/0100C49025D3E000/README.md",
+      "sha": "fc2b0e2b33de067dd1eeae4f711a2c8705424133"
+    },
+    {
+      "path": "engine/dm/games/0100CE4010AAC000/README.md",
+      "sha": "4f1bc9bee2cc4cc52b087e69e941c1444abd1050"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/README.md",
+      "sha": "bc0582071d2e0a013c8a06672ac7911037de33d8"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/game.tsv",
+      "sha": "0502b030babf098e2b70696f745377b16794e4e9"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/pso_manifest.tsv",
+      "sha": "0ca5ca600d01d9c34fd08eebd0b67a729ee8c37b"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/shader_map.tsv",
+      "sha": "6d901f309561424b6c94c15bd81d98d689af2fd5"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100D4900E82C000/shader_pairs.tsv",
+      "sha": "1a14cda46a5ec1baa5a51a36901071c17662de96"
+    },
+    {
+      "path": "engine/dm/games/0100DA801624E000/README.md",
+      "sha": "190848383c37762917c518ba79b4df1918350e41"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/README.md",
+      "sha": "44d566fc29caa1e45c47ce8dc0cde194263f36fc"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/game.tsv",
+      "sha": "2a1a6340b38daba09542e5ba08e5db09ef0e4c9f"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/pso_manifest.tsv",
+      "sha": "b9d7d0f411d40214c741de46d233e04a82d2b5d6"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/shader_map.tsv",
+      "sha": "8a722a77d5d892355bd89141c75ba9fca1cb9e1d"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100DBF01000A000/shader_pairs.tsv",
+      "sha": "c0c03cc5da0166b9f94759e68deb5ad7c7ca66f9"
+    },
+    {
+      "path": "engine/dm/games/0100E95004038000/README.md",
+      "sha": "e9b28b68629c2220e630c31c12a2f19ea0bcd39f"
+    },
+    {
+      "path": "engine/dm/games/0100F2C0115B6000/README.md",
+      "sha": "cb23ade812453e167efdb7e6d80471b3d8b04020"
+    },
+    {
+      "path": "engine/dm/games/0100F2C0115B6000/shader_facts.tsv",
+      "sha": "f394ae20aba5da98b0441f593d5894e2e8275a7f"
+    },
+    {
+      "path": "engine/dm/games/0100F2C0115B6000/shader_map.tsv",
+      "sha": "d1139bb1d72381259fae9a5d24f1a8409e48e4f6"
+    },
+    {
+      "path": "engine/dm/games/0100F43008C44000/README.md",
+      "sha": "da5f786072907b82b039bce8caeeea086494b0db"
+    },
+    {
+      "path": "engine/dm/games/0100F43008C44000/shader_facts.tsv",
+      "sha": "3f9b03813e82614ed7420467493f240357312fb2"
+    },
+    {
+      "path": "engine/dm/games/0100F43008C44000/shader_map.tsv",
+      "sha": "e7edf5f58b95cfe93eac999bc59be67d102bbdd5"
+    },
+    {
+      "path": "engine/dm/games/0400245021D2C000/README.md",
+      "sha": "a92a8d87e43deddc2435c9ab911f541bc6b8382d"
+    },
+    {
+      "path": "engine/dm/games/040032B023CA4000/README.md",
+      "sha": "057788f756b32fc26d963c3e6f02021813d33ee1"
+    },
+    {
+      "path": "engine/dm/games/040032B023CA4000/shader_map.tsv",
+      "sha": "8b166dcab6d592755bbd06c109bf4d9fea9a0195"
+    },
+    {
+      "path": "engine/dm/games/0400380020056000/README.md",
+      "sha": "a25a28cc7950219dfc0faea7cc95d7ad97bd3afd"
+    },
+    {
+      "path": "engine/dm/games/0400380020056000/shader_map.tsv",
+      "sha": "29496566476b8e05a4d4b7e2a651b4af861819fa"
+    },
+    {
+      "path": "engine/dm/games/040041E0212AE000/README.md",
+      "sha": "3c04344b92d0c537183ee7de457a0fb731e3694c"
+    },
+    {
+      "path": "engine/dm/games/040041E0212AE000/smoke.tsv",
+      "sha": "fdd0fd5f0d90ef609da93a9ca1f45a4db638b716"
+    },
+    {
+      "path": "engine/dm/games/0400486024DEC000/README.md",
+      "sha": "80ff4629d0779445ff9e65b01962af8726f0a048"
+    },
+    {
+      "path": "engine/dm/games/0400486024DEC000/pso_manifest.tsv",
+      "sha": "ab3c6719cab4b748d0df6ebe21a0f4de3a8c8b0d"
+    },
+    {
+      "path": "engine/dm/games/0400569027BF4000/README.md",
+      "sha": "8a763e3d61ed635d56e418f4544d087ad0930a60"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/README.md",
+      "sha": "4399c60beacf441f0fd5d5bcd6df459338f62649"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/game.tsv",
+      "sha": "920e117f4adcfa9ce42a358d2ea5fb9e3ee2dd81"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/pso_manifest.tsv",
+      "sha": "0ca5ca600d01d9c34fd08eebd0b67a729ee8c37b"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/shader_facts.tsv",
+      "sha": "bf8cfc2915dea7f4d335812e06bfb2de752c69da"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/shader_map.tsv",
+      "sha": "56c44151e6b0515d145bd3ccce619687f7c5c90f"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/040057C02159A000/shader_pairs.tsv",
+      "sha": "3509d567187a422b0546ec54b14547e6b40eeb98"
+    },
+    {
+      "path": "engine/dm/games/040074A01BF12000/README.md",
+      "sha": "fc826e2445c08476b812d36386198165c8b7af0a"
+    },
+    {
+      "path": "engine/dm/games/040074A01BF12000/shader_map.tsv",
+      "sha": "65efb8c024571f651f85c3fbc0526587d7d4d230"
+    },
+    {
+      "path": "engine/dm/games/040077201BE50000/README.md",
+      "sha": "b59a1c4d607ad690bac67473a51ec8d472d91446"
+    },
+    {
+      "path": "engine/dm/games/04007EF01F8AE000/README.md",
+      "sha": "839058f065e1b3071a0a854c91abc653c8ccea2e"
+    },
+    {
+      "path": "engine/dm/games/04007EF01F8AE000/shader_map.tsv",
+      "sha": "12e55c222ccbca5f4bc7ad3443a5c2e126adb29b"
+    },
+    {
+      "path": "engine/dm/games/04008E001F098000/README.md",
+      "sha": "644fa7c27cf648a262412a82c138d786c3fe9322"
+    },
+    {
+      "path": "engine/dm/games/0400A3A01EE4C000/README.md",
+      "sha": "6ce540e513a9ff78509c0059289e328a80bc94a2"
+    },
+    {
+      "path": "engine/dm/games/0400C3F00006E000/README.md",
+      "sha": "3d5015647e54f1bfe10cb551698f9ed9375e5dee"
+    },
+    {
+      "path": "engine/dm/games/0400C3F00006E000/shader_map.tsv",
+      "sha": "dbfebb2b01e0e1d3847ed01a5b6801fc2335034e"
+    },
+    {
+      "path": "engine/dm/games/0400C76024710000/README.md",
+      "sha": "2a860b61fcb534f1de9ed7f603b6d4baa39c6ff6"
+    },
+    {
+      "path": "engine/dm/games/0400D4201C6EA000/README.md",
+      "sha": "f13c5a61b87946b55cbccc915aba9d00b68dbe97"
+    },
+    {
+      "path": "engine/dm/games/0400D4201C6EA000/shader_map.tsv",
+      "sha": "34092b3802ceaa849fed81fe7aa0673c63d1915f"
+    },
+    {
+      "path": "engine/dm/games/0400E88025B1A000/README.md",
+      "sha": "8618aaa3908141af0ed8256a4bef0bd98cb03bae"
+    },
+    {
+      "path": "engine/dm/games/README.md",
+      "sha": "4cfd4c5e578c13b59e72f3ef5bc7a19d9ebc6568"
+    },
+    {
+      "path": "engine/dm/games/profile_guess.py",
+      "sha": "cca426c3354b70764c519f9aba211e5290f91b15"
+    },
+    {
+      "path": "engine/dm/games/settings.py",
+      "sha": "5179b0bacb7d3896352d635496cf3f295648bebc"
+    },
+    {
+      "path": "engine/dm/games/settings.tsv",
+      "sha": "9661d1f160907a0fd28d4a3cc50d39018034fadc"
+    },
+    {
+      "path": "engine/dm/gfx/gl/gl_aliases.h",
+      "sha": "765528f1e58313687f427f72ce12b0c051f8aa7e"
+    },
+    {
+      "path": "engine/dm/gfx/gl/hle_gl.m",
+      "sha": "b26fb536537a3d993e0f3d55f750b85a8e2c618f"
+    },
+    {
+      "path": "engine/dm/gfx/hle_nv.c",
+      "sha": "beed242319373bde3223ad33fa677236d2653102"
+    },
+    {
+      "path": "engine/dm/gfx/msl/accel.metal",
+      "sha": "7affd9728bdc4ab8b4354dbcdff93a1e621e8b22"
+    },
+    {
+      "path": "engine/dm/gfx/msl/copy.metal",
+      "sha": "7f9cfdb96d541e708ab62d21d538307b96e0636d"
+    },
+    {
+      "path": "engine/dm/gfx/msl/deswz.metal",
+      "sha": "f68fe211179576df2f7a93d8f92d0cd9653dc496"
+    },
+    {
+      "path": "engine/dm/gfx/msl/pair.metal",
+      "sha": "aa6fa9a57531afe907784011ca6c6bd379bfa55f"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/dmsh_abi.h",
+      "sha": "dbe3e567c690e4ea6bd3753742eee400826da2c2"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/hle_nvn.c",
+      "sha": "7a859104b6422cb7e1f1938b7ec183ec048839f2"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/include/nvn.h",
+      "sha": "12d7bdb1a35525462adc8cacc2b646cf90a49c94"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_accel.h",
+      "sha": "3008b2c99ed6620c06db31cb4938f39b10f94341"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_accel.inc",
+      "sha": "23ffec527e9a3d2d0292059d7e708247d1a36fa8"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_capture.c",
+      "sha": "4089f92d82717a00f5af349c9a6879893edfafc1"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_dirty.c",
+      "sha": "d671dd7064e5074380fb09103db4b3e3839c004b"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_dirty.h",
+      "sha": "48d155c30daa13549c8de28f6b2183fe5d94a220"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_feedback.inc",
+      "sha": "4b7e71bb37494875f2bf838a8d65d2a749fe1bef"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_geometry.inc",
+      "sha": "0d1331cf095053de5cdb51da8dbc9b38d996ef93"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_link_drain.h",
+      "sha": "5e71bcc9b3b67a8e203882ec2d1a226b160267bd"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_link_latch.h",
+      "sha": "013d74e4bb266a0ad917419aaf36d087576bc852"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_mtl.h",
+      "sha": "cd2119c59de64acee23f0817dfd6b3dde34cf502"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_mtl.m",
+      "sha": "4c9493f0196f95e226a790177529fc792c258a61"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_ndve.inc",
+      "sha": "e9b03f8906ad5486fc9234ea4f6308990dc49e1f"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_obj.h",
+      "sha": "bf56444e2040b83a66a7de4aa036b58f06b0beb8"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_owner.h",
+      "sha": "8f21839fd7404ae5cc7fd77bdc9893a7562b1f11"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_owner.m",
+      "sha": "c9e2f74b25238dbb6f8d9baa99985fe3f2416bc6"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_protos.h",
+      "sha": "def144cceb08fc07ccefbeffae9c4b1ee5302b05"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_pso_skey.h",
+      "sha": "18e8d1bcfab2d46748625c891f60dc050fe7e8d7"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_queue.inc",
+      "sha": "ef60b85a21a513d9881bbdb97186b3090294a00f"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_raytrace.h",
+      "sha": "bcda5df06d796fc5b0467aa134b913158608cf43"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_raytrace_dispatch.inc",
+      "sha": "a9144f3e45323aed60c2ce80af1b6fa65ac40654"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_raytrace_program.inc",
+      "sha": "f3c90d7e75550e16aa9373aae72e3e92da24ade6"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_rec.h",
+      "sha": "e8a79454d3d6493734983e22431b8d560f5bc2f4"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_refl.h",
+      "sha": "5c8a358cc1a4b38efb68d659cd307e591647a087"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_refl.m",
+      "sha": "63e81bb13803bf912297b4a46c7fedfc3effd9ba"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_tess.inc",
+      "sha": "334cdfc920020d22c64c8d68444047697e5f9fe2"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_tex.h",
+      "sha": "ab011d764c099be1fbdf25f6cc73f64a57898672"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_timestamp.h",
+      "sha": "ac94b98b156fc3a403cb6981488413c08098bcfc"
+    },
+    {
+      "path": "engine/dm/gfx/tests/Makefile",
+      "sha": "0282af555f2965ba9079bc3c4c8d65716071b74e"
+    },
+    {
+      "path": "engine/dm/gfx/tests/ampere_orin/ampere_orin.sass",
+      "sha": "98a3ca86ac4558cfccbedeec2a21c0452a361871"
+    },
+    {
+      "path": "engine/dm/gfx/tests/ampere_orin/ampere_orin.u32.gz",
+      "sha": "3482d102adb5be6fac90b18e674802ca718defcb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/ampere_orin/hfma_orin_fixture.u32",
+      "sha": "4040582bb1690e602aa3025b7f5c34093f7ae2b4"
+    },
+    {
+      "path": "engine/dm/gfx/tests/ampere_orin/manifest.json",
+      "sha": "3d238c704f89b215769590e91388fdcd10ab8927"
+    },
+    {
+      "path": "engine/dm/gfx/tests/ast_optimizer/AstOptimizer.csproj",
+      "sha": "a5c64d9c67e6bf1369edd582ac11b06e7eca07e2"
+    },
+    {
+      "path": "engine/dm/gfx/tests/ast_optimizer/Program.cs",
+      "sha": "bac11b31c902eba5a6c7c9f796f324cc590ed94c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/ast_optimizer/gpu.m",
+      "sha": "eb865c47211677789202388fe7d667f25b388b32"
+    },
+    {
+      "path": "engine/dm/gfx/tests/goto_conditions/Conditions.csproj",
+      "sha": "a5c64d9c67e6bf1369edd582ac11b06e7eca07e2"
+    },
+    {
+      "path": "engine/dm/gfx/tests/goto_conditions/Program.cs",
+      "sha": "434db538eb54ca0e65325418cd2c209139abaeaa"
+    },
+    {
+      "path": "engine/dm/gfx/tests/native_functions/NativeFunctions.csproj",
+      "sha": "cece0c966316d787cb4cffc753da6ebb8f843963"
+    },
+    {
+      "path": "engine/dm/gfx/tests/native_functions/Program.cs",
+      "sha": "d8be0d2ea8638f74e099e034269bd5cd1cbd2d0c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/native_functions/gpu.m",
+      "sha": "bf6dd2da2913cf6ae5f9a446a59059437f4e051a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_api/api.c",
+      "sha": "1796a707f92cb47bdd35b39c66dcf5859d9b5a04"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_api/program.m",
+      "sha": "86a2b478302d539f9251ff485a39fcb0e777430d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_control_flow/ControlFlow.csproj",
+      "sha": "094c5d0299dbfbc96e11739a40217d45a5238fd8"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_control_flow/Program.cs",
+      "sha": "d18b817e884370693d0b69c9c214250b0e58956e"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_hit_context/Program.cs",
+      "sha": "720b5a51429a4bbdb73d806367e9689614dcfcbb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_hit_context/RtHitContext.csproj",
+      "sha": "34bd1e7d7e62947451fe2dd09c5366a491e54a0f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_surfaces/Program.cs",
+      "sha": "42e49f6f096dc1b4545927c5663db045a0488266"
+    },
+    {
+      "path": "engine/dm/gfx/tests/rt_surfaces/RtSurfaces.csproj",
+      "sha": "094c5d0299dbfbc96e11739a40217d45a5238fd8"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_alias_takeover.m",
+      "sha": "674e2e2ae0c088b2273e5053933aef2051208d7b"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_args_gen.m",
+      "sha": "0bcb1ad29c31e868584ae239d29dbcd86658cd80"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_bc_alias.m",
+      "sha": "a81e0ae33aeff602668ca9e352ced967d6ee951a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_blend_zero.m",
+      "sha": "182433da11f5126b75c46e5abb2b93c7e141a992"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_capture.c",
+      "sha": "5d2fb9c693af7b24f264265dbfc7c5f9d9d16891"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_compute_loops.m",
+      "sha": "c1ae331c98f82648341aa303d97e4e09f3832e2d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_cpu_storage.m",
+      "sha": "b21957480ecd9089edfff338a9b26e1a1456a833"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_cpu_tex.m",
+      "sha": "467e7145c84099bc9590cbb7c21468802571bc21"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_descriptor_pools.m",
+      "sha": "52245a31187fbc87ac3973e59cae17f01336353f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_deswz_gpu.m",
+      "sha": "b534c86499cb41b5375f79dd8d3d9e4ef5f094ab"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_dirty_race.c",
+      "sha": "cc4adba3fd88faa2c5e78bfc142d93958561237a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_dirty_slots.c",
+      "sha": "07c0b33ac035099a3664abad55f667eb15fe5235"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_dispatch_barrier.m",
+      "sha": "a6d23326a2ed1d4a55dda520caafeb17f340fadf"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_dlss_mfx.m",
+      "sha": "7e778c3f94d9f49237e3c64a870a2a38d556d70c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_dlss_scaler.m",
+      "sha": "2a8c589ec85c95e102b6c79c62dbd83bae71edfb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_feedback.m",
+      "sha": "5018a289209eecbeed65de70f6d1eba3a6690558"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_geometry.m",
+      "sha": "59bdb74c540d316f28644f3d4e51a25eb9a417d1"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_gl_imports.m",
+      "sha": "e0944e49f8670ec4c2134e7496ac595b2f58da1a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_global_memory.m",
+      "sha": "7a9cede1f0a6faf2fa076f2c0c929dac8bb72225"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_gmem_words.m",
+      "sha": "57f3bbb9c4e787cfffdac2d5214049ad8b1985f4"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_gpu_fault_kinds.m",
+      "sha": "daeae5d00b57e52dafa7036270c7c81e851412ad"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_host_stubs.c",
+      "sha": "9ecc13505bc3bd3b8600edce3034a407e5cb0d9c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_image_usage.m",
+      "sha": "954946baa599ceed3e228b2fddde19eb19c1e389"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_lazy_clear_order.m",
+      "sha": "73f830cc0c8b60457340c0acc8e1ad48af53c55d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_link_drain.c",
+      "sha": "bce2f36324b5c136f077de7b4bb6f31c07b2be80"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_link_latch.c",
+      "sha": "a93b66da435fb7db9ea06aa200b306f1850b19d5"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_link_latch_cb.m",
+      "sha": "792d5d9f827a1ca614d2cf1186855101b4eb3595"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_link_ticks.m",
+      "sha": "fee55dc8aac02a6207ebd500b733ceaec7c81ff3"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_logic.m",
+      "sha": "8bc86324963d027dcb49e1fb3da516f874f9d4b4"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_mdx_prescan.m",
+      "sha": "e2f5dc29ec4e874555aba05a011c5c3d3622818d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_mtl_init.m",
+      "sha": "8ed181c1ac8a1940aad5e7aa132eee4b8bf41dfc"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_nvn.c",
+      "sha": "a0323665030c4824681bfe67bd72f0cb5501ecfc"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_nvn_accel.m",
+      "sha": "1200e316c5c0f9f082e52643df60f43ccc3f8163"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_nvn_accel_sbt.m",
+      "sha": "95b2bcd5ce6eab66cc3fe84529042f8262b4fddc"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_nvn_resource_stages.m",
+      "sha": "d93b67f70c4097f1192b668d2d1e194c5d150a08"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_nvn_rt_state.m",
+      "sha": "84ee6989942f8684d2554b24d12e6bbae4dd6083"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pend_index.m",
+      "sha": "bb456e5bc90a3beb3fb78292a085082ad490adbd"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_perf_order.m",
+      "sha": "55a2d0351b6e3f29b818f9ac09e8291dc69afb00"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pool_replay.m",
+      "sha": "8fbc64b154e8c9c2234603930bb2106eae00e817"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pool_standin_sparse.m",
+      "sha": "0e9d81425a7169331030e7e715e8d25a196aa234"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_present_alloc.m",
+      "sha": "9460f887c71c5d574f716908d5457ff01f96e627"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_admission.m",
+      "sha": "0ec8242987d7c98ac3553b01d45b1174e6a9e881"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_archive.m",
+      "sha": "36dc305f6874d1334640707f086d3110e9900e32"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_bg_look.m",
+      "sha": "609b46acaf8827df9e35605283d8f41570d5a890"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_bundle.m",
+      "sha": "de7a05f09d3c2d859b9cce0e5ac430b4655775f3"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_demand_record.m",
+      "sha": "b005f7f936ef92f5dd89e933d51ca36552d609b8"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_look_wait.m",
+      "sha": "664c9359f28fda5a00f2af38feff1be9a89c21ac"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_pending.m",
+      "sha": "536d7bb0157427321544d15422a1ebed6a3526ae"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_prewarm.m",
+      "sha": "0ac58da0fea3022827b147b3c40894a7b58634d5"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_race.m",
+      "sha": "ae8ee027d653b01a932c5cdcda7619f55c9516cc"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_skey.m",
+      "sha": "401f1e39e540f7d1e163f45781b057b22ebd7ce0"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_stall.m",
+      "sha": "cf7181dc9a72654344de33b87ccbfe254dccbef1"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pso_warm.m",
+      "sha": "cf76e8c80839466e3bb3ab327fd2ad5a3149baec"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pull.m",
+      "sha": "1af53ed70aee8fe72a8de9e23973aa204227b58a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_pull_inv.m",
+      "sha": "696d6fe034761b974c29e37feba5373d0ebef5d0"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_queue_origin.m",
+      "sha": "cef03bc76011032eae7151389773c0ac62dedcd9"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_refl.m",
+      "sha": "7da61e46b330d51bced3f722e6d120e7dde0175c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_registration.m",
+      "sha": "17521a0908aa340f3c0d749c90edc41c29a86da4"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_render_enable_queue.m",
+      "sha": "d8d0daec17d1eeb2ed6d46b62e58f91f95d10ec3"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_res_cb.m",
+      "sha": "aeb3aa2c2605cb6fbe70cda833c9dc5b2f4fd13f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_rop_round.m",
+      "sha": "71788793b07d2b1524ced4995b9ec6d2aa8ba2df"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_rt_recycle.m",
+      "sha": "c995f15b79ad237432a25176eb6321ae53088d4b"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_rt_unbind.m",
+      "sha": "8ff3f9e3cadc9835a6e92687da5982584db42b59"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_sparse_copy.m",
+      "sha": "b28638a6c882237cb321610a957820b07ce60671"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_sparse_layout.c",
+      "sha": "373c9ea3b8a5b071fad7d6537ecc822b61d7c807"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_sparse_tiles.m",
+      "sha": "f5a1ef291372fc41c1d27b805cbe1c4a16f0be9f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_storage_pair.m",
+      "sha": "461fc48093ad34e30639274079782018af2d8d2f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_tbuf_access.m",
+      "sha": "2f20a66e1675ef60ef53ca3ec938177515976a21"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_tbuf_handle.m",
+      "sha": "82e766db4bb80c2c69238175d2a4af419fab003d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_tbuf_live.m",
+      "sha": "bbd53787e861d996afefa8ec914455a7b79ae3cb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_timestamp.c",
+      "sha": "ee2280c7c4f9b003f751b7e5064a787bc358c867"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_typed_outputs.m",
+      "sha": "5004eb91ee3e2fff55123ef04d126e214109ceb7"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_unwritten_store.m",
+      "sha": "7bc9e6a51bf902fb00aed6759ab5dad18a1b42d7"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_upgrade_alias.m",
+      "sha": "75227e280fada27e82a2e09791673391d14608bf"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_upload_src.m",
+      "sha": "dfd1ecbb85c2bd879fe3301afb55cb7b0f11d5c5"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vc_lifetime.m",
+      "sha": "09c1c5450016fd8a32256e9af0aaaafe899cdf5c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_view_swizzle.m",
+      "sha": "4679d55493a40b6afa1d09df80f66d06686ec391"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vis_need.m",
+      "sha": "8ae5a32a159bf9e6ba3660559c1c014d82e888b5"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vk_clear_int.m",
+      "sha": "c4db2d97c7dd2aeac709e757e7ea9a710f108018"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vk_desc.m",
+      "sha": "a3037aaec4e55ca6948e82e848f3905f1f26e59a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vpool_first_map.m",
+      "sha": "4d13ad3e0bf9e56b617449ded85b4bb70cbe89b0"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_wline.m",
+      "sha": "7280f95b456387b21fc04ddecd56e925edf1ba4f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_alpha.py",
+      "sha": "b0c403abe5a92bf43f4eea0b365540c7dd45afc8"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_ampere_alu.py",
+      "sha": "f425ec9350c6c1820e9e00e26a060bbd7a7accc1"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_ampere_mem.py",
+      "sha": "44708af5e2d1751f473bbb907ca7575519301f5d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_ampere_orin.py",
+      "sha": "10a9da4720d0999fd4256e2dc6e9d737c83e98eb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_ampere_patch.py",
+      "sha": "35c443626c67929b57408d7f6efacb16144f7aef"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_ast_optimizer.py",
+      "sha": "7f620c85eac700ca9cbeaf07a7f37c7878210e37"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_blend_zero.py",
+      "sha": "3d0f932545f627082e13304fbc48a3eb421e4912"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_compute_loops.py",
+      "sha": "c36aa9ca8715592a7234d1695806deb45cddfa79"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_compute_uniform_handles.py",
+      "sha": "20e979779685220113c30a16df44ce07bb4e4e4b"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_control_flow.py",
+      "sha": "df955b7d2c120fffa4a707b49790ce25630e7ca8"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_fetch.py",
+      "sha": "d9a4d312e9e2340d1fe8df8c87c39ee65378d3ae"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_float_add.py",
+      "sha": "81266f184b21bc6a5fec0d0ea54ac03abd4b8d15"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_gather_offsets.py",
+      "sha": "2f5e5c465159dda3448b0b22d7cc8d5c589c3ce7"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_geometry.py",
+      "sha": "618ac33e6a76335b45fb63d8d7eed445386502c3"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_goto_conditions.py",
+      "sha": "b49c80cbf1af5526b4da9be45da7757609032ca8"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_hmma.py",
+      "sha": "660e8165cab33316ad6ea231081126f56275554c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_hull_cbe.py",
+      "sha": "35b68365853a508b34c9760995bf87398ecf784e"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_ldc_offset.py",
+      "sha": "f96e62cbd03701e6b0a075bb9892e371a7f018fb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_logic.py",
+      "sha": "5ab28c0f50da902bab4eed4e9c746b9003ec58f0"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_maxwell_ftz.py",
+      "sha": "87498221b4fb8f9f386cb720df3a1e421dd58542"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_membar_fence.py",
+      "sha": "097ba0124d1d41b3b92bc3004b31e6956b399a27"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_meshstage.py",
+      "sha": "e4a1d43d46edfb0ff2e61f7a092c63da6bad72fd"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_native_functions.py",
+      "sha": "3ce3cfcaa6b62fa85b6a2b2059c5afdaf9e60cd7"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_pull.py",
+      "sha": "55a9eee066016347807fe1785e9f2b464e4c7546"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_raw_last.py",
+      "sha": "3dce6cba1b8ed1d1b396d05f2f6924def9a3f894"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_raw_noinline.py",
+      "sha": "2d0ee6491139d8e525d8dd2551dc8261033e5ae4"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_raw_pointers.py",
+      "sha": "124cc855211d324933a661aaa635f8fab3997c9d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_reflect.py",
+      "sha": "b4617023412cb7d46b2e6c638a94a86975ac3792"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_rt.py",
+      "sha": "3b6660dfbd4ec0e9be5ac5d47ac483889dd99b29"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_rt_build.py",
+      "sha": "15af2ed51c688445622d45ed59cfc173c0a6ada0"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_rt_compile.py",
+      "sha": "0dc6d15adb8f96e22d2b663ddb971986ea14380d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_rt_control_flow.py",
+      "sha": "c23d68ca3f5656a19525db485b8b54c2a1864397"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_rt_surfaces.py",
+      "sha": "d7bb9d542dbca57b8735de6ff3f8ef89d4c1d721"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_shfl.py",
+      "sha": "a1d9398a8776346b8a152a2d4b7c9f355779b974"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_side.py",
+      "sha": "a51bc3f18e2bd799d4791386fc0769fb3c00c67b"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_storage_bounds.py",
+      "sha": "7338220e868add98f0975f50ce4e065e0ab1c28c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_storage_offset.py",
+      "sha": "ec5c19321c52707d7058f6c47eede6374e036e2f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_tg_fence.py",
+      "sha": "d5c3ad76a4f55773320b7aee0379a208b99fc255"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_typed.py",
+      "sha": "b84c0912c0f1488c0d182bed15d6718091571471"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_wide.py",
+      "sha": "a73e3f99486ced436abcdf07d3683f915bf572bb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_kit.py",
+      "sha": "2fe5a2dd17eb92e531918145e8f949277983ccf9"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_nvn_rt_api.py",
+      "sha": "76ad98280c188ba3a99d631368b6ad52c663ccdb"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_nvn_rt_program.py",
+      "sha": "fc293b0e716d12c62d53d5d499e57dc19ff8b5e6"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_pg_shader.py",
+      "sha": "93c4d44634064b78ba0336dcccf3adf140c9c16f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_spirv_ordered_ne.py",
+      "sha": "fd44d729b059d96872a4214c26dc50738995e00e"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_vbf.py",
+      "sha": "b95ecc822b015c61936cfe4e1516b2912ade422b"
+    },
+    {
+      "path": "engine/dm/gfx/tex/nvn_deswizzle.c",
+      "sha": "28de0b42eb031cb2efad7057393dd949fa389190"
+    },
+    {
+      "path": "engine/dm/gfx/tex/nvn_deswizzle.h",
+      "sha": "788d763f426e91c209f0667b51eaf4d3dbc20ba1"
+    },
+    {
+      "path": "engine/dm/gfx/tex/nvn_deswizzle_gpu.m",
+      "sha": "7522318a33208104c6173bac57fd6f59ece04fe6"
+    },
+    {
+      "path": "engine/dm/gfx/tex/tests/t_tex.c",
+      "sha": "b9edde303d56520f4a4c7c4f66a245bb6f0a4c02"
+    },
+    {
+      "path": "engine/dm/gfx/tools/ampere_orin/batch.py",
+      "sha": "0c789f8cf73b805958e955562a256958d4861444"
+    },
+    {
+      "path": "engine/dm/gfx/tools/ampere_orin/capture.py",
+      "sha": "3307775e725e4e64cbf1a1cf63f7131616bd578a"
+    },
+    {
+      "path": "engine/dm/gfx/tools/ampere_orin/compare.py",
+      "sha": "0352957a680026cba65b8f61eac7d70ef81b9b72"
+    },
+    {
+      "path": "engine/dm/gfx/tools/ampere_orin/cu.py",
+      "sha": "beaa130572d0b42c260c30940f9c29c5f8bafaf7"
+    },
+    {
+      "path": "engine/dm/gfx/tools/ampere_orin/ops.py",
+      "sha": "6ea50aace16a94610b2434675f81c97a36b49638"
+    },
+    {
+      "path": "engine/dm/gfx/tools/ampere_orin/prog.py",
+      "sha": "233325e55b4dea651d469e68e82e4ffa884dc62c"
+    },
+    {
+      "path": "engine/dm/gfx/tools/cb_extent.py",
+      "sha": "f9f2b8c3e8680b7e647b976d354de458bc96aab5"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_alpha.py",
+      "sha": "23cb2164d3c9a55514cce53f97fb74441af3ea5a"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_atomic.py",
+      "sha": "10baa6be9f1391b36a52c777f581b4e313b4f87e"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_chain.py",
+      "sha": "d0377f5febe5b8ef7ceee72d81ff1caf8edac252"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_dryrun.py",
+      "sha": "e779570e972aed43e8044aacd9f4cfebaae7ffc1"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_entry.py",
+      "sha": "b3cc77ae95153d0a7fae4de211ad42c5cf83d4a8"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_fetch.py",
+      "sha": "927d5b0c662ac888b128274dbb06946c06ffdd5f"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_logic.py",
+      "sha": "7ee3644cf0830309f4816c8a2ec725d3facba6cf"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_meshstage.py",
+      "sha": "2104303e1fbc2b99cefbf5f15849ab258298a5be"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_pull.metal",
+      "sha": "f42bfdf77ba65335ddd0e4b340a9ba921e65a604"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_pull.py",
+      "sha": "7bf4d9c7ec07cd72bac159fea181fce080b62442"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_reflect.py",
+      "sha": "c4c625b74202e94a9a220217ae1648649ba680ca"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_rewrite.py",
+      "sha": "12b0039dde59368b0962a62325b1d63715fd728b"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_rt.py",
+      "sha": "56a7f0aa5f0d82a2298bf279a68a3385e88c9c4c"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_rt_build.py",
+      "sha": "a70bd46b7ca70be18655fa01f8f5f0f9f987565e"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_rt_compile.py",
+      "sha": "2f5fbcbbce6a1f3532d7e77706e9fe8de258e525"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_side.py",
+      "sha": "5810bcccb6814e055dc33fda9c7707d4b3d5fb62"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_wide.py",
+      "sha": "fee22875ef958504b928a1c1277092744f77f12b"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_xlate/Program.cs",
+      "sha": "470e7289e767a4954f850d4cb90e87506f580b86"
+    },
+    {
+      "path": "engine/dm/gfx/tools/gl_aliases.py",
+      "sha": "2c52ebe336bdf9d84b72ba29094d345b614d7483"
+    },
+    {
+      "path": "engine/dm/gfx/tools/gl_shaders.py",
+      "sha": "c52bb0eb99d4c1378e7fca64ebdbb1aedd73a443"
+    },
+    {
+      "path": "engine/dm/gfx/tools/idtech4_programs.py",
+      "sha": "b2834311ec473917aa1c198c0705ca96b6ac803c"
+    },
+    {
+      "path": "engine/dm/gfx/tools/kit.py",
+      "sha": "fc0d0c50c4acbfa7bc74864a6ba3e964cb15ee33"
+    },
+    {
+      "path": "engine/dm/gfx/tools/pso_offline.py",
+      "sha": "a31607a829fea37e37f191427b70d739582d62de"
+    },
+    {
+      "path": "engine/dm/gfx/tools/spirv_cross_bin/ordered-ne.patch",
+      "sha": "96c97416ce0c5c87d01f86e47fe58423eaabd4b2"
+    },
+    {
+      "path": "engine/dm/gfx/tools/uepak.py",
+      "sha": "3bad3c52f59bb3aad85ca7ac966028520395fa1d"
+    },
+    {
+      "path": "engine/dm/gfx/vk/hle_vk.m",
+      "sha": "8810721bbcb545c23a012eb76241121728f26b4d"
+    },
+    {
+      "path": "engine/dm/host/account_users.h",
+      "sha": "935ce154072b06927b09375aae85c39bfbdc1065"
+    },
+    {
+      "path": "engine/dm/host/audio_input.c",
+      "sha": "e9257588a2968e41d493704f8e27c0b290055d9f"
+    },
+    {
+      "path": "engine/dm/host/audio_input.h",
+      "sha": "c32990f3fbf7fec3693ff1bbb19b4c68aa7aa231"
+    },
+    {
+      "path": "engine/dm/host/audio_input_mac.m",
+      "sha": "4be374e2ef13ed4d4373a7a73d388f3239ae341e"
+    },
+    {
+      "path": "engine/dm/host/dm.h",
+      "sha": "054616cc435daef3a0ce82f28e6047fa30f25f1a"
+    },
+    {
+      "path": "engine/dm/host/front.h",
+      "sha": "7f3b2303a57ee1a432e112605943a566ad3b8c03"
+    },
+    {
+      "path": "engine/dm/host/front_mac.m",
+      "sha": "d80024f7676653b169f77450725ea2f20dde8784"
+    },
+    {
+      "path": "engine/dm/host/front_role.h",
+      "sha": "628795540001cdb44336d9a4f1e0364975aa6b99"
+    },
+    {
+      "path": "engine/dm/host/haptics_apple.m",
+      "sha": "cb75e050d147897bda0f4377eb1d71d913f30923"
+    },
+    {
+      "path": "engine/dm/host/hle.h",
+      "sha": "562409b5a516627c84a68457d5f7838b9648751d"
+    },
+    {
+      "path": "engine/dm/host/hle_account.c",
+      "sha": "d212e076afe5117105cd4ab993a44fa9842c2345"
+    },
+    {
+      "path": "engine/dm/host/hle_account_users.c",
+      "sha": "f4752e3e1cfcfe96c511153a1579ca93f3100deb"
+    },
+    {
+      "path": "engine/dm/host/hle_audio.c",
+      "sha": "3b1a4c4fdb1ea3a0ada370edf2b329ffdb844aff"
+    },
+    {
+      "path": "engine/dm/host/hle_audren.c",
+      "sha": "2b32130a5bf5f3031d87da80ccd2a2d4eaec02ce"
+    },
+    {
+      "path": "engine/dm/host/hle_audren_sv.c",
+      "sha": "4613b37adba8363f1fca9daccac906f1953953da"
+    },
+    {
+      "path": "engine/dm/host/hle_codec.c",
+      "sha": "9d41a954789eb8dec5b4eee0d95ab8b837edf88b"
+    },
+    {
+      "path": "engine/dm/host/hle_codec_video.c",
+      "sha": "d205195501b3c1718ac2df4952fb1c8d7d7db316"
+    },
+    {
+      "path": "engine/dm/host/hle_friends.c",
+      "sha": "59dfd782d3d7b0e7a60ccf63d00cf6fb3e61be01"
+    },
+    {
+      "path": "engine/dm/host/hle_fs.c",
+      "sha": "befbfaaf3cf9709c40f3e43cb7db6dddc7c6cb71"
+    },
+    {
+      "path": "engine/dm/host/hle_hid.c",
+      "sha": "cc3b61e4165e5a31d2f5c951ef423ed5a2739229"
+    },
+    {
+      "path": "engine/dm/host/hle_movie.c",
+      "sha": "8857047a14f6831251bc8e0ef00fda92187fb87e"
+    },
+    {
+      "path": "engine/dm/host/hle_movie_av1.c",
+      "sha": "348cfdb0ad6b7b5e60ce9efc35d1429336449495"
+    },
+    {
+      "path": "engine/dm/host/hle_movie_av1.h",
+      "sha": "6997e5725cd9129ba658ec5c1ba6da0bae3bb71b"
+    },
+    {
+      "path": "engine/dm/host/hle_movie_avc.c",
+      "sha": "4ccb90a13d5a8c6b9351fe2c1a72232f2a7a4ac1"
+    },
+    {
+      "path": "engine/dm/host/hle_movie_avc.h",
+      "sha": "b4357f7846861bd0305967b98386e2976e772502"
+    },
+    {
+      "path": "engine/dm/host/hle_movie_vt.h",
+      "sha": "f9d838759bfd461f4989962e236f439143efeb7a"
+    },
+    {
+      "path": "engine/dm/host/hle_offline.c",
+      "sha": "9b94a0477761cbdda76c765481a97c024ccd91cb"
+    },
+    {
+      "path": "engine/dm/host/hle_os.c",
+      "sha": "0a41eef07b4fb80c9ded466ca4eb2d4225bf7cc3"
+    },
+    {
+      "path": "engine/dm/host/hle_sf.c",
+      "sha": "5470a992a6d6f26cc68b3228d3a5313c0a4413bf"
+    },
+    {
+      "path": "engine/dm/host/hle_table.c",
+      "sha": "b5689f99574736c0f5ae38df9e189c2336d353d4"
+    },
+    {
+      "path": "engine/dm/host/hle_thread.c",
+      "sha": "f9732f5b106eeab0f5b75aeb8889341d05a7f34d"
+    },
+    {
+      "path": "engine/dm/host/hle_time.c",
+      "sha": "8679bc4d1adde0e9e9eb6f65fbef0d8a059b0b24"
+    },
+    {
+      "path": "engine/dm/host/loader.c",
+      "sha": "7f04e5e73fa36a691f8714fb7fa738e9692cd3ee"
+    },
+    {
+      "path": "engine/dm/host/main.c",
+      "sha": "e046b207376745b9c4a12d9cca92cc59cfb79c00"
+    },
+    {
+      "path": "engine/dm/host/motion_apple.h",
+      "sha": "11cfe32e6c54e6e938d01165b07a0ad95f0c673c"
+    },
+    {
+      "path": "engine/dm/host/motion_pro.h",
+      "sha": "e4e73a4ddf612f5c8cd176f0b1265163b4d95482"
+    },
+    {
+      "path": "engine/dm/host/motion_pro_mac.h",
+      "sha": "2f17c5f73556e5d00cf690b33163ccf3064ba575"
+    },
+    {
+      "path": "engine/dm/host/pad_hid.h",
+      "sha": "43de8893abbdfb1559edfb069f7b248945202700"
+    },
+    {
+      "path": "engine/dm/host/pad_hid_mac.h",
+      "sha": "e7dbeee8163f309409a217bbb6385625bffd3448"
+    },
+    {
+      "path": "engine/dm/host/pad_jc1.h",
+      "sha": "18739be387b29f2a73424d2729de8a2f7ca2da3f"
+    },
+    {
+      "path": "engine/dm/host/pad_jc1_mac.h",
+      "sha": "ca565b42aee6d30780aed369712d647506fce8d0"
+    },
+    {
+      "path": "engine/dm/host/registration.h",
+      "sha": "eb270d679b19028e9a17f62050622a9ece41a6dc"
+    },
+    {
+      "path": "engine/dm/host/tests/Makefile",
+      "sha": "844b82f22453e028d07071fdaab4c835a0e1408d"
+    },
+    {
+      "path": "engine/dm/host/tests/audio_input_platform_stub.c",
+      "sha": "f7570339be2b96c461620702a4d204fffe27be06"
+    },
+    {
+      "path": "engine/dm/host/tests/movie_vt_data.h",
+      "sha": "533dc03e310fd624d3740f232b34474d0cef6e53"
+    },
+    {
+      "path": "engine/dm/host/tests/t_account.c",
+      "sha": "b826f60b80e0697147186d97516f5c2efb2f8cfa"
+    },
+    {
+      "path": "engine/dm/host/tests/t_account_save.c",
+      "sha": "32a251fec786c40982092edddd74f4abd916c975"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audio.c",
+      "sha": "79c06cb06c3965b1387bd15ae360a257887f0157"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audio_device.c",
+      "sha": "eafb13b8041fea02b362ecc87e7704442bdc3802"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audio_input.c",
+      "sha": "e665f6a53e8aaa35807a70d42fe19fb1047aa4f1"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audio_live.c",
+      "sha": "71d6dfd3a775fc9e3047a55154c76103f7153adc"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audio_spsc.c",
+      "sha": "e8c9f4223dfe0999a82b15ec5cc008c862cb3b95"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audio_stats.c",
+      "sha": "c594ccc615e0d4659e6ee220182ed7a289681a11"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audren_layout.c",
+      "sha": "fe44e916e91c0b56d6e20178b4a764f695579e23"
+    },
+    {
+      "path": "engine/dm/host/tests/t_audren_work.c",
+      "sha": "0745da516e36d1816a8a55c2efecd7dcb7736559"
+    },
+    {
+      "path": "engine/dm/host/tests/t_codec_opus.c",
+      "sha": "9b46c38c26e05a5a10390f25aadc38cf3e71d431"
+    },
+    {
+      "path": "engine/dm/host/tests/t_codec_video.c",
+      "sha": "1b86336768a75b90330e4cfb5347c3fbc92e00a9"
+    },
+    {
+      "path": "engine/dm/host/tests/t_condvar.c",
+      "sha": "90a06e712a2eb55464fec80d097d5586541f9d06"
+    },
+    {
+      "path": "engine/dm/host/tests/t_friends.c",
+      "sha": "d88bdf63a549c6aceb9bb1428e04ce4a369a1066"
+    },
+    {
+      "path": "engine/dm/host/tests/t_front_role.c",
+      "sha": "05b45f51a581763d5762bd5c935de2a842cae1ed"
+    },
+    {
+      "path": "engine/dm/host/tests/t_fs.c",
+      "sha": "a654738cda9f66ce50f8ed47857562d430d92e48"
+    },
+    {
+      "path": "engine/dm/host/tests/t_fs_case.c",
+      "sha": "4d54d4bf88059187babf583e161e2434af2e19d2"
+    },
+    {
+      "path": "engine/dm/host/tests/t_handoff_wait.c",
+      "sha": "d1fc441f994ffe14db0bd2bbe056512cf4680d69"
+    },
+    {
+      "path": "engine/dm/host/tests/t_haptics_apple.m",
+      "sha": "eb94ba716b90331d470abf4ed3a508b0c9ba81ef"
+    },
+    {
+      "path": "engine/dm/host/tests/t_hid.c",
+      "sha": "b11a239e60bd7a6199eff715b4ce32c61e1f3cad"
+    },
+    {
+      "path": "engine/dm/host/tests/t_jc1.c",
+      "sha": "a6c5334d80bbf40e0854fc75e93236de943fb51e"
+    },
+    {
+      "path": "engine/dm/host/tests/t_motion_apple.m",
+      "sha": "27804bf014380070b0cc5305ad320e941f44a1e8"
+    },
+    {
+      "path": "engine/dm/host/tests/t_motion_pro.c",
+      "sha": "87001b221d952738659d50a028ac2bc45fd25216"
+    },
+    {
+      "path": "engine/dm/host/tests/t_motion_pro_mac.m",
+      "sha": "76603c2bf726f621cc1ee3f010bca9bccd2dea07"
+    },
+    {
+      "path": "engine/dm/host/tests/t_movie_avc.c",
+      "sha": "df4b764b6213412d67291dbf6e53e0c2d3ff89fe"
+    },
+    {
+      "path": "engine/dm/host/tests/t_movie_vpx.c",
+      "sha": "bfcefad0403e35a1b99c6a5f6dc036260c166161"
+    },
+    {
+      "path": "engine/dm/host/tests/t_objmap.c",
+      "sha": "eb4a135680f301c45ab737fe21a59a2daeca72ad"
+    },
+    {
+      "path": "engine/dm/host/tests/t_output_stream.c",
+      "sha": "6a8d53146fb0b8a1c90bb79dee825121c8abc082"
+    },
+    {
+      "path": "engine/dm/host/tests/t_pad_hid.c",
+      "sha": "267bfe4fc23d0c195a470c4dd67066bb9579d018"
+    },
+    {
+      "path": "engine/dm/host/tests/t_pad_hid_mac.m",
+      "sha": "07511446a66cdbb9704cb518ef1e9043726ee969"
+    },
+    {
+      "path": "engine/dm/host/tests/t_server_environment.c",
+      "sha": "c06b5a7a9a0c5c93ab7deddf9e727ef3aa5afe9c"
+    },
+    {
+      "path": "engine/dm/host/tests/t_sf.c",
+      "sha": "9d8ef5f605432744419856f6e4aad3e24a91d4ca"
+    },
+    {
+      "path": "engine/dm/host/tests/t_time.c",
+      "sha": "0696a81edff72ed2bdbaa6826a2dbc02a3a65630"
+    },
+    {
+      "path": "engine/dm/host/user_select_mac.h",
+      "sha": "3ed5a7fa3f0b11f53506557aedd11608e93072af"
+    },
+    {
+      "path": "engine/dm/ios/Sources/DmIOS-Bridging-Header.h",
+      "sha": "ca8bf340233bddf6768655cc7f9dc72c58e8b6ad"
+    },
+    {
+      "path": "engine/dm/ios/Sources/GameMenu.swift",
+      "sha": "205e27753e5d366740d1117dbb9dd2a6dec9f865"
+    },
+    {
+      "path": "engine/dm/ios/Sources/LauncherRow.swift",
+      "sha": "ec2d2b1955bc967b2653758c8cb3fcd8794e9033"
+    },
+    {
+      "path": "engine/dm/ios/Sources/LauncherSettings.swift",
+      "sha": "c003978b365549c40da49fe0ee57408a5b9a22cd"
+    },
+    {
+      "path": "engine/dm/ios/Sources/front_ios.m",
+      "sha": "56a858d836f03978b370527fa1b527966b3b378b"
+    },
+    {
+      "path": "engine/dm/ios/tests/test_entitlements.py",
+      "sha": "36f9f22a9fbd96a6c570872f215b28732a3579c6"
+    },
+    {
+      "path": "engine/dm/ios/tests/test_xcode_workflow.py",
+      "sha": "b1fdd2b69756b9708c5e5bebd483562e60206cc2"
+    },
+    {
+      "path": "engine/dm/ios/tools/stage_resources.sh",
+      "sha": "5414fa9b0a2a2f208aa2d21d29eae3625a328767"
+    },
+    {
+      "path": "engine/dm/mac/Launcher.swift",
+      "sha": "054e19fc274e2cdfba3e4786a7e8ff2803871a54"
+    },
+    {
+      "path": "engine/dm/mac/launcher.c",
+      "sha": "ae7edfbef7c3d38f6c5cd134fa0264169b7ca370"
+    },
+    {
+      "path": "engine/dm/sanitizers/ignorelist.txt",
+      "sha": "9c38cb53155b0437a0e2ac7414dade2e36ef1a0b"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/README.md",
+      "sha": "5a2afd389372e3e4b90c835d8c3ffa3bb34839f5"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/CodeGen/Spirv/CodeGenContext.cs",
+      "sha": "0e3f4690f4187e7dd656da93100463bb2b746514"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/CodeGen/Spirv/Declarations.cs",
+      "sha": "a9d08d487a3a5885266467b433632346b4f79f95"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/CodeGen/Spirv/Instructions.cs",
+      "sha": "9b6c38a49babd237adad24f87d26e35a0f7cff40"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/CodeGen/Spirv/RayQuery.cs",
+      "sha": "a239e9f95349d9b98d880ee6cc415d4fbfac2241"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Constants.cs",
+      "sha": "16f57780a48f421ebbe2f500e173f39fb422363f"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Decoders/DecoderAmpere.cs",
+      "sha": "d9fe66b45a671151819aaf520bb76d82f47ff9f3"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Decoders/InstDecoders.cs",
+      "sha": "19dff81531ae418f84dfde73c7de0eb9c5743f3d"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/IGpuAccessor.cs",
+      "sha": "8c74955d65d91d25a2bb4addb6bd1b7e9991e490"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmit.cs",
+      "sha": "3477197b04a270c1dada8def4728942a279625a5"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitAluHelper.cs",
+      "sha": "8b2c1156e18d8b84d1e4b5058224dbe45de3653a"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitAmpere.cs",
+      "sha": "cbb477d14d85fb3a2934d943380dcc211120a437"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitAmpereAlu.cs",
+      "sha": "e651e25cf60db6277f2c7436a2ccc34f22ca4c76"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitAmpereMem.cs",
+      "sha": "04c53334a5270b67c1d73a38aac235a86cba369f"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitAmpereTensor.cs",
+      "sha": "de8c6d4e1b1baeac3e10d1f468d755b87b106e22"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitFloatArithmetic.cs",
+      "sha": "6f40aab31a2928b085aa3b348728c3326f30aabb"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitFloatMinMax.cs",
+      "sha": "4f605ad4decee4ad76497bc8568bc50d45fe2469"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitMemory.cs",
+      "sha": "222ebcca94b5a382c6c43e096a3ffee4ecb563da"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitSurface.cs",
+      "sha": "b021cdb9e3bf6a4982164bbb242ff84c5b868ecc"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitTexture.cs",
+      "sha": "c863b64d2ef5cb29c893f806af2402fcd89c3fe3"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/IntermediateRepresentation/Instruction.cs",
+      "sha": "5501cc328ceef375be03d675eb14b2cc0ca0b709"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/IntermediateRepresentation/Operand.cs",
+      "sha": "448a471ef3dfbdcca72a9a4f2b42a75307dd59c9"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/IntermediateRepresentation/TextureFlags.cs",
+      "sha": "6597d8b4fadc28d82531dcd40dae81230103debc"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/StructuredIr/AstOperand.cs",
+      "sha": "389ad39c3d85e7e288fe6ffd6e8410b2eacd5bf6"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/StructuredIr/AstOptimizer.cs",
+      "sha": "c19cadd4213f92ece3e3fa7fd58cd2a401ecfb10"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/StructuredIr/GotoElimination.cs",
+      "sha": "cad7dcf42c8d1c8e84da8c424486a0c32a720932"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/StructuredIr/InstructionInfo.cs",
+      "sha": "9289098223dbb03ab443145a0f20e5af01d38293"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/StructuredIr/ShaderProperties.cs",
+      "sha": "582818b0cfc4d38b0e47a3337a5c18a5edcf22dc"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/StructuredIr/StructuredProgram.cs",
+      "sha": "d0491f4a1d3f6f42e91fae7bfed7a8b4e4637cc3"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/HelperFunctionManager.cs",
+      "sha": "002a2a424b442c3ece06e10d3f9f496b3794c4f4"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/NativeFunctionState.cs",
+      "sha": "eec7f8cbc07a77254543daa9601632d58cb5d3b4"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/Optimizations/BindlessElimination.cs",
+      "sha": "b270582c3c280f47a79f7c592760e7093bf1b8dd"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/Optimizations/ConstantFolding.cs",
+      "sha": "19327c84d73661059d618610ed928f477a3d613a"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/Optimizations/GlobalToStorage.cs",
+      "sha": "c0461fc45acc5395a8b61b07019cdd3c541b423a"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/RayTracingControlFlow.cs",
+      "sha": "a0efab32519278c3388cd42663131119277a3eb5"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/RayTracingDriver.cs",
+      "sha": "594fc5cb3c9e9ed526ace1e75d10a580193e50ec"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/RayTracingHitContext.cs",
+      "sha": "b3eeac58950a4776a883ca518e65d92844e41d24"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/RayTracingProgram.cs",
+      "sha": "627b5c6c327f2d0a4ea949b91da6f0a1234bf172"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/RayTracingSurfaces.cs",
+      "sha": "7ca805fffb34827fc475d5dff60528c422b19d83"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/ResourceManager.cs",
+      "sha": "9cecab6ee768b3003f51b5cb7c49239c4bfbe0e2"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/Transforms/SharedMemoryFence.cs",
+      "sha": "926dee81fdc1bf8ce4f821a5d9037dbe879bb144"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/Translator.cs",
+      "sha": "0fe2ce1c037a37bf495423d4ff690fda2fb4523d"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/TranslatorContext.cs",
+      "sha": "dbf6885f4de292ec6cfbfdcb59e416772e0dad41"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Spv.Generator/Autogenerated/CoreGrammar.cs",
+      "sha": "f1b54101d200c13ccf5c6a06343d8ae96689d2df"
+    },
+    {
+      "path": "engine/dm/tools/audio_channel_check.py",
+      "sha": "0d03406ecac0cd17f822ce81bbbddc447638fd9e"
+    },
+    {
+      "path": "engine/dm/tools/docs_patches.py",
+      "sha": "7cffd69bcc65de6717ce75198c87d05bf5e96a6c"
+    },
+    {
+      "path": "engine/dm/tools/env_switches.py",
+      "sha": "9f7dad842a842e3d30d7c07582d07ddaf50f4c90"
+    },
+    {
+      "path": "engine/dm/tools/impact_map.tsv",
+      "sha": "d20c6b1f2ed2682bdd02a73542cedfbde61e243d"
+    },
+    {
+      "path": "engine/dm/tools/jump_solver.py",
+      "sha": "ebcb60ff49b2a7f60e62545c47e2cb2f798a97ea"
+    },
+    {
+      "path": "engine/dm/tools/lint_c_baseline.tsv",
+      "sha": "b9802b1108be60a28ec303c3b55035a1d457caa2"
+    },
+    {
+      "path": "engine/dm/tools/lint_python_baseline.tsv",
+      "sha": "494a351f6fcebef52034ba399b45d8094e11f2b3"
+    },
+    {
+      "path": "engine/dm/tools/nso_code.py",
+      "sha": "23b7abf08f50a4c8a8acf38dbc484d1eef2bd5d9"
+    },
+    {
+      "path": "engine/dm/tools/nso_syms.py",
+      "sha": "6513c4e4dff613a4e89eab2f3bb13d766adcc84e"
+    },
+    {
+      "path": "engine/dm/tools/nx_extract/Program.cs",
+      "sha": "a5c041a5d738b95dc416e5d7593173ee97b891f7"
+    },
+    {
+      "path": "engine/dm/tools/shader_lib.py",
+      "sha": "c5791ba90a9db987f3dbc055950a7c57bc438593"
+    },
+    {
+      "path": "engine/dm/tools/tests/fixtures/Pfs0StorageTests.cs",
+      "sha": "2a080074342cfbbc93cddbba7a7fbcfd138c9489"
+    },
+    {
+      "path": "engine/dm/tools/tests/fixtures/pool_callables.m",
+      "sha": "6e4dc085916ed6617592c21c5fdcfa01da486fa8"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_audio_channel_check.py",
+      "sha": "4acf39e4bcbb2d9e600539c123d6ba7d5e56e487"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_bug_report.py",
+      "sha": "d21d22802d418e5322f60850d42f699a5b999d42"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_dmsh_abi.py",
+      "sha": "a9c20106c7ca14615c3337889cd4d987d0086797"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_dmsh_code_fp.py",
+      "sha": "31752ea39ce2fdae8534b4de670511c2529f5521"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_dmsh_pool_arrays.py",
+      "sha": "b47f5e8a4eee1644122894e823d93e085ad1c550"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_dream_buffet_init.py",
+      "sha": "4269f2d9ccd86fe3f87ebf31f0862871b6bf17e2"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_gl_aliases.py",
+      "sha": "91ccd9bcc13dcc8c7e7606697890ed842d22a959"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_gl_shaders.py",
+      "sha": "565927e7983dc1d0f1501ab171cf825a75de417d"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_global_memory.py",
+      "sha": "c41f0ab481fceb50d00eec7c40c2fc0c88f984f5"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_idtech4_programs.py",
+      "sha": "e130c6ce8d2d63fda0be91c6b22b034c001b7411"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_image_atomic_bounds.py",
+      "sha": "3d1417066210e61116c945fcd2cf31bbc1651b45"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_ipa_tables.py",
+      "sha": "121294c0addd3cf0c73727dc1357c4b277fa2465"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_jump_solver.py",
+      "sha": "d392dcf86d1791c4aed2f7aadada9e1ab2208b0c"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nsp_alias.py",
+      "sha": "04f75c5e465a7f9746ac685301095f298646d409"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nsp_chain.py",
+      "sha": "7678acf25d909d9e6ba782a1a440959283f0499d"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nsp_extraction_key.py",
+      "sha": "769706b969c8f7182bd7ed24dc28634e27421eb7"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nsp_incremental.py",
+      "sha": "09335e05c34d6a6ae4afd4c9d2a75e04e48ba70b"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nsp_mac_app.py",
+      "sha": "8cbb6becb5eeb2c8bf80601e4cf05c0348ad0f81"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nsp_nup.py",
+      "sha": "dbe2f9efd8036657474230c12ae8f9475b774234"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nsp_scan.py",
+      "sha": "4980787a4dd1710438b2d5ae1a9dbc57e4e6f313"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_patches.py",
+      "sha": "dfa7cd5e7ce7cfe868d8f3b5dce5e9f21e147d0e"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_profile_guess.py",
+      "sha": "aafe6734046200edeb2d46b3589c97d976dbd89b"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_pso_offline.py",
+      "sha": "9551d86de25050596e4f3010331b35006ea98bc3"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_regress.py",
+      "sha": "95fb9c0790110dd3b67f361710041e245bbe6b80"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_residency_naming.py",
+      "sha": "798c316eb2b88cf4a13bb302d54f510237b57cf3"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_settings.py",
+      "sha": "1b180c8bb32f90717828c7b7475c4e5869ffc3bc"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_shader_cache.py",
+      "sha": "4b22ebd86d4ef151288bb559d06ee0de8ed412eb"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_shader_lib.py",
+      "sha": "53d1b14d4e6cab58591e389dd68a73f14ae13775"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_shader_rewrites.py",
+      "sha": "2b06873ecb97afb193b97c13b12cba3aa9671810"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_shader_toolchain_cache.py",
+      "sha": "2d4111423ecbd4dd611377f0161cd149e62db2f5"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_spirv_cross_pin.py",
+      "sha": "2ed926a2ab81b039c0f97d5c59e251c574cbb69a"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_bahs_entries.py",
+      "sha": "ec6b3edf5bb3696b08b27c1f2db572a2263e1ded"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_bnd2.py",
+      "sha": "33d5f3d16fe89fe8da8abbb5d4acb4b45336e49e"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_civbsf.py",
+      "sha": "39d30fe945c2cd88c1787de7e49b79ccbc4cfebe"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_representatives.py",
+      "sha": "d4e2b90bcf82ccc5b7ca37a6e7218a3723e97a6f"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_rt.py",
+      "sha": "8d8b28b7039090a49420dbf7f2be05fe642d09df"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_tail_call.py",
+      "sha": "ab48fa76c42dd387c38f53cb50d403cda0c60b8f"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_uepak_v9.py",
+      "sha": "9c6e9baaa08a25dcff4e8deff5a59056ec4419c1"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_x18_select.py",
+      "sha": "c57f7895fe575ff6b4a4cda31c6813f32473e743"
+    },
+    {
+      "path": "engine/docs/agents/game-patches.md",
+      "sha": "770409cf0b881b3f46b064ea43e41034ba3a0384"
+    },
+    {
+      "path": "engine/docs/agents/symptoms.md",
+      "sha": "87f6b4c83b6f1b530327deed75e7c7fd18b5158c"
+    },
+    {
+      "path": "engine/docs/development.md",
+      "sha": "e85b88c583bec65437fa6c04858833243f7edabe"
+    },
+    {
+      "path": "engine/docs/env_switches.tsv",
+      "sha": "4777c7c19a0e0da4930a233111b602a991df2542"
+    },
+    {
+      "path": "engine/docs/frontends.md",
+      "sha": "14a3875a8385f899e2f34c54c81d8a42ea083de2"
+    },
+    {
+      "path": "engine/docs/images/metro-2033-redux.jpg",
+      "sha": "2586f6b494e03396b2a98bd13ac79c9a48fe5b63"
+    },
+    {
+      "path": "engine/docs/playing.md",
+      "sha": "9b99136807c1c8ba2fac4fdec143ec8c974d13f3"
+    },
+    {
+      "path": "engine/docs/reference/audio.md",
+      "sha": "31489a4efd1cc78702e77f3392e9c90225e686a5"
+    },
+    {
+      "path": "engine/docs/reference/memory.md",
+      "sha": "701c88298b937854ce868399857515afb8dd03b8"
+    },
+    {
+      "path": "engine/docs/reference/movies.md",
+      "sha": "74a0ed6d9177962d5bf5e6d81aaa8930904f6283"
+    },
+    {
+      "path": "engine/docs/reference/nvn-objects.md",
+      "sha": "58f99edb832853373c5890202ff3189daf4fa02b"
+    },
+    {
+      "path": "engine/docs/reference/packing.md",
+      "sha": "d1e1af0efa087caf8cac79de3bce2967bbcd93be"
+    },
+    {
+      "path": "engine/docs/reference/rendering.md",
+      "sha": "fbdbc1f9ff8cef0043cf8e9546bee72bd5fb9124"
+    },
+    {
+      "path": "engine/docs/reference/rewriter.md",
+      "sha": "c974be7cfb5007e527ed701afe604eaa0569e759"
+    },
+    {
+      "path": "engine/docs/reference/services.md",
+      "sha": "56a9822279731020e804e94b566470fc83eae0c8"
+    },
+    {
+      "path": "engine/docs/reference/shaders.md",
+      "sha": "1affa42575325d4a7d377acc2cf274b319115ac0"
+    },
+    {
+      "path": "engine/docs/reference/threads.md",
+      "sha": "c4551d032b8935f518f2bfeaba989794495d9290"
+    },
+    {
+      "path": "engine/docs/settings.md",
+      "sha": "824da490c78e363b22c167845bcb6b7bd82ee169"
+    },
+    {
+      "path": "engine/scripts/bug_report.py",
+      "sha": "be6593ae598aaf40142217bf8142a8e8ab22304e"
+    },
+    {
+      "path": "engine/scripts/pack_nup.py",
+      "sha": "0ba213b6568c6ee894b88471c113b9a7d8cce096"
+    },
+    {
+      "path": "engine/scripts/regress.py",
+      "sha": "baab974297e4069385d9b5f5a033735c2c1694d4"
+    }
+  ],
+  "windows_overlays": [
+    "engine/dm/gfx/nvn/dmsh_chain.h",
+    "engine/dm/gfx/tools/c1_guard.py",
+    "engine/dm/gfx/tools/dmsh_build.py",
+    "engine/dm/gfx/tools/dmsh_chain.lock",
+    "engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate",
+    "engine/dm/gfx/tools/shader_split.py",
+    "engine/dm/gfx/tools/spirv_cross_bin/build.sh",
+    "engine/dm/gfx/tools/spirv_cross_bin/spirv-cross",
+    "engine/dm/ios/tools/build_ipa.sh",
+    "engine/dm/mac/pack_app.py",
+    "engine/dm/tools/nx_extract_bin/nx_extract",
+    "engine/dm/tools/patch_nso.py",
+    "engine/dm/tools/shader_cache.py",
+    "engine/docs/reference/frame-rate.md",
+    "engine/scripts/build_ipa_from_nsp.py"
+  ],
+  "deleted_paths": [
+    "engine/dm/games/0100606026F12000/shader_facts_manual.tsv",
+    "engine/dm/games/01007EF00011E000/shader_facts_manual.tsv",
+    "engine/dm/games/0100A9D01C446000/shader_facts_manual.tsv",
+    "engine/dm/games/0100F2C0115B6000/shader_facts_manual.tsv",
+    "engine/dm/games/0100F43008C44000/shader_facts_manual.tsv",
+    "engine/dm/tools/tests/test_jump_copies.py",
+    "engine/dm/tools/tests/test_jump_guarded.py"
+  ],
+  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout."
 }
