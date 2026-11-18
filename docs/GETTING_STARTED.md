@@ -4,6 +4,16 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.1: iPhone black-screen diagnostics
+
+A black game picture with responsive controls is **not automatically a sideloading failure**. It can indicate a rendering/presentation problem, missing or mismatched shader libraries, or another on-device issue. Do not delete the existing Windows build cache to diagnose this. **A game log is needed before claiming a root cause.**
+
+The Windows-built **iPhone launcher** now offers **Export Game Logs** below Play. After a black-screen attempt, fully close the game, reopen it to the launcher, and choose **Export Game Logs → Save to Files** or share manually. This exports **HookLink-last-game-session.txt** (the previous run, originally `Documents/log.prev.txt`) and **HookLink-this-launch.txt** (current run, originally `Documents/log.txt`). iOS file sharing is also enabled, so the same originals can be copied from the application's Documents folder using Files or Apple Devices. The launcher does not upload logs automatically; review them before sharing because device paths and other diagnostics may be present.
+
+In the Windows builder choose **iPhone log…**, select the downloaded `log.prev.txt` / `HookLink-last-game-session.txt`, and review the error excerpts and last log lines in **Build output and diagnostics**. This is **offline, read-only log inspection**, not a conclusive renderer diagnosis or an automatic repair.
+
+For **app-only IPA** installs, confirm that the *installed app's* Documents folder contains `RomFS.img`, the exact matching `b-<shader-chain>.img` archive, and `env.txt`. The tested Ocarina settings in the phone's effective `env.txt` are `DM_MSL_DIR=.`, `DM_NVN_ENC_THREAD=0`, `DM_PSO_MTL4=0`, and `DM_NVN_BARRIER=full`. The local Windows configuration file alone does not update a previously installed app. Avoid changing render switches speculatively until the iPhone logs show what failed.
+
 ### Alpha 1.1.0: X2-compatible graphics setup
 
 **Alpha 1.1.0 fixes an Alpha 1.0.9 regression** where `Check prerequisites` or `Toolchain setup… → Retry graphics setup` could report `Expected HookLink 2.0 source tree` before attempting to build the shader translator. The previous bootstrap hardcoded both HookLink `VERSION=2.0` and the X1 NXNative pin. The bootstrap now checks consistent **HookLink 3.0 + NXNative X2 `7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf`** metadata and validates the accompanying 25-file X2 provenance manifest. The earlier 2.0/pinned-engine pair is also recognized for older source checkouts; unknown or inconsistent engine pins remain rejected. This check runs before the external toolchain build and does not reset, download or rewrite the engine.
