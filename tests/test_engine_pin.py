@@ -101,7 +101,7 @@ class EnginePinTests(unittest.TestCase):
         self.assertIn("text='View commit'", gui)
         self.assertIn('webbrowser.open_new_tab(self.engine_pin.url)', gui)
         self.assertIn("upstream_button.configure(state='disabled')", gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.1'", gui)
+        self.assertIn("GUI_VERSION = 'Alpha V1.1.2'", gui)
 
 
 if __name__ == '__main__':
