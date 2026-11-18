@@ -1,5 +1,16 @@
 # Changelog
 
+## X2.0.1 (3.0.1)
+
+A hotfix for crashes after area changes in X2.
+
+- **No more closing after area changes.** Some iPhones hit GPU errors right after loading a new area: a moment of flicker, then the game closed. Two X2 changes could cause that, so both are out of the defaults for now:
+  - GPU occlusion is now off by default. It's still under Settings → Performance, marked experimental, for anyone who wants to try it.
+  - A memory change from nxnative that freed textures when the game frees a memory pool is taken back out. It returns once it's merged safely with HookLink's own memory handling.
+- Everything else in X2 stays: the Master Sword fix, less stutter on A19 iPhones, the Shadow map setting and the rest.
+
+**To update:** click the engine update in HookLink and build again, then install over your current app. Shaders don't recompile, so it takes minutes.
+
 ## X2 (3.0)
 
 HookLink X2 fixes the Master Sword white screen, crashes after long play, and stutter on iPhones with an A19 chip. It also adds GPU occlusion and a Shadow map setting.
