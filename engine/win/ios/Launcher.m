@@ -354,6 +354,50 @@ static UIImage *app_icon(void) {
     for (NSString *f in [files reverseObjectEnumerator]) { UIImage *im = [f isKindOfClass:NSString.class] ? [UIImage imageNamed:f] : nil; if (im) return im; }
     return [UIImage imageNamed:@"AppIcon60x60"];
 }
+- (void)exportGameLogsFromButton:(UIButton *)sender {
+    // main.m rotates Documents/log.txt into log.prev.txt on each launch.
+    // The previous session is the one containing a black-screen failure;
+    // the current log may contain only launcher and startup diagnostics.
+    NSString *doc = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    NSString *shareDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"hooklink-share-logs"];
+    NSFileManager *fm = NSFileManager.defaultManager;
+    NSError *error = nil;
+    if (![fm createDirectoryAtPath:shareDir withIntermediateDirectories:YES attributes:nil error:&error]) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Cannot prepare logs"
+            message:error.localizedDescription ?: @"Unable to create a temporary sharing folder."
+            preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+    NSMutableArray<NSURL *> *items = [NSMutableArray array];
+    for (NSArray<NSString *> *entry in @[@[@"log.prev.txt", @"HookLink-last-game-session.txt"],
+                                         @[@"log.txt", @"HookLink-this-launch.txt"]]) {
+        NSString *src = [doc stringByAppendingPathComponent:entry[0]];
+        NSDictionary *attrs = [fm attributesOfItemAtPath:src error:nil];
+        if (!attrs || [attrs fileSize] == 0) continue;
+        NSString *dst = [shareDir stringByAppendingPathComponent:entry[1]];
+        [fm removeItemAtPath:dst error:nil];
+        if (![fm copyItemAtPath:src toPath:dst error:&error]) {
+            fprintf(stderr, "launcher: cannot prepare game log for sharing: %s\n",
+                    error.localizedDescription.UTF8String);
+            continue;
+        }
+        [items addObject:[NSURL fileURLWithPath:dst]];
+    }
+    if (!items.count) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"No game log yet"
+            message:@"Play the game at least once, then close and reopen the app. Export Game Logs will include the last game session's log."
+            preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+    UIActivityViewController *share = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+    UIPopoverPresentationController *popover = share.popoverPresentationController;
+    if (popover) { popover.sourceView = sender; popover.sourceRect = sender.bounds; }
+    [self presentViewController:share animated:YES completion:nil];
+}
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
@@ -380,6 +424,15 @@ static UIImage *app_icon(void) {
     __weak DmLauncherVC *w = self;
     UIButton *b = [UIButton buttonWithConfiguration:cfg primaryAction:[UIAction actionWithHandler:^(UIAction *a) { if (w.play) w.play(); }]];
     [b.widthAnchor constraintEqualToConstant:220].active = YES; [card addArrangedSubview:b];
+    // Available before starting the game, so a black-screen session can be
+    // inspected without running the renderer again. No Xcode connection needed.
+    UIButtonConfiguration *logCfg = [UIButtonConfiguration plainButtonConfiguration];
+    logCfg.title = @"Export Game Logs";
+    logCfg.buttonSize = UIButtonConfigurationSizeMedium;
+    UIButton *logs = [UIButton buttonWithConfiguration:logCfg primaryAction:
+        [UIAction actionWithHandler:^(UIAction *a) { if (w) [w exportGameLogsFromButton:logs]; }]];
+    [logs.widthAnchor constraintEqualToConstant:220].active = YES;
+    [card addArrangedSubview:logs];
     card.translatesAutoresizingMaskIntoConstraints = NO; [self.view addSubview:card];
 
     DmSettingsVC *list = [[DmSettingsVC alloc] initWithStyle:UITableViewStyleInsetGrouped]; list.m = self.m;
