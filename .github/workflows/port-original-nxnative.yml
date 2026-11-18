@@ -64,6 +64,9 @@ jobs:
             --merged "$RUNNER_TEMP/merged-nxnative" \
             --hooklink-engine "$RUNNER_TEMP/merged-nxnative"
           git add -A -- engine VERSION ENGINE_PIN.json ENGINE_PIN_FILES.json docs/GETTING_STARTED.md
+          # This upstream documentation image is ignored by the Windows fork's
+          # general binary-asset filter; include the exact tracked upstream blob.
+          git add -f -- engine/docs/images/metro-2033-redux.jpg
           git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check
           git diff --cached --stat | tail -30
           test "$(python3 -c 'import json; print(json.load(open("ENGINE_PIN.json"))["nxnative_commit"])')" = 0b5fd6020093407af8bb5ad166e78e00bd2b7242
