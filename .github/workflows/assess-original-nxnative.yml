@@ -1,0 +1,57 @@
+name: Assess original NXNative main port into HookLinkWindows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/assess-original-nxnative.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Examine original upstream merge in disposable checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone -q https://github.com/dsi-hub/nxnative.git nxnative-assessment
+          cd nxnative-assessment
+          git switch -q hooklink
+          echo "HookLink NXNative branch: $(git rev-parse HEAD)"
+          git remote add original https://github.com/seedds/nxnative.git
+          git fetch -q original 0b5fd6020093407af8bb5ad166e78e00bd2b7242
+          echo "Original upstream target: $(git rev-parse FETCH_HEAD)"
+          base=$(git merge-base HEAD FETCH_HEAD)
+          echo "Original common ancestor: $base"
+          echo "Unique original commits: $(git rev-list --count "$base"..FETCH_HEAD)"
+          echo "Unique HookLink commits: $(git rev-list --count "$base"..HEAD)"
+          set +e
+          git -c user.name=NXNativeAssessment -c user.email=assessment@invalid.local merge --no-commit --no-ff FETCH_HEAD > merge-assessment.log 2>&1
+          status=$?
+          set -e
+          echo "Merge exit code: $status"
+          echo "Conflicts:"
+          git diff --name-only --diff-filter=U | tee conflicts.txt
+          echo "Number of conflicted files: $(wc -l < conflicts.txt)"
+          echo "Repository status summary:"
+          git status --short | head -100 || true
+          echo "Direct source integration requires manual merge resolution and iOS/Windows compilation checks before changing the pinned engine."
+          cp conflicts.txt "$GITHUB_WORKSPACE/merge-conflicts.txt"
+          cp merge-assessment.log "$GITHUB_WORKSPACE/merge-assessment.log"
+          printf 'HookLink branch: %s\nOriginal target: %s\nMerge base: %s\nGit merge exit code: %s\nConflicts: %s\n' \
+            "$(git rev-parse HEAD)" 0b5fd6020093407af8bb5ad166e78e00bd2b7242 "$base" "$status" "$(wc -l < conflicts.txt)" > "$GITHUB_WORKSPACE/merge-summary.txt"
+      - name: Publish original upstream porting assessment
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-nxnative-port-assessment
+          path: |
+            merge-summary.txt
+            merge-conflicts.txt
+            merge-assessment.log
+          if-no-files-found: error
