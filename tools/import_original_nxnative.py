@@ -156,6 +156,29 @@ def perform(merged: Path, hooklink_engine: Path) -> None:
     }
     (ROOT / "ENGINE_PIN_FILES.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     (ROOT / "VERSION").write_text("3.0.1\n", encoding="utf-8")
+    guide = ROOT / "docs/GETTING_STARTED.md"
+    intro = (
+        "### Alpha 1.1.2: original NXNative plus HookLink's engine changes (experimental candidate)\n\n"
+        "This candidate merges original [seedds/nxnative](https://github.com/seedds/nxnative) "
+        "commit `" + OFFICIAL + "` with HookLink's custom [dsi-hub/nxnative]"
+        "(https://github.com/dsi-hub/nxnative) commit `" + HOOKLINK + "`. "
+        "Overlapping merge hunks favor HookLink to preserve its game-specific fixes. "
+        "The source is **not byte-identical to original NXNative**. A manifest records "
+        "the upstream SHA, HookLink parent, exact merged-source commit, imported blob hashes, "
+        "and Windows-specific overlay paths. The GUI's primary commit link points "
+        "to **original NXNative**, not HookLink.\n\n"
+        "This is a **test candidate**, not a verified iPhone build. Build it using the "
+        "GUI's **New clean…** button, which clears shader reuse and creates an empty sibling "
+        "work folder. The reported earlier black screen was resolved by selecting the "
+        "correct output file; no speculative graphics setting changes are included.\n\n"
+    )
+    old_guide = guide.read_text(encoding="utf-8")
+    if "### Alpha 1.1.2: original NXNative" not in old_guide:
+        old_guide = old_guide.replace(
+            "## 1. Obtain the complete source checkout", 
+            intro + "## 1. Obtain the complete source checkout"
+        )
+        guide.write_text(old_guide, encoding="utf-8")
     print(f"Imported {len(imported)} original/HookLink-merged engine files", flush=True)
     print(f"Preserved {len(overlays)} Windows engine overlays; removed {len(deletes)} obsolete files", flush=True)
     print(f"Official base: {OFFICIAL}; HookLink overlay: {HOOKLINK}; merged engine: {merged_sha}", flush=True)
