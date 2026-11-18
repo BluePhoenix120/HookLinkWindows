@@ -91,7 +91,7 @@ class NativeIosLogExportTests(unittest.TestCase):
 
     def test_windows_gui_has_local_file_picker_for_device_log(self):
         src = (ROOT / 'win/hooklink_gui.pyw').read_text(encoding='utf-8')
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.1'", src)
+        self.assertIn("GUI_VERSION = 'Alpha V1.1.2'", src)
         self.assertIn("text='iPhone log…'", src)
         self.assertIn('summarize_iphone_log(Path(path))', src)
         self.assertIn('askopenfilename(', src)
