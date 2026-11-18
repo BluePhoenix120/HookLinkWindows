@@ -10,9 +10,19 @@ sys.path.insert(0, str(ROOT / 'win'))
 from hooklink_engine_pin import github_repository_url, read_engine_pin
 
 
-PIN = '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'
-FORK = 'https://github.com/dsi-hub/nxnative'
-ORIGINAL = 'https://github.com/seedds/nxnative'
+_PROJECT_PIN = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))
+PIN = _PROJECT_PIN['nxnative_commit']
+FORK = github_repository_url(_PROJECT_PIN['nxnative_repo'])
+ORIGINAL = ('https://github.com/seedds/nxnative'
+            if FORK == 'https://github.com/dsi-hub/nxnative'
+            else 'https://github.com/dsi-hub/nxnative')
+_ALLOWED_PINS = {
+    '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf',
+    '0b5fd6020093407af8bb5ad166e78e00bd2b7242',
+}
+assert PIN in _ALLOWED_PINS
+assert FORK in ('https://github.com/dsi-hub/nxnative',
+                'https://github.com/seedds/nxnative')
 
 
 class EnginePinTests(unittest.TestCase):
