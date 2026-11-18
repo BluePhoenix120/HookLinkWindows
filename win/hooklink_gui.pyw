@@ -35,11 +35,12 @@ from hooklink_sdk_import import validate_xip_archive
 from hooklink_dependency_manager import XCODE_XIP_DOWNLOAD_URL, dependency_statuses, missing_python_packages
 from hooklink_engine_pin import read_engine_pin
 from hooklink_iphone_logs import summarize_iphone_log
+from hooklink_clean_build import new_clean_test_work_dir
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.1.1'
+GUI_VERSION = 'Alpha V1.1.2'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -136,6 +137,7 @@ class App(tk.Tk):
         form.pack(fill='x')
         self._field(form, 0, 'Game .nup file', self.input_var, self._browse_input)
         self._field(form, 1, 'Build directory', self.work_var, self._browse_work)
+        ttk.Button(form, text='New clean…', command=self._new_clean_build, width=13).grid(row=1, column=3, sticky='w', pady=4)
         self._field(form, 2, 'iOS runtime settings', self.env_var, self._browse_env)
         self._field(form, 3, 'Output IPA', self.output_var, self._browse_output)
         packaging = ttk.Frame(form)
@@ -229,6 +231,24 @@ class App(tk.Tk):
         f = filedialog.askdirectory(title='Select build work folder', initialdir=self.work_var.get())
         if f:
             self.work_var.set(native_display_path(f))
+
+    def _new_clean_build(self):
+        """Select a new empty work directory; never reuse previous shader files."""
+        if self.busy:
+            messagebox.showwarning('Build in progress', 'Stop or finish the current build before changing work directories.')
+            return
+        try:
+            folder = new_clean_test_work_dir(Path(self.work_var.get().strip()))
+        except (OSError, ValueError) as exc:
+            messagebox.showerror('Cannot create clean build directory', str(exc))
+            return
+        self.reuse_var.set('')
+        self.output_auto = True
+        self.work_var.set(native_display_path(folder))
+        self.state_var.set('Fresh build directory selected — no shader or output reuse.')
+        self._append(f'\n[CLEAN TEST] New empty work folder: {folder}\n')
+        self._append('[CLEAN TEST] Existing build folders untouched; external shader reuse cleared.\n')
+        self._save_settings()
 
     def _browse_env(self):
         f = filedialog.askopenfilename(title='Choose runtime settings file', filetypes=[('Environment files', '*.txt *.env'), ('All files', '*.*')], initialdir=str(DEFAULT_ENV.parent))
