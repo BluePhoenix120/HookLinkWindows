@@ -429,8 +429,10 @@ static UIImage *app_icon(void) {
     UIButtonConfiguration *logCfg = [UIButtonConfiguration plainButtonConfiguration];
     logCfg.title = @"Export Game Logs";
     logCfg.buttonSize = UIButtonConfigurationSizeMedium;
+    __block __weak UIButton *logSource = nil;  // avoid a retained button/action cycle
     UIButton *logs = [UIButton buttonWithConfiguration:logCfg primaryAction:
-        [UIAction actionWithHandler:^(UIAction *a) { if (w) [w exportGameLogsFromButton:logs]; }]];
+        [UIAction actionWithHandler:^(UIAction *a) { if (w && logSource) [w exportGameLogsFromButton:logSource]; }]];
+    logSource = logs;
     [logs.widthAnchor constraintEqualToConstant:220].active = YES;
     [card addArrangedSubview:logs];
     card.translatesAutoresizingMaskIntoConstraints = NO; [self.view addSubview:card];
