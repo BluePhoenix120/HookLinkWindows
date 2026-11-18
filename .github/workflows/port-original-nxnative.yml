@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     outputs:
-      sha: \${{ steps.candidate.outputs.sha }}
+      sha: ${{ steps.candidate.outputs.sha }}
     steps:
       - name: Checkout Windows fork (do not change main)
         uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
       - name: Checkout exact tested candidate commit
         uses: actions/checkout@v4
         with:
-          ref: \${{ needs.integrate.outputs.sha }}
+          ref: ${{ needs.integrate.outputs.sha }}
           fetch-depth: 1
 
       - name: Install Python for Windows regression tests
