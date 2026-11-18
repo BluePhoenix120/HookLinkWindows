@@ -34,10 +34,16 @@ OUTPUTS = (
 # Keep the check strict, but also accept the explicitly imported X2 engine.
 # No branch HEAD or Git checkout is used to infer the engine version.
 _SUPPORTED_ENGINE_BASES = {
-    ('2.0', '3a28152fe7052c9f45ede460022d39be6c91e3cf'),
-    ('3.0', '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'),
+    ('2.0', '3a28152fe7052c9f45ede460022d39be6c91e3cf',
+     'https://github.com/dsi-hub/nxnative.git'),
+    ('3.0', '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf',
+     'https://github.com/dsi-hub/nxnative.git'),
+    # The official NXNative main is merged with HookLink's custom engine,
+    # not substituted wholesale. ENGINE_PIN_FILES.json records both parents.
+    ('3.0.1', '0b5fd6020093407af8bb5ad166e78e00bd2b7242',
+     'https://github.com/seedds/nxnative.git'),
 }
-_PINNED_REPO = 'https://github.com/dsi-hub/nxnative.git'
+_HOOKLINK_X201_ENGINE = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
 
 
 def verify_source_identity(root: Path) -> tuple[str, str]:
@@ -58,17 +64,19 @@ def verify_source_identity(root: Path) -> tuple[str, str]:
     need(isinstance(meta, dict), 'ENGINE_PIN.json must contain an object')
     engine_sha = meta.get('nxnative_commit')
     need(isinstance(engine_sha, str), 'NXNative pin must be a commit SHA string')
-    need(meta.get('nxnative_repo') == _PINNED_REPO,
+    source_repo = meta.get('nxnative_repo')
+    need(source_repo in ('https://github.com/dsi-hub/nxnative.git',
+                        'https://github.com/seedds/nxnative.git'),
          'Unexpected NXNative source repository in ENGINE_PIN.json')
     need(meta.get('engine_location') == 'engine/',
          'Unexpected NXNative engine directory in ENGINE_PIN.json')
     need(meta.get('hooklink_base') == version,
          f'HookLink VERSION {version!r} disagrees with ENGINE_PIN.json hooklink_base')
-    need((version, engine_sha) in _SUPPORTED_ENGINE_BASES,
+    need((version, engine_sha, source_repo) in _SUPPORTED_ENGINE_BASES,
          f'Unsupported HookLink {version!r} / NXNative {str(engine_sha)[:12]!r} pair; '
          'use an unmodified complete HookLinkWindows release')
 
-    if version == '3.0':
+    if version in ('3.0', '3.0.1'):
         manifest = root / 'ENGINE_PIN_FILES.json'
         need(manifest.is_file(), 'X2 engine provenance manifest missing (ENGINE_PIN_FILES.json)')
         try:
@@ -77,10 +85,17 @@ def verify_source_identity(root: Path) -> tuple[str, str]:
             raise RuntimeError(f'Invalid ENGINE_PIN_FILES.json: {exc}') from exc
         need(isinstance(record, dict)
              and record.get('nxnative_commit') == engine_sha
-             and record.get('nxnative_repo') == _PINNED_REPO
-             and isinstance(record.get('changed_paths'), list)
-             and len(record['changed_paths']) == 25,
-             'X2 engine manifest does not match pinned revision; use the complete release')
+             and record.get('nxnative_repo') == source_repo
+             and isinstance(record.get('changed_paths'), list),
+             'Engine manifest does not match pinned revision; use the complete release')
+        if version == '3.0':
+            need(len(record['changed_paths']) == 25, 'X2 file manifest has an unexpected size')
+        else:
+            need(len(record['changed_paths']) >= 250
+                 and record.get('from_commit') == '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'
+                 and record.get('hooklink_engine_commit') == _HOOKLINK_X201_ENGINE
+                 and isinstance(record.get('windows_overlays'), list),
+                 'Original NXNative + HookLink integration manifest is incomplete')
     print(f'PASS: HookLink {version}, pinned NXNative {engine_sha}', flush=True)
     return version, engine_sha
 
