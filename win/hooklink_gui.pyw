@@ -34,11 +34,12 @@ from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
 from hooklink_sdk_import import validate_xip_archive
 from hooklink_dependency_manager import XCODE_XIP_DOWNLOAD_URL, dependency_statuses, missing_python_packages
 from hooklink_engine_pin import read_engine_pin
+from hooklink_iphone_logs import summarize_iphone_log
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.1.0'
+GUI_VERSION = 'Alpha V1.1.1'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -174,8 +175,9 @@ class App(tk.Tk):
         self.build_btn = ttk.Button(actions, text='Build IPA', command=self._start_build)
         self.stop_btn = ttk.Button(actions, text='Stop', command=self._stop, state='disabled')
         self.guide_btn = ttk.Button(actions, text='Setup guide', command=self._open_setup_guide)
+        self.device_log_btn = ttk.Button(actions, text='iPhone log…', command=self._analyze_iphone_log)
         self.toolchain_btn = ttk.Button(actions, text='Toolchain setup…', command=self._open_toolchain_setup)
-        for b in (self.doctor_btn, self.toolchain_btn, self.guide_btn, self.preview_btn, self.build_btn, self.stop_btn):
+        for b in (self.doctor_btn, self.toolchain_btn, self.guide_btn, self.device_log_btn, self.preview_btn, self.build_btn, self.stop_btn):
             b.pack(side='left', padx=(0, 8))
 
         ttk.Label(outer, textvariable=self.state_var, foreground='#163f75', wraplength=920).pack(fill='x', pady=(2, 4))
@@ -896,6 +898,21 @@ class App(tk.Tk):
         except queue.Empty:
             pass
         self.after(100, self._drain)
+
+    def _analyze_iphone_log(self):
+        """Inspect a game-session log downloaded from iPhone file sharing."""
+        path = filedialog.askopenfilename(
+            title='Open iPhone game log (log.prev.txt is the last game session)',
+            filetypes=[('iPhone game logs', '*.txt'), ('All files', '*.*')])
+        if not path:
+            return
+        try:
+            report = summarize_iphone_log(Path(path))
+        except (OSError, ValueError) as exc:
+            messagebox.showerror('Unable to read iPhone log', str(exc))
+            return
+        self._append('\n' + report + '\n')
+        self.state_var.set('iPhone game log inspected locally — review the highlighted messages below.')
 
     def _open_work(self):
         path = Path(self.work_var.get())
