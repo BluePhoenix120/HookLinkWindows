@@ -18,7 +18,7 @@
 > [!IMPORTANT]
 > **Alpha software — not a one-click game installer.** HookLinkWindows is an experimental, Windows-hosted build tool for producing an iOS app **locally from game files you already own**. It does not distribute the game, an IPA containing game assets, signing credentials, Apple SDKs, or proprietary compiler binaries. You must provide the required tools and game input yourself. Do not upload or redistribute game dumps, generated IPAs, RomFS images, shader caches, private keys, or saves.
 
-HookLinkWindows adapts the [HookLink](https://github.com/dsi-hub/HookLink) and [nxnative](https://github.com/seedds/nxnative) projects to a **Windows-first, GUI-based workflow**. It translates game code and graphics for iOS/Metal rather than using a conventional Switch emulator. It is a **builder for iPhone**, not a Windows port of the game itself.
+HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [NXnativeWindows](https://github.com/zenvyzenshiro/NXNativeWindows) and [NXnative](https://github.com/seedds/nxnative) projects to a **Windows-first, GUI-based workflow**. It translates game code and graphics for iOS/Metal rather than using a conventional Switch emulator. It is a **builder for iPhone**, not a Windows port of the game itself.
 
 ## Download
 
@@ -48,7 +48,7 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
 | Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |
 
-The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the newly merged V1.1.2 engine renders correctly**. In particular, a black screen with working controls is still a diagnostic symptom, not proof of a specific rendering or signing failure.
+The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the newly merged V1.1.2 engine renders and or functions correctly** this project is still in Alpha after all.
 
 For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
