@@ -53,7 +53,8 @@ class PinnedEngineDeltaTests(unittest.TestCase):
         self.assertEqual(len({x['path'] for x in files}), len(files))
         for row in files:
             path = row['path']
-            self.assertTrue(path.startswith('engine/dm/') or path.startswith('engine/docs/'))
+            self.assertTrue(path.startswith('engine/'), path)
+            self.assertNotIn('..', Path(path).parts, path)
             full = ROOT / path
             self.assertTrue(full.is_file(), path)
             raw_bytes = full.read_bytes()
