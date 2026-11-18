@@ -117,9 +117,15 @@ class TestPinnedEngineSourceIdentity(unittest.TestCase):
             (root / 'ENGINE_PIN_FILES.json').write_text(json.dumps(manifest), encoding='utf-8')
         return pin
 
-    def test_actual_x2_checkout_is_accepted_before_toolchain_setup(self):
+    def test_actual_checkout_is_accepted_before_toolchain_setup(self):
         root = BOOT.parents[1]
-        self.assertEqual(bootstrap.verify_source_identity(root), ('3.0', self.X2))
+        data = json.loads((root / 'ENGINE_PIN.json').read_text(encoding='utf-8'))
+        version = (root / 'VERSION').read_text(encoding='utf-8').strip()
+        self.assertIn((version, data['nxnative_commit']), (
+            ('3.0', self.X2),
+            ('3.0.1', '0b5fd6020093407af8bb5ad166e78e00bd2b7242'),
+        ))
+        self.assertEqual(bootstrap.verify_source_identity(root), (version, data['nxnative_commit']))
 
     def test_x2_snapshot_passes_without_dotnet_or_metal(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -127,6 +133,27 @@ class TestPinnedEngineSourceIdentity(unittest.TestCase):
             self.make_checkout(root)
             with mock.patch.object(bootstrap.shutil, 'which', side_effect=AssertionError('external tools must not run')):
                 self.assertEqual(bootstrap.verify_source_identity(root), ('3.0', self.X2))
+
+    def test_hybrid_official_nxnative_with_hooklink_custom_engine(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            latest = '0b5fd6020093407af8bb5ad166e78e00bd2b7242'
+            custom = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
+            repo = 'https://github.com/seedds/nxnative.git'
+            pin = self.make_checkout(root, version='3.0.1', sha=latest, include_manifest=False)
+            pin['nxnative_repo'] = repo
+            (root / 'ENGINE_PIN.json').write_text(json.dumps(pin), encoding='utf-8')
+            manifest = {'nxnative_repo': repo, 'nxnative_commit': latest,
+                        'from_commit': self.X2, 'hooklink_engine_commit': custom,
+                        'windows_overlays': ['engine/win/build_app.py'],
+                        'changed_paths': [{'path': f'engine/dm/test{i}', 'sha': 'f' * 40}
+                                          for i in range(300)]}
+            (root / 'ENGINE_PIN_FILES.json').write_text(json.dumps(manifest), encoding='utf-8')
+            self.assertEqual(bootstrap.verify_source_identity(root), ('3.0.1', latest))
+            manifest['changed_paths'] = manifest['changed_paths'][:20]
+            (root / 'ENGINE_PIN_FILES.json').write_text(json.dumps(manifest), encoding='utf-8')
+            with self.assertRaisesRegex(RuntimeError, 'integration manifest is incomplete'):
+                bootstrap.verify_source_identity(root)
 
     def test_legacy_hooklink_two_is_still_recognized(self):
         with tempfile.TemporaryDirectory() as folder:
