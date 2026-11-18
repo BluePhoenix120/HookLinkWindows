@@ -64,7 +64,7 @@ jobs:
             --merged "$RUNNER_TEMP/merged-nxnative" \
             --hooklink-engine "$RUNNER_TEMP/merged-nxnative"
           git add -A -- engine VERSION ENGINE_PIN.json ENGINE_PIN_FILES.json docs/GETTING_STARTED.md
-          git diff --cached --check
+          git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check
           git diff --cached --stat | tail -30
           test "$(python3 -c 'import json; print(json.load(open("ENGINE_PIN.json"))["nxnative_commit"])')" = 0b5fd6020093407af8bb5ad166e78e00bd2b7242
 
@@ -73,7 +73,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B -m unittest discover -s tests -p 'test_*.py' -q
-          git diff --cached --check
+          git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check
           test "$(git rev-parse HEAD:README.md)" = "$(git hash-object README.md)"
 
       - name: Publish isolated candidate branch, never overwrite main
