@@ -1,0 +1,145 @@
+name: Build experimental original NXNative + HookLink Windows candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/port-original-nxnative.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: original-nxnative-candidate-112
+  cancel-in-progress: false
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      sha: \${{ steps.candidate.outputs.sha }}
+    steps:
+      - name: Checkout Windows fork (do not change main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Merge latest original NXNative into HookLink's custom engine in a disposable checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git clone -q --branch hooklink https://github.com/dsi-hub/nxnative.git "$RUNNER_TEMP/merged-nxnative"
+          git -C "$RUNNER_TEMP/merged-nxnative" remote add official https://github.com/seedds/nxnative.git
+          git -C "$RUNNER_TEMP/merged-nxnative" fetch -q official 0b5fd6020093407af8bb5ad166e78e00bd2b7242
+          test "$(git -C "$RUNNER_TEMP/merged-nxnative" rev-parse HEAD)" = 698b46bc5b14510fffc0a4b8fd4bf78309004e4c
+          test "$(git -C "$RUNNER_TEMP/merged-nxnative" rev-parse FETCH_HEAD)" = 0b5fd6020093407af8bb5ad166e78e00bd2b7242
+          git -C "$RUNNER_TEMP/merged-nxnative" -c user.name=NXNativeMerge -c user.email=merge@invalid.local merge -X ours --no-ff -m 'Merge original NXNative at 0b5fd60, retain HookLink conflict hunks' FETCH_HEAD
+          test -z "$(git -C "$RUNNER_TEMP/merged-nxnative" ls-files -u)"
+          echo "Merged upstream source commit:"
+          git -C "$RUNNER_TEMP/merged-nxnative" log -1 --format='%H%n%P%n%s'
+          echo "Windows tree remains isolated until candidate tests pass."
+
+      - name: Merge latest HookLink X2.0.1 app metadata into candidate only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch -q https://github.com/dsi-hub/HookLink.git d04e664d253aafbd77a8fc543f6ed3c7d91d5dde
+          git merge --no-ff --no-edit FETCH_HEAD
+          test "$(cat VERSION)" = "3.0.1"
+          git status --short
+          test -z "$(git status --porcelain)"
+
+      - name: Preserve Windows overlays and import merged original NXNative source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/import_original_nxnative.py \
+            --merged "$RUNNER_TEMP/merged-nxnative" \
+            --hooklink-engine "$RUNNER_TEMP/merged-nxnative"
+          git add -A -- engine VERSION ENGINE_PIN.json ENGINE_PIN_FILES.json docs/GETTING_STARTED.md
+          git diff --cached --check
+          git diff --cached --stat | tail -30
+          test "$(python3 -c 'import json; print(json.load(open("ENGINE_PIN.json"))["nxnative_commit"])')" = 0b5fd6020093407af8bb5ad166e78e00bd2b7242
+
+      - name: Test candidate provenance and Windows source before publishing candidate branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest discover -s tests -p 'test_*.py' -q
+          git diff --cached --check
+          test "$(git rev-parse HEAD:README.md)" = "$(git hash-object README.md)"
+
+      - name: Publish isolated candidate branch, never overwrite main
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git commit -m 'engine: integrate latest original NXNative and HookLink X2.0.1 for Alpha 1.1.2 test candidate'
+          git push origin HEAD:refs/heads/alpha-v1.1.2-original-engine-candidate
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Experimental candidate branch: alpha-v1.1.2-original-engine-candidate"
+
+  windows:
+    needs: integrate
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact tested candidate commit
+        uses: actions/checkout@v4
+        with:
+          ref: \${{ needs.integrate.outputs.sha }}
+          fetch-depth: 1
+
+      - name: Install Python for Windows regression tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+
+      - name: Check engine provenance and Windows GUI regression suite
+        shell: pwsh
+        run: |
+          python -B -m unittest discover -s tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Official NXNative + HookLink regression tests failed' }
+          python -B tools/release_audit.py .
+          if ($LASTEXITCODE -ne 0) { throw 'Windows release audit failed' }
+
+      - name: Build standalone Windows GUI EXE
+        shell: pwsh
+        run: ./tools/build_windows_gui_exe.ps1
+
+      - name: Package complete candidate sources and EXE
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'dist/HookLinkWindows.exe'
+          if (!(Test-Path -LiteralPath $exe)) { throw 'Missing standalone GUI executable' }
+          $zip = Join-Path $PWD 'dist/HookLinkWindows-Alpha-1.1.2-Original-NXNative-Candidate.zip'
+          & git archive --format=zip "--output=$zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to package engine candidate' }
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::Open($zip, [System.IO.Compression.ZipArchiveMode]::Update)
+          try { [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $exe, 'HookLinkWindows.exe', [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null } finally { $archive.Dispose() }
+          $read = [System.IO.Compression.ZipFile]::OpenRead($zip)
+          try {
+            foreach ($need in @('HookLinkWindows.exe', 'ENGINE_PIN.json', 'ENGINE_PIN_FILES.json', 'win/hooklink_gui.pyw', 'engine/dm/gfx/nvn/nvn_mtl.m', 'engine/win/build_app.py')) {
+              if (!$read.GetEntry($need)) { throw "Missing candidate release content: $need" }
+            }
+          } finally { $read.Dispose() }
+          Write-Host "Windows experimental candidate ZIP: $zip"
+
+      - name: Upload complete candidate package for a clean local build
+        uses: actions/upload-artifact@v4
+        with:
+          name: HookLinkWindows-Alpha-1.1.2-Original-NXNative-Candidate
+          path: dist/HookLinkWindows-Alpha-1.1.2-Original-NXNative-Candidate.zip
+          if-no-files-found: error
