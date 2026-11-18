@@ -16,6 +16,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 OLD_PIN = '3a28152fe7052c9f45ede460022d39be6c91e3cf'
 X2_PIN = '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'
+OFFICIAL_PIN = '0b5fd6020093407af8bb5ad166e78e00bd2b7242'
+HOOKLINK_HOTFIX_PIN = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
 
 
 def git_blob_sha(data: bytes) -> str:
@@ -29,14 +31,25 @@ class PinnedEngineDeltaTests(unittest.TestCase):
         manifest_path = ROOT / 'ENGINE_PIN_FILES.json'
         if sha == OLD_PIN and not manifest_path.exists():
             self.skipTest('Pre-X2 source snapshot; engine sync workflow has not run yet')
-        self.assertEqual(sha, X2_PIN)
-        self.assertTrue(manifest_path.is_file(), 'X2 engine manifest missing')
+        self.assertIn(sha, (X2_PIN, OFFICIAL_PIN))
+        self.assertTrue(manifest_path.is_file(), 'Engine provenance manifest missing')
         manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
         self.assertEqual(manifest['nxnative_commit'], sha)
-        self.assertEqual(manifest['from_commit'], OLD_PIN)
         self.assertEqual(manifest['nxnative_repo'], pin['nxnative_repo'])
         files = manifest['changed_paths']
-        self.assertEqual(len(files), 25)
+        if sha == X2_PIN:
+            self.assertEqual(manifest['from_commit'], OLD_PIN)
+            self.assertEqual(len(files), 25)
+        else:
+            self.assertEqual(manifest['from_commit'], X2_PIN)
+            self.assertEqual(pin['nxnative_repo'],
+                             'https://github.com/seedds/nxnative.git')
+            self.assertEqual(manifest['hooklink_engine_commit'], HOOKLINK_HOTFIX_PIN)
+            self.assertGreaterEqual(len(files), 250)
+            self.assertIsInstance(manifest['windows_overlays'], list)
+            self.assertTrue(manifest['engine_integration_commit'])
+            self.assertEqual(pin['engine_integration_commit'],
+                             manifest['engine_integration_commit'])
         self.assertEqual(len({x['path'] for x in files}), len(files))
         for row in files:
             path = row['path']
