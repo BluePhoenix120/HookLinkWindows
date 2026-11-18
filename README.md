@@ -1,164 +1,165 @@
-<p align="center"><img src="docs/icon.png" width="128" alt="HookLinkWindows icon"></p>
+<p align="center"><img src="docs/icon.png" width="112" alt="HookLinkWindows icon"></p>
 
 <h1 align="center">HookLinkWindows</h1>
 
-<p align="center"><b>The Legend of Zelda: Ocarina of Time (Nintendo Switch 2 Edition) on your iPhone, natively, built on your Windows from your own copy of the game.</b></p>
+<p align="center"><strong>Build an iPhone app from your own supported Ocarina of Time `.nup` — using Windows.</strong></p>
 
 <p align="center">
-<a href="#project-status">Status</a> · <a href="#how-to-build">How to build</a> · <a href="#installing-and-copying-the-game">Install</a> · <a href="#updating">Updating</a> · <a href="#what-HookLinkWindows-tunes-for-the-iphone">What it tunes</a> · <a href="#if-something-goes-wrong">Problems</a> · <a href="#want-to-help">Help</a> · <a href="#credits">Credits</a> · <a href="#license">License</a>
+<a href="#download">Download</a> ·
+<a href="#project-status">Status</a> ·
+<a href="#requirements">Requirements</a> ·
+<a href="#quick-start-windows">Quick start</a> ·
+<a href="#install-on-iphone">Install on iPhone</a> ·
+<a href="#troubleshooting">Troubleshooting</a> ·
+<a href="#engine-and-upstream">Engine</a> ·
+<a href="#credits">Credits</a>
 </p>
 
-Discord: https://discord.gg/bSrN5kEScg
-
-HookLinkWindows is a Windows app that turns your own dump of Ocarina of Time into an iPhone app. It runs [nxnative](https://github.com/seedds/nxnative), which translates the game's code and its graphics to Apple's Metal, with changes made and tested for this one game on the iPhone: faster pipeline loading, memory fixes, real-time game speed below 60 fps, and a resolution tuned for the phone. No emulator is involved.
-
 > [!IMPORTANT]
-> This repository does not contain the game, keys or a built app, and it does not explain how to get them. You need your own copy. Everything HookLinkWindows makes (the IPA, the game files on your phone, the shader caches and your saves) comes from your game and stays on your Windows and your phone. **Never share those files.**
+> **Alpha software — not a one-click game installer.** HookLinkWindows is an experimental, Windows-hosted build tool for producing an iOS app **locally from game files you already own**. It does not distribute the game, an IPA containing game assets, signing credentials, Apple SDKs, or proprietary compiler binaries. You must provide the required tools and game input yourself. Do not upload or redistribute game dumps, generated IPAs, RomFS images, shader caches, private keys, or saves.
+
+HookLinkWindows adapts the [HookLink](https://github.com/dsi-hub/HookLink) and [nxnative](https://github.com/seedds/nxnative) projects to a **Windows-first, GUI-based workflow**. It translates game code and graphics for iOS/Metal rather than using a conventional Switch emulator. It is a **builder for iPhone**, not a Windows port of the game itself.
+
+## Download
+
+**Latest release: [Alpha V1.1.2](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+
+| Download | Intended use |
+|---|---|
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.2-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.2-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
+
+1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
+2. Keep `HookLinkWindows.exe` in the extracted **project root** beside `win/`, `engine/`, `config/` and `docs/`. Do **not** move the EXE out on its own.
+3. Open `HookLinkWindows.exe`. The bundled GUI can open without a separate Python installation, but **building the game still requires Python and the other prerequisites** listed below.
+
+Windows may display an unsigned-app security warning. Check the publisher/source, release location and files before deciding whether to run an unsigned executable. This is not a Microsoft Store installer.
 
 ## Project status
 
-**Experimental.** Tested on one iPhone (iPhone 18 Pro Max, iOS 27.2), built on one Windows.
+**Alpha V1.1.2 — experimental Windows port (November 2026).**
 
-| What | Status |
+| Area | Status |
 |---|---|
-| Kokiri Forest, Hyrule Field, Castle Town | ✅ Plays |
-| Sound, touch controls, controllers, saves | ✅ Works |
-| Frame rate | ✅ 60 fps is the default again (1.8.5). 30 fps + frame generation looks like 60 and runs cooler. ⚠️ Busy areas can still dip |
-| Stutter the first time you enter an area | ⚠️ Happens once; the next start prepares that area |
-| First start after installing | ⚠️ Long "Preparing shaders" screen, a few minutes, once |
-| iPhone 17 family (A19) | ✅ Runs on a 17 Pro (tested by a player): 30 fps + frame generation recommended |
-| iPhone 16 Pro / 16 Pro Max (A18 Pro) | ❓ Not tested yet; 8 GB of memory, so the game may close in busy areas |
-| Windows (This Windows) | ❓ New in 1.8 and not tested yet |
-| Older iPhones | ❌ Not supported (memory and graphics) |
+| Windows GUI, package creation and automated regression tests | **164 Windows tests passed** for the V1.1.2 candidate; complete ZIP and EXE were produced |
+| Source integration | Original NXnative base integrated with HookLink-specific modifications and Windows overlays; see [Engine and upstream](#engine-and-upstream) |
+| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Not yet verified end to end for V1.1.2** |
+| Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
+| Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |
 
-## How to build
+The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the newly merged V1.1.2 engine renders correctly**. In particular, a black screen with working controls is still a diagnostic symptom, not proof of a specific rendering or signing failure.
 
-### With the HookLinkWindows app (the easy way)
+For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
-1. Download **HookLinkWindows.zip** from the [Releases](../../releases) page and unzip it.
-2. Open **HookLinkWindows.app**. The first time, WindowsOS says it can't check it for malware (it isn't from the App Store or notarized): open **System Settings → Privacy & Security**, scroll down, click **Open Anyway**, then open HookLinkWindows again.
-3. Follow the steps in the window:
-   1. **Check your Windows**: HookLinkWindows finds what's missing and installs most of it for you.
-   2. **Choose your game**: drop your `.nup` file in.
-   3. **Choose device**: your iPhone model, or **This Windows** to build a Windows app (new, not tested yet).
-   4. **Build**: a few hours the first time. You can keep using your Windows.
-   5. **Install** the IPA with your sideloading tool.
-   6. **Copy game files**: plug in your iPhone and click one button (or use Finder, if the cable copy keeps stopping).
-   7. **Play.**
+## Requirements
 
-### How long it takes
+You need a **Windows 10/11 x64 PC**, a compatible iPhone, your own supported `.nup` game file, adequate disk space, and the separate build toolchain. The integrated GUI checks the installed tools; it does not bundle or silently install third-party compilers.
 
-| Step | First time | Later builds |
-|---|---|---|
-| Check your Windows and install tools | 5–20 min (plus Xcode's own download, if you need it) | Seconds |
-| Build, step 1–3 (unpack, rewrite, split shaders) | ~10 min | ~5 min |
-| Build, step 4 (iOS shaders) | ~1 h 10 min. Part of it shows no percentage for 10+ minutes while it checks the shader cache: that's normal | Minutes, unless an update changes the shaders |
-| Build, step 5 (app and GPU pipeline archive) | ~45 min | Minutes |
-| Build, step 6 (pack the IPA) | ~5 min | ~5 min |
-| Copy game files to the phone | 10–25 min | Not needed again |
-| First start of the game ("Preparing shaders") | A few minutes, once | Seconds |
-
-### What you need
-
-- A Windows with Apple silicon, WindowsOS 26.6 or later.
-- [Xcode 27.2](https://developer.apple.com/download/all/?q=Xcode%2027.2), opened once, with the iOS platform (Xcode → Settings → Components).
-- [Homebrew](https://brew.sh).
-- About **80 GB free** while building. The build folder keeps about 70 GB afterwards so later builds are fast; see [Disk space](#disk-space).
-- Your game: program `0400486024DEC000`, update `v131072`, as a `.nup`. Other versions don't work.
-- An iPhone 18 Pro / Pro Max (tested), an iPhone 17 model (played by a tester) or an iPhone 16 Pro / Pro Max (untested), with **Developer Mode** on, and a cable. Or build for your Windows instead (untested).
-- A sideloading tool such as iLoader, Sideloadly or AltStore.
-
-### From the command line
-
-HookLinkWindows runs nxnative's packing script with its own settings. With nxnative (HookLinkWindows's branch) checked out:
-
-```bash
-DM_ENTITLEMENTS="$PWD/../HookLinkWindows/Resources/presets/entitlements.plist" \
-python3 -I scripts/build_ipa_from_nsp.py "/path/to/your-game.nup" \
-  --platform ios --romfs separate --allow-damaged --gpu g19p \
-  --env-file ../HookLinkWindows/Resources/presets/iphone.env \
-  -o ~/HookLinkWindows/HookLinkWindows-OcarinaOfTime.ipa
-```
-
-Use `--gpu g18p` for an iPhone 17 model.
-
-## Installing and copying the game
-
-The IPA holds the app, its shaders and its GPU pipeline archive (about 5 GB). The game's own files (about 24 GB) are copied to the phone separately, once:
-
-1. Install the IPA with your sideloading tool. Turn on **Increased Memory Limit** if it offers it.
-2. Don't open the game yet.
-3. In HookLinkWindows, **Copy game files**: set **Auto-Lock → Never** on the phone, plug it in, unlock it, tap **Trust**, then click the button. HookLinkWindows copies the game files and the iPhone resolution file made from your game, then checks them.
-4. Open the game.
-
-**If the cable copy keeps stopping**, click **Copy with Finder instead**. HookLinkWindows shows the file in Finder; drag it onto the game in your iPhone's **Files** tab in Finder, wait for Finder to finish, then click **Finder is done: check and finish**. HookLinkWindows checks the game files arrived whole and does the rest.
-
-## Your saves
-
-Your saves live only on your iPhone, inside the game. HookLinkWindows can keep copies on your Windows:
-
-- **Play → Back up my saves** copies them to `Documents/HookLinkWindows Save Backups/<date>` on the Windows.
-- HookLinkWindows also backs them up **by itself before copying game files** to the phone.
-- **Play → Restore a backup…** puts a backup back on the phone (close the game first). What's on the phone is backed up first, and every file is checked after copying.
-
-**Never delete the game from your phone to reinstall it:** that deletes its saves. Install the new version over the old one instead, and back up first to be safe.
-
-## Updating
-
-HookLinkWindows checks for updates every time you open it (and from **HookLinkWindows → Check for Updates…**):
-
-- **A game update** (performance and fixes): click **Update and rebuild**, then build again. Small updates rebuild in minutes; updates that change the shaders take a few hours. Install the new IPA over the old one: your saves, game files and resolution file stay on the phone, so there's nothing to copy again.
-- **A new HookLinkWindows version**: download it from the Releases page and replace the old app.
-
-## What HookLinkWindows tunes for the iPhone
-
-- **Pipelines:** a draw waiting for its pipeline no longer repeats failed archive searches every frame. Each pipeline the game asks for is listed for the next start, which builds them all behind the loading screen.
-- **First starts:** the app ships with a list of the pipelines recorded while playing Kokiri Forest, Hyrule Field, Castle Town and Hyrule Castle, so those areas are prepared before the game starts instead of stuttering. Players' shared lists extend it with every update.
-- **GPU:** nxnative's latest work for this game: occlusion tests that let hidden grass be skipped, faster mesh-shader loads (the foliage), no 2 ms GPU wait each frame, faster shader math, and the mist without dark specks.
-- **Mesh shaders:** the foliage, shadow and enemy shaders are prepared before the game starts and saved, instead of freezing the game the first time each one is drawn.
-- **Frame pacing:** the thread that sends each frame to the GPU always runs in iOS's top class, so the busy areas run on the fast cores.
-- **Memory:** freed render targets' memory is reused for the next one, and textures of scenes you've left are retired when memory runs short (fixes the freeze after the talk with Saria). The game gets 8 GB of address space on the phone, which it needs from the Master Sword on (fixes the white screen there).
-- **Game speed:** the game moves at real speed even when a frame runs long, without dropping to 30 fps.
-- **Resolution:** the handheld dynamic resolution ranges from 1080×608 down to 640×360 on the phone, made from your own game files.
-- **Controls:** a glass look on every on-screen layout, and a Mobile layout with a floating stick, glass buttons and a D-pad (inspired by cheemu21's kid-with-sword; from the [kid-with-sword fork](https://github.com/ednofedulo/kid-with-sword-remake-detached-20261108) of nxnative).
-- **Wide view (experimental):** an optional launcher setting that fills an iPhone screen with a wider 3D view. The HUD and menus are still stretched, and it runs slower (from nxnative pull request 1460 by vladbondarenko97).
-- **Settings:** thread priorities, no 30 fps hold, no 30 fps thermal cap.
-
-## Disk space
-
-HookLinkWindows keeps its build folder (the folder you chose, about 70 GB) so later builds take minutes instead of hours.
-
-| Safe to delete | Don't delete (costs a long rebuild) |
+| Component | Purpose / source |
 |---|---|
-| Old IPAs you no longer need | `build/shader` (the shader cache: over an hour to rebuild) |
-| `copy-to-phone` (only a link to your game files, no extra space) | `build/ipa` (holds the GPU pipeline archive: about 45 minutes to rebuild) |
-| | `build/extract` (your game, unpacked) |
+| [Python 3.10+](https://www.python.org/downloads/windows/) (3.12–3.13 recommended) | Running the build scripts and their Python dependencies |
+| [.NET SDK 10 (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) | Game-data and shader translator tooling |
+| [LLVM/Clang 20+ for Windows](https://github.com/llvm/llvm-project/releases), including `ld64.lld` | Cross-compilation and linking |
+| [Apple Metal Developer Tools for Windows](https://developer.apple.com/metal/tools/) | `metal.exe` and `metallib.exe` shader compilation |
+| **iPhoneOS SDK 26+** | Required iOS SDK headers/framework stubs, **not included**; see [Apple SDK note](#apple-sdk-note) |
+| [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) and [zstd](https://github.com/facebook/zstd/releases) | Shader translation and compression |
+| Python packages and `dmsh_xlate.dll` | Check via the GUI; it can install missing approved Python packages with confirmation and build/repair the translator from source when prerequisites are present |
+| [AltStore](https://altstore.io/) or another compatible signing/sideloading tool; [Apple Devices for Windows](https://apps.microsoft.com/detail/9np83lwlpz9k) | IPA installation/signing and, where supported, app file sharing |
+| **Ample free storage** | Plan on **at least ~80 GB of working space** as an initial estimate, potentially more depending on extracted assets, shaders, staging files and output format |
 
-To remove HookLinkWindows completely, delete the app, the build folder, and `~/Library/Application Support/HookLinkWindows`.
+Also needed: a supported version of the Ocarina of Time remake as a `.nup` file, supplied by the user. **No game or copyrighted game assets are available for download here.** The Windows GUI is specific to this NUP build flow; it does not provide a `prod.keys` field.
 
-## If something goes wrong
+The authoritative requirement checker is the included engine doctor's report. For the detailed list and detection rules, see [docs/PREREQUISITES.md](docs/PREREQUISITES.md).
 
-| Problem | What to do |
+### Apple SDK note
+
+**Xcode.app does not install or run as a Windows application.** The Windows builder uses the separately installed Metal Developer Tools for Windows and a locally accessible iPhoneOS SDK. HookLinkWindows does not distribute Apple's SDK or compiler executables.
+
+Within **Toolchain setup…** the GUI provides **Download .xip** (opens an official Apple Xcode download link), **Import SDK from Xcode .xip…**, and a way to select an existing SDK folder. Review Apple's license and usage restrictions before attempting SDK extraction or use, particularly on non-Apple hardware. The project's tooling does not change those restrictions or promise that an import will succeed.
+
+## Quick start (Windows)
+
+The normal path uses the **GUI**; there is no need to hand-edit JSON configuration files for initial setup.
+
+1. **Extract the complete release ZIP** and open `HookLinkWindows.exe` in its root directory.
+2. Click **Check prerequisites**. Open **Toolchain setup…** for the detected statuses, download links, Python package installation, Metal/shader-translator repair and SDK selection or import. Install external dependencies from their official sources, reopen the GUI as needed, and check again.
+3. In **Game .nup file**, browse to your own supported game input. Set **Build directory** to a separate workspace with substantial free space. Choose your **iOS runtime settings** file if you have a reason to override the included defaults.
+4. Leave **App-only (recommended)** selected for a smaller IPA and a separate transfer folder. **Full (includes game data)** is available, but can produce an IPA too large for common sideloading tools.
+5. Review **Preview command**, then select **Build IPA**. Read **Build output and diagnostics** for progress and any toolchain errors. The first build may take hours; cached rebuilds can be faster, but neither completion time nor successful compilation is guaranteed.
+6. Sign and install the generated IPA using your own compatible sideloading tool, then transfer the files described in [Install on iPhone](#install-on-iphone).
+
+**Testing from scratch?** The GUI's **New clean…** button creates a fresh sibling build directory and clears optional previous-shader reuse without deleting your existing build folders. This is the preferred way to validate V1.1.2 independently of an older shader cache.
+
+**Advanced controls:** You can configure shader split workers (automatic mode detects logical CPUs with a cap of 61), Bundle ID, runtime settings, optional previous shader work, compatibility settings, and experimental native app-only packaging. The default Bundle ID is `PhoenixNetwork.HookLinkWindows`. **Changing it may create a separate iPhone app and leave previous saves inaccessible from the new app.** Start with the defaults unless testing a specific issue.
+
+For step-by-step details and developer options, use [the full Windows setup guide](docs/GETTING_STARTED.md).
+
+## Install on iPhone
+
+The usual **App-only** build produces an IPA **and** a matching directory of game-derived files. The IPA is not a finished, independently playable download.
+
+1. **Sign and install the generated IPA** using AltStore or another sideloading tool compatible with your Apple account, iOS version and requested entitlements. Enable Developer Mode on the phone when required.
+2. Keep the generated transfer files together. Using **Apple Devices → Files** on Windows (where available), open the **installed app's Documents folder** and transfer:
+   - `RomFS.img`
+   - the exact matching `b-<shader-chain>.img` archive
+   - `env.txt`
+3. Verify the files belong to the **same build**. An old shader archive or an environment file updated only on Windows can result in a failed or black-screen launch.
+4. Launch the app and test. Preserve your existing device data and saves before reinstalling or changing app IDs.
+
+The runtime preset expected by this build includes `DM_MSL_DIR=.`, `DM_NVN_ENC_THREAD=0`, `DM_PSO_MTL4=0` and `DM_NVN_BARRIER=full`. Confirm the settings in the **phone's actual `env.txt`**, not only the Windows file, when investigating an issue.
+
+**Full IPA:** This mode packages game data within the IPA instead of relying on the same split-transfer flow. Its output is much larger, and support depends on the signing/install tool.
+
+> [!WARNING]
+> Do **not** delete the existing iPhone app as a troubleshooting step without backing up its saves. Removing an app or installing under a different Bundle ID can delete or isolate its Documents data. HookLinkWindows does not provide an automatic Windows-side save-backup guarantee.
+
+## Builds, caches and disk space
+
+Builds can generate tens of gigabytes of intermediates and shader data. Keep the build workspace separate from the source tree and your original NUP file. By default, reuse a successful workspace for subsequent builds.
+
+- **Do not delete shader caches or staging data when diagnosing a failure.** A new build may otherwise repeat lengthy extraction and compilation steps.
+- **Previous shader work** is an optional, strict-verified reuse feature; it is not an automatic shortcut for incompatible shader chains. See [cache reuse documentation](docs/CACHE_REUSE_AND_NATIVE_PACKAGING.md).
+- **New clean…** deliberately creates an isolated workspace with no shader reuse for reproducible testing.
+- The **Build output and diagnostics** area and output logs are more useful for troubleshooting than assuming an apparently quiet compiler has frozen.
+
+## Troubleshooting
+
+| Symptom | What to check |
 |---|---|
-| HookLinkWindows says the game isn't supported | Check it's the Switch 2 Edition with update v131072, as a `.nup` |
-| The build seems stuck | Look at the progress card's timer and its last line: some steps go quiet for 10+ minutes. Stopped for over an hour? Click **Show details** |
-| The game file copy stops part way | Set Auto-Lock to Never and keep the phone unlocked; if it still stops, use **Copy with Finder instead** |
-| The build stops | Click **Show details** and look at the last lines. Free disk space and Xcode 27.2 are the usual causes |
-| "No iPhone found" | Use a cable, unlock the phone, tap Trust, turn on Developer Mode |
-| "The game is not installed on this iPhone" | Install the IPA first, then click **Find my iPhone** again |
-| The game closes at start | Copy the game files again from HookLinkWindows; make sure Increased Memory Limit is on |
-| Stutter the first time somewhere | Normal: the next start prepares that area |
-| The first session after installing runs slowly | Close the game fully (swipe it away) and open it again: the next start runs at full speed |
-| "The build needs Xcode 27.2's Metal compiler" | Install Xcode 27.2 and select it (`sudo xcode-select -s /Applications/Xcode.app`), then build again |
+| GUI opens, but **Check prerequisites** fails | Confirm you extracted the **complete ZIP**, with `engine/` and `win/` next to the EXE; follow the listed missing-tool details |
+| `dmsh_xlate.dll` or shader toolchain is missing | In **Toolchain setup…**, install/check .NET, SPIRV-Cross and Metal tools; use **Retry graphics setup** where offered |
+| iPhoneOS SDK not detected | Use the GUI's SDK browse/import controls; remember Metal Developer Tools and the iPhoneOS SDK are separate requirements |
+| Build seems idle during shader work | Inspect the diagnostics and underlying build logs before interrupting; some stages have long stretches with little visible progress |
+| IPA signing or installation fails | Verify the IPA, chosen Bundle ID, signing capability, increased-memory entitlement if required, iOS compatibility and available device storage |
+| **Black picture but controls respond** | Verify you installed the **correct IPA**, copied the matching `RomFS.img` and shader archive, and placed the expected `env.txt` inside **that app's Documents folder**. Collect logs rather than blindly changing render switches |
+| Game exits or behaves incorrectly | Preserve the existing build/output, check the input version and runtime settings, and review device logs |
 
-Still stuck? Click **Get game log** on HookLinkWindows's last step, then [open an issue](../../issues) or ask on [Discord](https://discord.gg/bSrN5kEScg) with your iPhone model, iOS version, where you were in the game and what happened. A screenshot or video helps. **Never attach game files.**
+**Log collection:** The iPhone launcher includes **Export Game Logs** when available in the built app. After an affected session, export the previous/current logs from the launcher or the app's Documents folder. In the Windows GUI, choose **iPhone log…** to inspect a saved log locally. Logs may contain local paths or device information, so review them before sharing.
 
-## Want to help?
+Still stuck? Open a [GitHub issue](https://github.com/BluePhoenix120/HookLinkWindows/issues) and include the release version, Windows version, toolchain status, iPhone/iOS model, build stage, and relevant **redacted** log excerpts. Never attach copyrighted game content, generated shader archives, IPAs, signing credentials or personal saves.
 
-- **Test on another iPhone**, especially an iPhone 17 model, and report how it runs.
-- **Play further** than anyone has, and report what breaks.
-- **Share your pipeline list**: in HookLinkWindows, **Play → Share my pipeline list**. Lists from different players are merged into the next update, so everyone's game prepares more of the world ahead of time and stutters less.
-- **Send a fix**: see [CONTRIBUTING.md](CONTRIBUTING.md).
+## Engine and upstream
+
+V1.1.2 uses an integration of **original NXnative**, **HookLink's customized engine**, and the project's **Windows-specific adaptations**. It is **not** an unmodified copy of any one upstream repository.
+
+| Component | Pinned revision |
+|---|---|
+| [Original `seedds/nxnative`](https://github.com/seedds/nxnative) | [`0b5fd6020093407af8bb5ad166e78e00bd2b7242`](https://github.com/seedds/nxnative/commit/0b5fd6020093407af8bb5ad166e78e00bd2b7242) |
+| [HookLink engine `dsi-hub/nxnative`](https://github.com/dsi-hub/nxnative) | [`698b46bc5b14510fffc0a4b8fd4bf78309004e4c`](https://github.com/dsi-hub/nxnative/commit/698b46bc5b14510fffc0a4b8fd4bf78309004e4c) |
+| Integrated engine source | `19528cf1e3115e64ecc8f02ab555ed0341579c09`, with preserved Windows overlays |
+| HookLink base | `3.0.1` (X2.0.1) |
+
+Conflicting merge hunks favored HookLink's existing behavior to retain game-specific fixes. The current pin and policy are recorded in [ENGINE_PIN.json](ENGINE_PIN.json); file provenance is in [ENGINE_PIN_FILES.json](ENGINE_PIN_FILES.json). The Windows GUI's upstream commit link points to the **original NXnative base**, not to an assertion that the merged engine is byte-identical to it.
+
+Other relevant project documentation: [fork integration](docs/FORK_INTEGRATION.md), [shader-chain validation](docs/SHADER_CHAIN.md), [contribution guide](CONTRIBUTING.md), [changelog](CHANGELOG.md), and [upstream HookLink README snapshot](docs/UPSTREAM_HOOKLINK_README.md).
+
+## Contributing
+
+Windows clean-build results, verified device logs, tested fixes, and carefully scoped pull requests are welcome. When reporting performance or rendering issues, distinguish the **original upstream app**, **older HookLinkWindows releases**, and **this exact integrated engine**. Do not publish game-derived assets or Apple proprietary binaries.
+
+**Community:** [Discord](https://discord.gg/bSrN5kEScg) · [Issues](https://github.com/BluePhoenix120/HookLinkWindows/issues) · [Releases](https://github.com/BluePhoenix120/HookLinkWindows/releases)
+
 
 ## Credits
 
