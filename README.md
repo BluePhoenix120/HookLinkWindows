@@ -174,6 +174,7 @@ Windows clean-build results, verified device logs, tested fixes, and carefully s
 - **[Tyuv97G](https://github.com/Tyuv97G)**: tested the engine on an iPhone 17 Pro and found the slowdown that the 30 fps steady mode answers ([issue #3](https://github.com/dsi-hub/HookLinkWindows/issues/3)).
 - **[cshess](https://github.com/cshess)**: offered iPhone Duo testing and reported the third-party signer problem ([issue #1](https://github.com/dsi-hub/HookLinkWindows/issues/1)).
 - **[HookShot](https://github.com/NotRexed/Hookshot)** by NotRexed: inspired HookLinkWindows's name and the idea of frame generation.
+- **[HookLink](https://github.com/dsi-hub/HookLink)** by DSi-hub aka DSi: Developed HookLink. I'd say he is the most important dev from my perspective. Without DSi, this project would not exist. Thank you so much DSi.
 
 ## License
 
