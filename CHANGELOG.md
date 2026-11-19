@@ -1,5 +1,15 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.1.3 (2026-11-18)
+
+- Fixed the shader-build failure encountered during clean Windows testing of V1.1.2: the merged builder called `dmsh_atomic.cross_args()` after importing an original NXnative module without that function.
+- Updated SPIRV-Cross argument handling to use the integrated NXnative MSL 3.2 chain rather than stale HookLink MSL 2.3 defaults.
+- Corrected the Python `BrokenProcessPool` error handler that masked the initial shader failure.
+- Added regression tests for the builder/atomic module interface and MSL chain options.
+- GitHub Actions now publishes Alpha-tagged versions as regular GitHub Releases, not prereleases.
+- **Known limitation:** shader compilation, completed IPA generation, and iPhone rendering have not yet been verified end to end on this release. Retrying with an existing build workspace may require shader-chain synchronization or recompilation.
+
+
 ## X2.0.1 (3.0.1)
 
 A hotfix for crashes after area changes in X2.

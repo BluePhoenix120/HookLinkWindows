@@ -1,8 +1,14 @@
-# HookLinkWindows — Windows first-time setup (release candidate)
+# HookLinkWindows — Windows first-time setup (Alpha)
 
 This guide covers **building your own local iOS application from your own Ocarina of Time remake `.nup`**. HookLinkWindows is an experimental Windows port. It does **not** include the game, a prebuilt game-specific IPA, signing credentials, Apple's SDK, or Apple's proprietary compiler tools. The source-only GitHub release must include **the entire tested HookLinkWindows engine**; a GUI add-on ZIP alone cannot compile an IPA.
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
+
+### Alpha 1.1.3: Windows shader compiler integration fix
+
+V1.1.2 exposed a merged-engine mismatch on a clean Windows build: `dmsh_build.py` called `dmsh_atomic.cross_args()` even though the integrated original NXnative `dmsh_atomic.py` does not provide it. The shader build also requested MSL 2.3 while the source chain specified MSL 3.2. V1.1.3 removes the obsolete calls, uses the pinned chain MSL options, and fixes the `BrokenProcessPool` exception handler for Windows/Python 3.14. This was found after shader splitting completed (186,587 inputs, 42,848 shaders). A complete V1.1.3 IPA build and iPhone validation remain to be demonstrated.
+
+**To retry:** Extract the complete V1.1.3 package to a *new source directory* and open its `HookLinkWindows.exe`. In the GUI point **Build directory** at your existing failed V1.1.2 *work directory* (not the extracted source tree), choose the original `.nup`, run **Check prerequisites**, then **Build IPA**. Do not choose **New clean…** for this retry; preserve existing shader intermediate data and logs. The shader-chain preflight may resynchronize the chain lock and header because the builder source has changed. If an earlier build's cache is incompatible, rebuild work may still be required. Do not manually copy just the EXE over V1.1.2 source files.
 
 ### Alpha 1.1.1: iPhone black-screen diagnostics
 
