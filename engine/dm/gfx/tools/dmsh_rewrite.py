@@ -13,6 +13,18 @@ import dmsh_abi as abi, dmsh_side
 # GX lighting takes max(0, NaN) from light directions left at zero, and the half of Mario its fill light faces came out white on the iPhone (GitHub issue 72; vk_shaders.py PRECISE)
 def precise(msl): return re.sub(r'\bfast::(min|max|clamp)\(', r'precise::\1(', msl)
 
+_MEMBAR = 'threadgroup_barrier(mem_flags::mem_device | mem_flags::mem_threadgroup | mem_flags::mem_texture);'
+def membar_fence(msl):
+    """MEMBAR as a fence, not a barrier. The translator turns BAR.SYNC into OpControlBarrier (workgroup scope; SPIRV-Cross prints threadgroup_barrier(mem_flags::mem_threadgroup)) and
+    MEMBAR.GPU / .SYS into OpMemoryBarrier at device scope (Ryujinx CodeGen/Spirv/Instructions.cs GenerateMemoryBarrier), which SPIRV-Cross prints as a threadgroup_barrier with device,
+    threadgroup and texture memory: an execution barrier the Switch code does not have. Where the threads of a group are not converged it waits for threads that never come.
+    PRAGMATA's GPU culling queue 12a52b683eec95c1 has no BAR.SYNC at all, only MEMBAR.SC.GPU; ERRBAR inside its persistent work loop. Each becomes the fence it is,
+    atomic_thread_fence at device scope, sequentially consistent; two in a row (MEMBAR.SC and ERRBAR) become one. From uncraftablexd's PRAGMATA bring-up (PR #1407)"""
+    if _MEMBAR not in msl: return msl
+    fence = 'atomic_thread_fence(mem_flags::mem_device | mem_flags::mem_threadgroup | mem_flags::mem_texture, memory_order_seq_cst, thread_scope_device);   // MEMBAR (membar_fence)'
+    msl = re.sub(r'^([ \t]*)' + re.escape(_MEMBAR) + r'\n\1' + re.escape(_MEMBAR) + r'$', lambda m: m[1] + _MEMBAR, msl, flags=re.M)
+    return msl.replace(_MEMBAR, fence)
+
 PER_VERTEX_BASE = 64   # the translator's Declarations.PerVertexLocationBase: dm_pv<L>_<v> is at user(locn<64 + 3L + v>), past every attribute's own location
 PER_VERTEX_IN = re.compile(r'\n    float4 dm_pv(\d+)_([012]) \[\[user\(locn(\d+)\)(?:, flat)?\]\];')
 VERTEX_INDEX = ('first', 'second', 'third')
