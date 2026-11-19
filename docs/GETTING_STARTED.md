@@ -4,6 +4,10 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.5: fix shader analysis import after Metal compilation
+
+V1.1.4 successfully built all 42,848 shaders and reached 52,980 iOS Metal compilations, then failed while running `cb_extent.py` because its imported `memo_reflection` function was missing from the retained HookLink `c1_guard.py`. V1.1.5 restores the original NXnative guard module (matching the pinned upstream file), including its memo-key normalization and regression tests. Keep your existing build directory and use it for a retry; do not select **New clean…**. The shader-chain compatibility checks may still require regenerating affected outputs, but this guard change does not intentionally change shader translation semantics.
+
 ### Alpha 1.1.4: restore HookLink memory fence semantics after original NXnative merge
 
 A clean V1.1.3 Windows run hit `AttributeError: module 'dmsh_rewrite' has no attribute 'membar_fence'` during iOS shader compilation. The builder retained a HookLink-specific MEMBAR rewrite, but the original NXnative module lacked the implementation. V1.1.4 restores the HookLink memory-fence function instead of silently skipping it, and tests the builder's entire set of directly referenced shader helper calls. This change affects the shader translation chain, so the GUI may resynchronize the local tool lock and host chain header before retrying. Preserve the previous build directory, logs and inputs; shader caches from another chain are not interchangeable.
