@@ -1,4 +1,5 @@
 """Offline tests for the Windows dependency manager and its allowlisted actions."""
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -66,7 +67,9 @@ class DependencyManagerTests(unittest.TestCase):
         self.assertIn("'--no-input', 'install', *packages]", gui)
         self.assertIn('webbrowser.open_new_tab(url)', gui)
         self.assertIn('self._render_dependency_rows()', gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.2'", gui)
+
+        release = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))['release']
+        self.assertIn(f"GUI_VERSION = {release!r}", gui)
         self.assertNotIn('subprocess.run([\'powershell\'', gui)
 
 
