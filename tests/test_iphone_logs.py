@@ -1,4 +1,5 @@
 """Offline regression tests for black-screen session log export and inspection."""
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -91,7 +92,9 @@ class NativeIosLogExportTests(unittest.TestCase):
 
     def test_windows_gui_has_local_file_picker_for_device_log(self):
         src = (ROOT / 'win/hooklink_gui.pyw').read_text(encoding='utf-8')
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.2'", src)
+
+        release = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))['release']
+        self.assertIn(f"GUI_VERSION = {release!r}", src)
         self.assertIn("text='iPhone log…'", src)
         self.assertIn('summarize_iphone_log(Path(path))', src)
         self.assertIn('askopenfilename(', src)

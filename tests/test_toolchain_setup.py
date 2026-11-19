@@ -68,7 +68,9 @@ class ToolchainSetupTests(unittest.TestCase):
         self.assertIn("can_auto_prepare_translator(payload)", gui)
         self.assertIn("self._start_graphics_setup(automatic=True)", gui)
         self.assertIn("self._auto_translator_attempted = True", gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.2'", gui)
+
+        release = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))['release']
+        self.assertIn(f"GUI_VERSION = {release!r}", gui)
         self.assertIn('configured_ios_sdk(ROOT)', gui)
         self.assertIn('save_ios_sdk(ROOT, sdk_var.get())', gui)
 

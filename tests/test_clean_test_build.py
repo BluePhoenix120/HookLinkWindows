@@ -1,4 +1,5 @@
 """Clean-build GUI regression tests; no actual build or external tool needed."""
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -66,7 +67,9 @@ class CleanBuildTests(unittest.TestCase):
         self.assertIn("self.reuse_var.set('')", gui)
         self.assertIn('self.output_auto = True', gui)
         self.assertIn('self.work_var.set(native_display_path(folder))', gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.2'", gui)
+
+        release = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))['release']
+        self.assertIn(f"GUI_VERSION = {release!r}", gui)
 
 
 if __name__ == '__main__':
