@@ -1,3 +1,4 @@
+import json
 import importlib.util
 import plistlib
 import sys
@@ -24,7 +25,9 @@ class TestGui(unittest.TestCase):
         self.assertIn('build_python()', source)
         self.assertIn("ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False)", source)
         self.assertIn("kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW", source)
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.3'", source)
+
+        release = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))['release']
+        self.assertIn(f"GUI_VERSION = {release!r}", source)
         self.assertNotIn(r'C:\\HookLinkWindowsBuild', source)
         self.assertNotIn('test0400486024dec000', source)
         self.assertNotIn('env-WORKING-1.8.5', source)
