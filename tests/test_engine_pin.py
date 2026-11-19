@@ -111,7 +111,9 @@ class EnginePinTests(unittest.TestCase):
         self.assertIn("text='View commit'", gui)
         self.assertIn('webbrowser.open_new_tab(self.engine_pin.url)', gui)
         self.assertIn("upstream_button.configure(state='disabled')", gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.3'", gui)
+
+        release = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))['release']
+        self.assertIn(f"GUI_VERSION = {release!r}", gui)
 
 
 if __name__ == '__main__':
