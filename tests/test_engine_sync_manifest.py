@@ -83,30 +83,3 @@ class PinnedEngineDeltaTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-)
-            self.assertTrue(override.get('reason'), path)
-        for row in files:
-            path = row['path']
-            self.assertTrue(path.startswith('engine/'), path)
-            self.assertNotIn('..', Path(path).parts, path)
-            full = ROOT / path
-            self.assertTrue(full.is_file(), path)
-            raw_bytes = full.read_bytes()
-            committed_hash = git_blob_sha(raw_bytes)
-            if committed_hash != row['sha']:
-                # Git for Windows commonly expands LF to CRLF in the working
-                # tree, while the committed upstream Git blob retains LF.
-                # Validate the canonical bytes as well, without weakening
-                # the test for any content changes other than line endings.
-                committed_hash = git_blob_sha(raw_bytes.replace(b'\r\n', b'\n'))
-            self.assertEqual(committed_hash, row['sha'], path)
-
-    def test_launcher_uses_live_engine_pin_for_commit_button(self):
-        source = (ROOT / 'win/hooklink_gui.pyw').read_text(encoding='utf-8')
-        self.assertIn('self.engine_pin = read_engine_pin(ROOT)', source)
-        self.assertIn('webbrowser.open_new_tab(self.engine_pin.url)', source)
-        self.assertNotIn('3a28152fe7052c9f45ede460022d39be6c91e3cf/commit/', source)
-
-
-if __name__ == '__main__':
-    unittest.main()
