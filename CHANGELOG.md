@@ -1,5 +1,13 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.1.4 (2026-11-18)
+
+- Restored HookLink's `membar_fence()` rewrite from its pinned `dsi-hub/nxnative` engine into the original NXnative-derived `dmsh_rewrite.py`, preserving device-scoped memory ordering rather than deleting the builder call.
+- Added contract tests that cross-check direct `dmsh_build.py` helper API calls against all bundled shader modules, plus MEMBAR rewrite behavior tests.
+- Maintained Alpha release workflow, original NXnative base metadata and Windows-specific engine overlays.
+- **Known limitation:** a full clean Windows IPA build and iPhone rendering are still unverified for this Alpha. Reuse the failed build workspace for targeted retry; shader-chain metadata may be resynchronized automatically.
+
+
 ## HookLinkWindows Alpha V1.1.3 (2026-11-18)
 
 - Fixed the shader-build failure encountered during clean Windows testing of V1.1.2: the merged builder called `dmsh_atomic.cross_args()` after importing an original NXnative module without that function.

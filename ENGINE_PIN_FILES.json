@@ -2386,6 +2386,7 @@
     "engine/dm/gfx/nvn/dmsh_chain.h",
     "engine/dm/gfx/tools/c1_guard.py",
     "engine/dm/gfx/tools/dmsh_build.py",
+    "engine/dm/gfx/tools/dmsh_rewrite.py",
     "engine/dm/gfx/tools/dmsh_chain.lock",
     "engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate",
     "engine/dm/gfx/tools/shader_split.py",
@@ -2408,5 +2409,12 @@
     "engine/dm/tools/tests/test_jump_copies.py",
     "engine/dm/tools/tests/test_jump_guarded.py"
   ],
-  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout."
+  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout. Alpha V1.1.4 restores HookLink's MEMBAR-as-device-fence rewrite in the original NXnative dmsh_rewrite.py; this path is now an intentional integration overlay.",
+  "integration_overrides": {
+    "engine/dm/gfx/tools/dmsh_rewrite.py": {
+      "upstream_sha": "12b0039dde59368b0962a62325b1d63715fd728b",
+      "integrated_sha": "332678869b1799212fb5a5b3892c458875027ca3",
+      "reason": "Preserve HookLink MEMBAR device-scope fence semantics while retaining original NXnative rewrites"
+    }
+  }
 }

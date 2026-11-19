@@ -51,6 +51,15 @@ class PinnedEngineDeltaTests(unittest.TestCase):
             self.assertEqual(pin['engine_integration_commit'],
                              manifest['engine_integration_commit'])
         self.assertEqual(len({x['path'] for x in files}), len(files))
+        # Preserve immutable upstream provenance while verifying intentional integration overlays.
+        overrides = manifest.get('integration_overrides', {})
+        upstream_files = {row['path']: row['sha'] for row in files}
+        self.assertTrue(set(overrides) <= set(upstream_files))
+        self.assertTrue(set(overrides) <= set(manifest.get('windows_overlays', [])))
+        for path, override in overrides.items():
+            self.assertEqual(override['upstream_sha'], upstream_files[path], path)
+            self.assertRegex(override['integrated_sha'], r'^[0-9a-f]{40}$')
+            self.assertTrue(override.get('reason'), path)
         for row in files:
             path = row['path']
             self.assertTrue(path.startswith('engine/'), path)
@@ -58,14 +67,12 @@ class PinnedEngineDeltaTests(unittest.TestCase):
             full = ROOT / path
             self.assertTrue(full.is_file(), path)
             raw_bytes = full.read_bytes()
+            expected_hash = overrides[path]['integrated_sha'] if path in overrides else row['sha']
             committed_hash = git_blob_sha(raw_bytes)
-            if committed_hash != row['sha']:
-                # Git for Windows commonly expands LF to CRLF in the working
-                # tree, while the committed upstream Git blob retains LF.
-                # Validate the canonical bytes as well, without weakening
-                # the test for any content changes other than line endings.
+            if committed_hash != expected_hash:
+                # Git for Windows can expand LF to CRLF in the working tree.
                 committed_hash = git_blob_sha(raw_bytes.replace(b'\r\n', b'\n'))
-            self.assertEqual(committed_hash, row['sha'], path)
+            self.assertEqual(committed_hash, expected_hash, path)
 
     def test_launcher_uses_live_engine_pin_for_commit_button(self):
         source = (ROOT / 'win/hooklink_gui.pyw').read_text(encoding='utf-8')
