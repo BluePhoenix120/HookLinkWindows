@@ -1,5 +1,14 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.1.5 (2026-11-19)
+
+- Fixed a post-compilation shader analysis import failure in V1.1.4: original NXnative `cb_extent.py` requires `memo_reflection`, but the retained HookLink `c1_guard.py` did not provide it.
+- Restored the **exact pinned original NXnative `c1_guard.py`**, including `memo_reflection` and cache-key normalization that ignores the reflection's chain identifier while respecting actual bindings/c1 content.
+- Added regression tests for the cross-module import and memo-reflection behavior.
+- V1.1.4 built all **42,848 shaders**, generated auxiliary shader libraries, and reported **52,980 compiled iOS Metal cache entries** before failing in `cb_extent.py` (the complete IPA was not generated).
+- **Known limitation:** full IPA packing and iPhone rendering are not yet verified; preserve existing compiled shader caches on retry, subject to shader-chain compatibility.
+
+
 ## HookLinkWindows Alpha V1.1.4 (2026-11-18)
 
 - Restored HookLink's `membar_fence()` rewrite from its pinned `dsi-hub/nxnative` engine into the original NXnative-derived `dmsh_rewrite.py`, preserving device-scoped memory ordering rather than deleting the builder call.
