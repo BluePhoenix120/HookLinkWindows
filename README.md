@@ -22,12 +22,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.1.3](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.1.4](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.3-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.3-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.4-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.4-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -38,21 +38,25 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.1.3 — experimental Windows port (November 2026).**
+**Alpha V1.1.4 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
 | Windows GUI, package creation and automated regression tests | **164 Windows tests passed** for the V1.1.2 candidate; V1.1.3 adds shader-builder integration tests, but has not passed an end-to-end iOS build |
 | Source integration | Original NXnative base integrated with HookLink-specific modifications and Windows overlays; see [Engine and upstream](#engine-and-upstream) |
-| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Not yet verified end to end for V1.1.3** |
+| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Not yet verified end to end for V1.1.4** |
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
 | Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |
 
-The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the V1.1.3 engine renders and functions correctly** this project is still in Alpha after all.
+The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the V1.1.4 engine renders and functions correctly** this project is still in Alpha after all.
 
 For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
-## Alpha V1.1.3 changes
+## Alpha V1.1.4 changes
+
+A fresh V1.1.3 Windows build reached shader compilation and exposed another merged-engine API mismatch: the builder calls `dmsh_rewrite.membar_fence()`, but the original NXnative rewrite module did not contain HookLink's implementation. V1.1.4 restores HookLink's device-scope memory-fence rewrite in that module, retaining the original NXnative changes, and adds regression tests for the merged shader helper APIs. The underlying build had already rewritten its main/SDK binaries, split 186,587 shader inputs, and discovered 42,848 shaders; **no completed IPA or iPhone rendering verification is claimed for V1.1.4**.
+
+## Previous Alpha V1.1.3 changes
 
 This Alpha release fixes a source compatibility failure discovered in a clean Windows build of V1.1.2. The original NXnative `dmsh_atomic.py` no longer exports `cross_args()`, but the merged HookLink shader builder still called it. V1.1.3 removes those calls, uses the integrated shader-chain MSL 3.2 flags, fixes the worker exception handler for Windows/Python 3.14, and adds regression tests to catch API drift. **This is a testable fix, not a claim of a completed iOS shader compile or an on-device rendering fix.** Preserve existing build-work directories for retry; the shader-chain check may need to resynchronize local metadata.
 
@@ -93,7 +97,7 @@ The normal path uses the **GUI**; there is no need to hand-edit JSON configurati
 5. Review **Preview command**, then select **Build IPA**. Read **Build output and diagnostics** for progress and any toolchain errors. The first build may take hours; cached rebuilds can be faster, but neither completion time nor successful compilation is guaranteed.
 6. Sign and install the generated IPA using your own compatible sideloading tool, then transfer the files described in [Install on iPhone](#install-on-iphone).
 
-**Testing from scratch?** The GUI's **New clean…** button creates a fresh sibling build directory and clears optional previous-shader reuse without deleting your existing build folders. This is the preferred way to validate V1.1.3 independently of an older shader cache.
+**Testing from scratch?** The GUI's **New clean…** button creates a fresh sibling build directory and clears optional previous-shader reuse without deleting your existing build folders. This is the preferred way to validate V1.1.4 independently of an older shader cache.
 
 **Advanced controls:** You can configure shader split workers (automatic mode detects logical CPUs with a cap of 61), Bundle ID, runtime settings, optional previous shader work, compatibility settings, and experimental native app-only packaging. The default Bundle ID is `PhoenixNetwork.HookLinkWindows`. **Changing it may create a separate iPhone app and leave previous saves inaccessible from the new app.** Start with the defaults unless testing a specific issue.
 
@@ -145,7 +149,7 @@ Still stuck? Open a [GitHub issue](https://github.com/BluePhoenix120/HookLinkWin
 
 ## Engine and upstream
 
-V1.1.3 retains V1.1.2's integration of **original NXnative**, **HookLink's customized engine**, and the project's **Windows-specific adaptations**. It is **not** an unmodified copy of any one upstream repository.
+V1.1.4 retains V1.1.2's integration of **original NXnative**, **HookLink's customized engine**, and the project's **Windows-specific adaptations**. It is **not** an unmodified copy of any one upstream repository.
 
 | Component | Pinned revision |
 |---|---|
