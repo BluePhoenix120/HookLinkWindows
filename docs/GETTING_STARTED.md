@@ -4,6 +4,10 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.4: restore HookLink memory fence semantics after original NXnative merge
+
+A clean V1.1.3 Windows run hit `AttributeError: module 'dmsh_rewrite' has no attribute 'membar_fence'` during iOS shader compilation. The builder retained a HookLink-specific MEMBAR rewrite, but the original NXnative module lacked the implementation. V1.1.4 restores the HookLink memory-fence function instead of silently skipping it, and tests the builder's entire set of directly referenced shader helper calls. This change affects the shader translation chain, so the GUI may resynchronize the local tool lock and host chain header before retrying. Preserve the previous build directory, logs and inputs; shader caches from another chain are not interchangeable.
+
 ### Alpha 1.1.3: Windows shader compiler integration fix
 
 V1.1.2 exposed a merged-engine mismatch on a clean Windows build: `dmsh_build.py` called `dmsh_atomic.cross_args()` even though the integrated original NXnative `dmsh_atomic.py` does not provide it. The shader build also requested MSL 2.3 while the source chain specified MSL 3.2. V1.1.3 removes the obsolete calls, uses the pinned chain MSL options, and fixes the `BrokenProcessPool` exception handler for Windows/Python 3.14. This was found after shader splitting completed (186,587 inputs, 42,848 shaders). A complete V1.1.3 IPA build and iPhone validation remain to be demonstrated.
