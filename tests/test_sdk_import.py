@@ -108,7 +108,9 @@ class SDKImportTests(unittest.TestCase):
         self.assertIn("Do you confirm that you are authorized to proceed?", gui)
         self.assertIn("'hooklink_sdk_import.py'", gui)
         self.assertIn("if title == 'iPhoneOS SDK import':", gui)
-        self.assertIn("GUI_VERSION = 'Alpha V1.1.2'", gui)
+
+        release = json.loads((ROOT / 'ENGINE_PIN.json').read_text(encoding='utf-8'))['release']
+        self.assertIn(f"GUI_VERSION = {release!r}", gui)
 
 
 if __name__ == '__main__':
