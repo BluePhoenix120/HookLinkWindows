@@ -22,12 +22,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.1.5](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.1.7](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.5-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.5-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.7-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.7-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -38,21 +38,25 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.1.5 — experimental Windows port (November 2026).**
+**Alpha V1.1.7 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
 | Windows GUI, package creation and automated regression tests | **164 Windows tests passed** for the V1.1.2 candidate; V1.1.3 adds shader-builder integration tests, but has not passed an end-to-end iOS build |
 | Source integration | Original NXnative base integrated with HookLink-specific modifications and Windows overlays; see [Engine and upstream](#engine-and-upstream) |
-| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Not yet verified end to end for V1.1.5** |
+| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Not yet verified end to end for V1.1.7** |
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
 | Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |
 
-The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the V1.1.5 engine renders and functions correctly** this project is still in Alpha after all.
+The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the V1.1.7 engine renders and functions correctly** this project is still in Alpha after all.
 
 For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
-## Alpha V1.1.5 changes
+## Alpha V1.1.7 native-host compiler fix (V1.1.5 baseline)
+
+This is **V1.1.5 with only targeted native iOS host compilation repairs**, plus tests and release metadata. It restores missing compressed-texture alias, deferred unbind, and depth/stencil declarations and fixes an Objective-C texture result cast in `nvn_mtl.m`; in `front_ios.m` it removes the duplicate screen-rate function and adds `<stdatomic.h>`. No V1.1.6 Metal worker cap, RAM budget, Job Object, or stop behavior changes are included. A successful full iOS host compile, IPA, and device run are **not yet verified**; preserve your V1.1.5 shader cache for a retry.
+
+## Previous Alpha V1.1.5 changes
 
 A fresh V1.1.4 Windows build completed 42,848 shader translations and 52,980 iOS Metal compilations, then failed when `cb_extent.py` imported missing `memo_reflection` from an older HookLink `c1_guard.py`. V1.1.5 replaces the stale guard with the **exact pinned original NXnative implementation**, preserving the analyzer and normalized memo-key behavior. Source-contract and functional tests now detect this mismatch in CI. **IPA creation and on-device rendering are still unverified.** Retain your compiled shader work directory rather than creating another clean one for the first retry.
 

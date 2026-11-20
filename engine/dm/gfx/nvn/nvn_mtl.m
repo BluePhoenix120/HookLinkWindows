@@ -2781,6 +2781,9 @@ int mtl_gpu_span(uint64_t f, uint64_t *t0, uint64_t *t1) {
 }
 static void rp_flush_at(const char *fn, int line);
 #define rp_flush() rp_flush_at(__func__, __LINE__)
+// Restored from the pinned original NXnative: depth/stencil feedback is used before its later definition.
+enum { FB_DS_DEPTH = 1, FB_DS_STENCIL = 2, FB_DS_BOTH = 3 };
+static void fb_ds_note_write(uint32_t planes);
 static const char *cctx_snap(void);   // What is in this submission (printed into the failure line on error; defined before mtl_exec)
 typedef struct cbs_list cbs_list;   // The game's shaders one command buffer encoded (defined before encode_args)
 static cbs_list *cbs_take(void);
@@ -5428,7 +5431,7 @@ static void *tex_mtl_resolve(const tex_t *ct, int *in_storage, id<MTLTexture> __
     if (have) { if (!off && t->pool && nvn_sparse_pool(t->pool)) sparse_gpu_look(t, have); if (!g_pool_walk) tu_stamp(have, 0); return tex_mtl_result(have, owned); }   // its mappings are synced on the submit thread (sparse_sync)
     alias_key ak = tex_alias_key(t);
     id shared = own_alias_take(t->serial, &ak);   // found and published in one hold (nvn_owner.m)
-    if (shared) { if (!g_pool_walk) tu_stamp(shared, 0); return shared; }
+    if (shared) { if (!g_pool_walk) tu_stamp(shared, 0); return tex_mtl_result(shared, owned); }
     int again = 0;   // HookLink: a key alias_retire_idle retired resolves to nothing for a finalized descriptor, and is made anew from its storage for a live object
     { int g = own_alias_gone(t->serial, &ak); if (g == 1) return nil; again = g == 2; }
     // A buffer texture's view is shared by storage as every other texture is: NVN texture objects over the same range with the same description are one view, kept by the sharing
@@ -5917,7 +5920,13 @@ static uint64_t g_rt_merge_n;   // Cumulative continuation count
 // the encoder track and the GPU interval table carry this name directly, and shader_map.tsv maps it back to the shader; off by default (one string allocation per pass)
 static int g_el_w, g_el_h, g_el_draws; static char g_el_key[12];
 static int enc_label_on(void) { static int v = -1; if (v < 0) { const char *e = getenv("DM_NVN_ENC_LABEL"); v = e && atoi(e); } return v; }
-static int g_nbcrt; static void bcrt_flush(void);   // shadows of block-compressed render targets used by the open pass (see bcrt_attach)
+static int g_nbcrt; static void bcrt_flush(void);
+// Restored original NXnative forward declarations for compressed-alias texture pairing.
+static int g_nbcp; static void bcp_flush(void); static void bcp_wrote(const tex_t *t, id<MTLTexture> m); static void bcp_idx(int id_, const tex_t *t, int add);
+static int bcp_before(const tex_t *t, id<MTLTexture> m, tex_t *o); static void bcp_after(const tex_t *t, unsigned level, const NVNcopyRegion *r); static void bcp_after_to(const tex_t *t, const tex_t *op, unsigned level, const NVNcopyRegion *r);
+// An empty render-target binding may be deferred across an active render pass (original NXnative).
+static int g_unb; static p_set_rt g_unb_rt; static uint64_t g_unb_n;
+static int unb_on(void) { static int v = -1; if (v < 0) { const char *e = getenv("DM_NVN_UNBIND_DEFER"); v = !(e && !strcmp(e, "0")); if (!v) MLOG("DM_NVN_UNBIND_DEFER=0: unbinding the targets ends the pass"); } return v; }   // shadows of block-compressed render targets used by the open pass (see bcrt_attach)
 // What the GPU writes into a texture whose storage the CPU can read reaches that storage, as on the hardware, where a render pass, a texture clear or a copy into a texture writes the
 // texture's storage and a game may read it there or upload it again from there. After each such write, in the same command buffer and so before any fence after it, the GPU stores the
 // region it wrote into the storage (gsb_store, the swz kernel in dm/gfx/msl/deswz.metal): from the host texture through a linear area of the frame arena, or for a buffer-to-texture copy

@@ -1,5 +1,13 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.1.7 (2026-11-19)
+
+- Rebased the source directly on the **exact Alpha V1.1.5 release**, discarding V1.1.6 memory budgeting, process controls, and all other non-compilation changes.
+- Repaired V1.1.5's native iOS host compilation errors in `nvn_mtl.m`: restored compressed-alias, deferred-unbind and depth/stencil declarations and corrected an Objective-C texture result cast.
+- Repaired `front_ios.m` duplicate `front_screen_max_fps()` definition and missing atomic header while retaining the newer refresh-rate implementation.
+- Added focused, offline compiler-integration contract tests and updated engine provenance for the two intentional overlays.
+- End-to-end arm64 iOS host compilation, IPA creation, and device rendering are still unverified. Retain the V1.1.5 shader cache.
+
 ## HookLinkWindows Alpha V1.1.5 (2026-11-19)
 
 - Fixed a post-compilation shader analysis import failure in V1.1.4: original NXnative `cb_extent.py` requires `memo_reflection`, but the retained HookLink `c1_guard.py` did not provide it.
