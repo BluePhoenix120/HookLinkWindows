@@ -52,14 +52,21 @@ class AudioProducerRealtimeContracts(unittest.TestCase):
         self.assertIn("if (prefill) prefill--;", s)
         self.assertIn("if (!dm_pcmout_append(out, b))", s)
 
-    def test_upstream_backport_is_recorded_without_changing_engine_pin(self):
+    def test_audio_policy_now_matches_full_original_nxnative_source(self):
         pin = json.loads((ROOT / "ENGINE_PIN.json").read_text(encoding="utf-8"))
         manifest = json.loads((ROOT / "ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))
         self.assertEqual(pin["audio_producer_patch_commit"], "2edad1828de247aaf46c53cb288357cb65e84be0")
         self.assertEqual(pin["nxnative_commit"], "d2fd78b402f92d5a83b78987e49aba22e8626719")
+        self.assertEqual(manifest["nxnative_commit"], pin["nxnative_commit"])
         path = "engine/dm/host/hle_audren.c"
-        self.assertIn(path, manifest["windows_overlays"])
-        self.assertIn(path, manifest["integration_overrides"])
+        official = {entry["path"]: entry["sha"] for entry in manifest["changed_paths"]}
+        self.assertIn(path, official)
+        self.assertNotIn(path, manifest["windows_overlays"])
+        self.assertNotIn(path, manifest["integration_overrides"])
+        import hashlib
+        raw = AUDIO.read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw).hexdigest()
+        self.assertEqual(actual, official[path])
 
 
 if __name__ == "__main__":
