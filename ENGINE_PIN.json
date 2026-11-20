@@ -1,13 +1,14 @@
 {
     "hooklink_base": "3.0.1",
     "nxnative_repo": "https://github.com/seedds/nxnative.git",
-    "nxnative_commit": "0b5fd6020093407af8bb5ad166e78e00bd2b7242",
+    "nxnative_commit": "d2fd78b402f92d5a83b78987e49aba22e8626719",
     "engine_location": "engine/",
     "shader_chain": "a58d7f1f4ef9",
     "release": "Alpha V1.2.1",
     "hooklink_engine_repo": "https://github.com/dsi-hub/nxnative.git",
     "hooklink_engine_commit": "698b46bc5b14510fffc0a4b8fd4bf78309004e4c",
-    "engine_integration_commit": "19528cf1e3115e64ecc8f02ab555ed0341579c09",
-    "engine_integration_policy": "git-merge-ort-X-ours (conflicting hunks favor HookLink)",
-    "audio_producer_patch_commit": "2edad1828de247aaf46c53cb288357cb65e84be0"
+    "engine_integration_commit": "4c7473846bf0df7b2af2d7f881fc9e2989821c8b",
+    "engine_integration_policy": "full-original-main-three-way-merge-ort-X-ours; HookLink/Windows conflict hunks retained",
+    "audio_producer_patch_commit": "2edad1828de247aaf46c53cb288357cb65e84be0",
+    "full_upstream_sync_parent": "0b5fd6020093407af8bb5ad166e78e00bd2b7242"
 }

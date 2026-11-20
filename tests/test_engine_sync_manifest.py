@@ -16,7 +16,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 OLD_PIN = '3a28152fe7052c9f45ede460022d39be6c91e3cf'
 X2_PIN = '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'
-OFFICIAL_PIN = '0b5fd6020093407af8bb5ad166e78e00bd2b7242'
+OFFICIAL_PIN = 'd2fd78b402f92d5a83b78987e49aba22e8626719'
 HOOKLINK_HOTFIX_PIN = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
 
 

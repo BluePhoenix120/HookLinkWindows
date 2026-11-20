@@ -56,7 +56,7 @@ class AudioProducerRealtimeContracts(unittest.TestCase):
         pin = json.loads((ROOT / "ENGINE_PIN.json").read_text(encoding="utf-8"))
         manifest = json.loads((ROOT / "ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))
         self.assertEqual(pin["audio_producer_patch_commit"], "2edad1828de247aaf46c53cb288357cb65e84be0")
-        self.assertEqual(pin["nxnative_commit"], "0b5fd6020093407af8bb5ad166e78e00bd2b7242")
+        self.assertEqual(pin["nxnative_commit"], "d2fd78b402f92d5a83b78987e49aba22e8626719")
         path = "engine/dm/host/hle_audren.c"
         self.assertIn(path, manifest["windows_overlays"])
         self.assertIn(path, manifest["integration_overrides"])
