@@ -4,6 +4,12 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.6: stop orphan compiler processes on builder exit
+
+The Windows builder attaches itself to a kill-on-close Job Object before launching its shader and host compiler processes. Its descendants ordinarily inherit job membership; they are terminated automatically if the builder exits, crashes, or is closed. The initial GUI log should contain `[JOB] Kill-on-close containment active`. If assignment fails (for example due to restrictions imposed by another Job Object), the builder will log `[JOB] Warning` and still attempt the build; the existing Stop button retains its process-tree termination fallback.
+
+This **does not flush Windows memory globally**: standby cache is reclaimable, while leaked nonpaged pool or driver-locked memory cannot safely be reclaimed by a user-mode application's cleanup button. If memory stays full after the build and all descendants have stopped, inspect RAMMap's Use Counts: Process Private / Nonpaged Pool / Driver Locked / Standby. Do not delete your shader cache or clear system caches without evidence.
+
 ### Alpha 1.1.6: fix iOS host compilation after shader generation
 
 A V1.1.5 build progressed through shader generation and 269/269 iOS host compilation inputs, then Clang rejected `nvn_mtl.m` (missing compressed-texture alias and depth/stencil feedback declarations, a missing deferred-unbind definition, and an unbridged Objective-C pointer) and `front_ios.m` (duplicate screen-rate implementation and missing `<stdatomic.h>`). The native host source in V1.1.6 has narrow repairs ported from the pinned original NXnative while retaining HookLink's graphics code. Offline integration tests check these interfaces; **the cross-compiled iOS host and final IPA have not yet been verified**. Keep your existing build directory and shader caches; use Build IPA, not New clean.

@@ -2,6 +2,9 @@
 
 ## HookLinkWindows Alpha V1.1.6 (2026-11-19)
 
+- Added a Windows kill-on-close Job Object to the Python IPA builder, created **before** it launches other processes. By default Windows keeps child compilers inside the job, so leftover `metal.exe`, `metallib.exe`, `spirv-cross.exe` and console hosts terminate when the parent exits normally or crashes; this complements GUI Stop's existing process-tree cleanup. A failed Job Object assignment logs `[JOB] Warning` and never silently claims success.
+- **Memory diagnosis remains necessary:** the Job Object only addresses orphaned processes; it cannot purge arbitrary working sets, reclaim driver-locked allocations or fix a kernel/nonpaged-pool leak. Use RAMMap to distinguish process, cache, nonpaged pool and driver-locked physical RAM.
+
 - Repaired native iOS host compilation failures reported after successful shader generation: `nvn_mtl.m` now restores the pinned original NXnative compressed-alias texture, deferred-unbind, and depth/stencil feedback declarations and handles an Objective-C texture return through its existing resolver helper.
 - Resolved duplicate `front_screen_max_fps()` implementations in `front_ios.m` while preserving the newer live screen refresh-rate logic and adding the missing `<stdatomic.h>` include.
 - Added source-contract regression tests to detect missing host declarations and conflicting screen-rate implementations before Alpha packaging.
