@@ -1,5 +1,14 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.1.6 (2026-11-19)
+
+- Retained up to 61 shader workers while introducing separate Metal compiler/linker session admission, default 24 sessions on Windows. Cache hits remain unaffected.
+- Added a configurable Metal-concurrency control in GUI Advanced settings and a default 8 GiB available-RAM reserve; compilation pauses new Metal work during pressure, with periodic `[METAL]` diagnostics, and fails clearly rather than indefinitely starving Windows.
+- Fixed GUI Stop to request termination of the Windows builder and child compiler process tree with `taskkill /T /F` before killing just the parent.
+- Added deterministic tests for concurrency limits, free-memory admission, exception-safe slot release and process-tree Stop behavior.
+- **Not a confirmed memory-leak fix:** the exact cause of rising RAM/nonpaged pool still requires diagnosis with a full resumed build. Shader cache and chain are unchanged by the Metal scheduler.
+
+
 ## HookLinkWindows Alpha V1.1.5 (2026-11-19)
 
 - Fixed a post-compilation shader analysis import failure in V1.1.4: original NXnative `cb_extent.py` requires `memo_reflection`, but the retained HookLink `c1_guard.py` did not provide it.
