@@ -1,6 +1,6 @@
 # Changelog
 
-## HookLinkWindows Alpha V1.1.10 (2026-11-19)
+## HookLinkWindows Alpha V1.2.0 (2026-11-19)
 
 - Repaired the V1.1.9 native host iOS compilation failures in `nvn_mtl.m`: restored the `uint32_t *lead` parameter of `pool_entry` and its two call sites, reintroduced compressed-alias pairing initialization in the buffer-to-texture copy, defined the display-link tolerance used by frame pacing, and passed the two missing parameters to `link_drain_note`.
 - Added Windows source-contract tests for these exact signature, variable-scope, and callback call sites.

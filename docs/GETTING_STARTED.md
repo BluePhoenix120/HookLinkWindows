@@ -4,9 +4,9 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
-### Alpha 1.1.10: native host callback and pool-entry repair
+### Alpha 1.2.0: native host callback and pool-entry repair
 
-V1.1.9 built the shader and host Metal stages, then failed native Clang compilation on `pool_entry`'s 10th parameter, a missing compressed-alias `paired` value, undefined frame-pacing tolerance and a 3-vs-5-argument `link_drain_note` call in `nvn_mtl.m`. V1.1.10 corrects these specific engine source errors with isolated tests and no V1.1.6 memory/process changes. Continue using the existing shader work directory and click **Build IPA** without **New clean**. Native iOS compile, IPA output and device rendering remain unverified.
+V1.1.9 built the shader and host Metal stages, then failed native Clang compilation on `pool_entry`'s 10th parameter, a missing compressed-alias `paired` value, undefined frame-pacing tolerance and a 3-vs-5-argument `link_drain_note` call in `nvn_mtl.m`. V1.2.0 corrects these specific engine source errors with isolated tests and no V1.1.6 memory/process changes. Continue using the existing shader work directory and click **Build IPA** without **New clean**. Native iOS compile, IPA output and device rendering remain unverified.
 
 ### Alpha 1.1.9: pool-spare and demand-recording host merge repair
 
