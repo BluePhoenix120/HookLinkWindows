@@ -24,6 +24,9 @@ ORIGINAL = "https://github.com/seedds/nxnative.git"
 HOOKLINK = "https://github.com/dsi-hub/nxnative.git"
 X2_BASE = "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf"
 SHA = re.compile(r"[0-9a-f]{40}\Z")
+# Intentional Windows source-distribution exception: upstream includes a prebuilt
+# non-Windows translator executable; the Windows builder compiles its own DLL.
+PLATFORM_BINARY_EXCLUSIONS = {"dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate"}
 
 
 def cmd(*argv: str, cwd: Path = ROOT, check: bool = True) -> subprocess.CompletedProcess:
@@ -122,15 +125,18 @@ def sync(target: str) -> None:
         windows_overlays = ["engine/" + x for x in all_paths if upstream.get(x) != combined.get(x)]
         changed_paths = []
         overrides = {}
+        omitted_binaries = []
         for path in changes:
             original_file = upstream.get(path)
             local_file = combined.get(path)
             if original_file is None:
                 continue
             if local_file is None:
-                # HookLink deliberately deleted a file that official NXnative has.
-                # Report rather than silently claiming that the full sync is complete.
-                raise RuntimeError(f"Original NXnative file absent after merge: {path}")
+                if path not in PLATFORM_BINARY_EXCLUSIONS:
+                    raise RuntimeError(f"Original NXnative source file absent after merge: {path}")
+                omitted_binaries.append({"path": "engine/" + path, "upstream_sha": original_file[0],
+                                         "reason": "Prebuilt non-Windows executable excluded from source-only Windows distribution"})
+                continue
             changed_paths.append({"path": "engine/" + path, "sha": original_file[0]})
             if original_file != local_file:
                 overrides["engine/" + path] = {
@@ -158,6 +164,7 @@ def sync(target: str) -> None:
             "changed_paths": changed_paths,
             "windows_overlays": windows_overlays,
             "integration_overrides": overrides,
+            "platform_binary_exclusions": omitted_binaries,
             "deleted_paths": ["engine/" + x for x in changes if x not in upstream],
             "reconstructed_hooklink_base": reconstructed,
             "windows_overlay_parent": before_merge,
@@ -191,7 +198,8 @@ def sync(target: str) -> None:
             "Previous original base: " + previous + "\n\n"
             "Combined synthetic merge commit: " + merged_commit + "\n\n"
             f"Official files in target: {len(upstream)}; merged files: {len(combined)}; changed original paths since X2: {len(changes)}; "
-            f"changed files with retained custom conflicts/overlays: {len(overrides)}; all different paths: {len(windows_overlays)}.\n\n"
+            f"changed files with retained custom conflicts/overlays: {len(overrides)}; all different paths: {len(windows_overlays)}; "
+            f"explicit non-Windows binary exclusions: {len(omitted_binaries)}.\n\n"
             "Git three-way merge imports all nonconflicting updates, favoring HookLinkWindows changes only where the merge conflicts. "
             "Windows-only files are retained. ENGINE_PIN_FILES.json records the original hashes and integrated hash for every conflicting updated file.\n\n"
             "**Not yet verified:** Windows full suite, arm64 iOS host cross-compile, shader-cache compatibility, IPA build, phone rendering, audio, power and startup. "
@@ -200,7 +208,7 @@ def sync(target: str) -> None:
             "official_target": target, "hooklink": hook_commit, "merged_commit": merged_commit,
             "official_files": len(upstream), "merged_files": len(combined),
             "changed_paths": len(changes), "overrides": len(overrides),
-            "windows_overlay_paths": len(windows_overlays)}), flush=True)
+            "windows_overlay_paths": len(windows_overlays), "excluded_nonwindows_binaries": len(omitted_binaries)}), flush=True)
 
 
 if __name__ == "__main__":
