@@ -34,6 +34,7 @@ class BuildConfig:
     output_ipa: Path
     bundle_id: str
     workers: int = 61
+    metal_workers: int = 24  # independent physical RAM-aware Metal compile concurrency
     allow_damaged: bool = True
     allow_other_metal: bool = True
     entitlements: bool = True
@@ -197,6 +198,8 @@ def verify_build_config(c: BuildConfig) -> None:
         raise ValueError('Bundle ID must have at least two dot-separated components, such as PhoenixNetwork.HookLinkWindows.')
     if not 1 <= c.workers <= 61:
         raise ValueError('Worker count must be between 1 and 61 on Windows.')
+    if not 1 <= c.metal_workers <= 61:
+        raise ValueError('Metal compiler count must be between 1 and 61 on Windows.')
     if c.output_ipa.suffix.lower() != '.ipa':
         raise ValueError('Output path must end with .ipa.')
     if c.output_ipa.resolve() == c.input_path.resolve():
@@ -232,6 +235,8 @@ def make_build_command(c: BuildConfig, python: str | None = None, split_data_dir
 def make_build_environment(c: BuildConfig) -> dict[str, str]:
     env = os.environ.copy()
     env['J'] = str(c.workers)
+    env['NXW_METAL_J'] = str(c.metal_workers)
+    env['NXW_METAL_MIN_FREE_GB'] = '8'
     env['DMSH_PROCS'] = '0'  # Avoid the unsupported Unix 'fork' context on Windows.
     if c.reuse_shader_work is not None:
         env['NXW_REUSE_SHADER_WORK'] = str(c.reuse_shader_work.resolve())
