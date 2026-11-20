@@ -149,13 +149,16 @@ class MetalBudget:
                         'Completed shader cache entries are retained. Investigate memory pressure or reduce NXW_METAL_J.'
                         % self.timeout)
                 time.sleep(0.25)
-        free = self.available()
-        nonpaged = kernel_nonpaged_gib()
-        self._log('[METAL] active=%d/%d, high-water=%d; available RAM=%s GiB; kernel nonpaged=%s GiB' %
-                  (self._active, self.limit, self._high_water,
-                   ('%.1f' % free) if free is not None else 'unknown',
-                   ('%.2f' % nonpaged) if nonpaged is not None else 'unknown'))
         try:
+            try:
+                free = self.available()
+            except OSError:
+                free = None
+            nonpaged = kernel_nonpaged_gib()
+            self._log('[METAL] active=%d/%d, high-water=%d; available RAM=%s GiB; kernel nonpaged=%s GiB' %
+                      (self._active, self.limit, self._high_water,
+                       ('%.1f' % free) if free is not None else 'unknown',
+                       ('%.2f' % nonpaged) if nonpaged is not None else 'unknown'))
             yield
         finally:
             with self._lock:
