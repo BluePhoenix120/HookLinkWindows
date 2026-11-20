@@ -1,5 +1,12 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.1.8 (2026-11-19)
+
+- Corrected the `nvn_mtl.m` compile failure after V1.1.7: missing `arch_file_check`, malformed `arch_plan`, shadowed local `p`, and omitted `arch_vm_room`, `arch_admit`, and `pso_bundle_open` implementations.
+- Imported the missing Metal 4 archive helper implementation directly from pinned original NXnative commit `0b5fd6020093407af8bb5ad166e78e00bd2b7242`, including archive validation, memory-address-space admission and bundle-open behavior. Kept all unrelated engine code unchanged.
+- Added source-contract regression tests for archive helper function completeness and their call sites.
+- Retains the V1.1.5 baseline, V1.1.7 host fixes, 61-worker behavior and shader cache; no V1.1.6 Metal budgeting or process management code. Full iOS cross-compilation/IPA and device rendering still need real-world verification.
+
 ## HookLinkWindows Alpha V1.1.7 (2026-11-19)
 
 - Rebased the source directly on the **exact Alpha V1.1.5 release**, discarding V1.1.6 memory budgeting, process controls, and all other non-compilation changes.

@@ -4,6 +4,10 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.8: missing archive-management helpers after V1.1.7
+
+V1.1.7 got past the initial `nvn_mtl.m` and `front_ios.m` errors but then failed compiling Metal 4 archive management (`arch_file_check` undeclared, malformed `arch_plan` body). The integrated source also lacked `arch_vm_room`, `arch_admit`, and `pso_bundle_open` despite referencing them. Alpha 1.1.8 restores these helpers from the exact pinned NXnative source and adds offline integration tests, without adopting V1.1.6 memory/process changes. Keep the existing work directory and shader cache; retry **Build IPA** without selecting **New clean**. A complete native iOS compile and final IPA remain unverified.
+
 ### Alpha 1.1.7: native iOS host compiler repair from V1.1.5
 
 Alpha V1.1.7 deliberately uses V1.1.5 as its exact source baseline. Its only engine implementation changes are `nvn_mtl.m` and `front_ios.m` native host compilation repairs, plus regression tests and provenance/release metadata. No V1.1.6 memory scheduler, process lifecycle containment, or GUI worker settings were carried forward. Keep the existing V1.1.5 shader work directory; do not select **New clean** when retrying this specific host compile failure. Full IPA and iPhone behavior remain unverified.
