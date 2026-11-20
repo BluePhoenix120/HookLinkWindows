@@ -38,6 +38,39 @@ def available_gib():
     return info.ullAvailPhys / (1024 ** 3)
 
 
+class _PerformanceInfo(ctypes.Structure):
+    _fields_ = [
+        ('cb', ctypes.c_ulong),
+        ('CommitTotal', ctypes.c_size_t),
+        ('CommitLimit', ctypes.c_size_t),
+        ('CommitPeak', ctypes.c_size_t),
+        ('PhysicalTotal', ctypes.c_size_t),
+        ('PhysicalAvailable', ctypes.c_size_t),
+        ('SystemCache', ctypes.c_size_t),
+        ('KernelTotal', ctypes.c_size_t),
+        ('KernelPaged', ctypes.c_size_t),
+        ('KernelNonpaged', ctypes.c_size_t),
+        ('PageSize', ctypes.c_size_t),
+        ('HandleCount', ctypes.c_ulong),
+        ('ProcessCount', ctypes.c_ulong),
+        ('ThreadCount', ctypes.c_ulong),
+    ]
+
+
+def kernel_nonpaged_gib():
+    """Optional kernel-pool diagnostic; was 3.6 GiB in the reported failure."""
+    if os.name != 'nt':
+        return None
+    try:
+        pi = _PerformanceInfo()
+        pi.cb = ctypes.sizeof(pi)
+        if ctypes.windll.psapi.GetPerformanceInfo(ctypes.byref(pi), ctypes.sizeof(pi)):
+            return pi.KernelNonpaged * pi.PageSize / (1024 ** 3)
+    except (OSError, AttributeError):
+        pass
+    return None
+
+
 def _env_int(name, default, low, high):
     try:
         return max(low, min(high, int(os.environ.get(name, str(default)))))
@@ -116,6 +149,12 @@ class MetalBudget:
                         'Completed shader cache entries are retained. Investigate memory pressure or reduce NXW_METAL_J.'
                         % self.timeout)
                 time.sleep(0.25)
+        free = self.available()
+        nonpaged = kernel_nonpaged_gib()
+        self._log('[METAL] active=%d/%d, high-water=%d; available RAM=%s GiB; kernel nonpaged=%s GiB' %
+                  (self._active, self.limit, self._high_water,
+                   ('%.1f' % free) if free is not None else 'unknown',
+                   ('%.2f' % nonpaged) if nonpaged is not None else 'unknown'))
         try:
             yield
         finally:
