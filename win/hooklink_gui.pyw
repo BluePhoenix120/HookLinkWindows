@@ -30,6 +30,7 @@ from hooklink_prereqs import can_auto_prepare_translator, run_prerequisite_check
 from shader_chain_flow import run_build_chain_preflight
 from hooklink_progress import parse_build_progress
 from auto_workers import logical_workers
+from host_process import terminate_build_tree
 from hooklink_toolchain_setup import configured_ios_sdk, save_ios_sdk
 from hooklink_sdk_import import validate_xip_archive
 from hooklink_dependency_manager import XCODE_XIP_DOWNLOAD_URL, dependency_statuses, missing_python_packages
@@ -40,7 +41,7 @@ from hooklink_clean_build import new_clean_test_work_dir
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.1.5'
+GUI_VERSION = 'Alpha V1.1.6'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -81,6 +82,7 @@ class App(tk.Tk):
             saved_bundle = DEFAULT_BUNDLE_ID
         self.bundle_var = tk.StringVar(value=saved_bundle)
         self.auto_workers_var = tk.BooleanVar(value=prefs.get('auto_workers', True))
+        self.metal_workers_var = tk.StringVar(value=str(prefs.get('metal_workers', 24)))
         self.workers_var = tk.StringVar(value=str(logical_workers() if self.auto_workers_var.get() else prefs.get('workers', logical_workers())))
         self.allow_damaged = tk.BooleanVar(value=prefs.get('allow_damaged', True))
         self.allow_metal = tk.BooleanVar(value=prefs.get('allow_metal', True))
@@ -147,7 +149,7 @@ class App(tk.Tk):
         ttk.Radiobutton(packaging, text='Full (includes game data)', value=PACKAGE_FULL, variable=self.package_mode).pack(side='left', padx=(16, 0))
         row = ttk.Frame(form)
         row.grid(row=5, column=1, columnspan=2, sticky='w', pady=(7, 1))
-        ttk.Label(row, text='Shader split workers (1–61):').pack(side='left')
+        ttk.Label(row, text='Shader workers (1–61):').pack(side='left')
         self.worker_spin = ttk.Spinbox(row, from_=1, to=61, width=5, textvariable=self.workers_var)
         self.worker_spin.pack(side='left', padx=(8, 8))
         ttk.Checkbutton(row, text='Auto (2x logical CPUs, max 61)', variable=self.auto_workers_var, command=self._update_auto_workers).pack(side='left', padx=(0, 16))
@@ -167,6 +169,11 @@ class App(tk.Tk):
         self._field(self.advanced_box, 2, 'Previous shader work', self.reuse_var, self._browse_reuse)
         ttk.Label(self.advanced_box, text='Optional: reuse only after exact shader-package and library verification; never alters the previous build.', foreground='#555').grid(row=3, column=0, columnspan=3, sticky='w', pady=(0, 4))
         ttk.Checkbutton(self.advanced_box, text='Experimental native app-only packaging (avoids temporary full IPA)', variable=self.native_var).grid(row=4, column=0, columnspan=3, sticky='w', pady=(0, 4))
+        metal_row = ttk.Frame(self.advanced_box)
+        metal_row.grid(row=5, column=0, columnspan=3, sticky='w', pady=(8, 2))
+        ttk.Label(metal_row, text='Parallel Metal compiler sessions (1–61):').pack(side='left')
+        ttk.Spinbox(metal_row, from_=1, to=61, width=5, textvariable=self.metal_workers_var).pack(side='left', padx=(8, 8))
+        ttk.Label(self.advanced_box, text='Independent of 61 shader jobs. Defaults to 24; pauses new compilers below 8 GiB available RAM.', foreground='#555').grid(row=6, column=0, columnspan=3, sticky='w')
         self.advanced_visible = False
         form.columnconfigure(1, weight=1)
 
@@ -307,6 +314,7 @@ class App(tk.Tk):
             'output_ipa': self.output_var.get().strip(),
             'bundle_id': self.bundle_var.get().strip(),
             'workers': workers,
+            'metal_workers': int(self.metal_workers_var.get()) if self.metal_workers_var.get().isdigit() else 24,
             'auto_workers': self.auto_workers_var.get(),
             'allow_damaged': self.allow_damaged.get(),
             'allow_metal': self.allow_metal.get(),
@@ -333,10 +341,11 @@ class App(tk.Tk):
             n = logical_workers() if self.auto_workers_var.get() else int(self.workers_var.get())
         except ValueError as exc:
             raise ValueError('Shader worker count is not a number') from exc
+        metal_workers = int(self.metal_workers_var.get())
         return BuildConfig(root=locate_engine_root(ROOT), input_path=Path(self.input_var.get().strip()),
                            work_dir=Path(self.work_var.get().strip()), env_file=Path(self.env_var.get().strip()),
                            output_ipa=Path(self.output_var.get().strip()), bundle_id=self.bundle_var.get().strip(),
-                           workers=n, allow_damaged=self.allow_damaged.get(),
+                           workers=n, metal_workers=metal_workers, allow_damaged=self.allow_damaged.get(),
                            allow_other_metal=self.allow_metal.get(), entitlements=self.entitlements.get(),
                            reuse_shader_work=Path(self.reuse_var.get().strip()) if self.reuse_var.get().strip() else None,
                            native_app_only=self.native_var.get())
@@ -366,7 +375,7 @@ class App(tk.Tk):
             messagebox.showerror('Python required', str(exc))
             return
         self._append(subprocess.list2cmdline(plan.command) + '\n')
-        self._append(f'Environment: J={c.workers}; DMSH_PROCS=0; Windows rewrite x18 processes: up to 8 per module\n')
+        self._append(f'Environment: J={c.workers}; NXW_METAL_J={c.metal_workers}; Metal RAM reserve=8 GiB; DMSH_PROCS=0; Windows rewrite x18 processes: up to 8 per module\n')
         if c.reuse_shader_work is not None:
             self._append(f'Reuse source (read-only; fail on mismatch): {c.reuse_shader_work}\n')
         self._append('Before compilation: validate shader-chain lock/header; synchronize locally with backups only if mismatched.\n')
@@ -804,9 +813,17 @@ class App(tk.Tk):
         if self.proc is None:
             messagebox.showinfo('Operation', 'Preflight or packaging is in progress. No IPA compiler is currently running.')
             return
-        if messagebox.askyesno('Stop build?', 'Terminate the top-level builder? Child processes may require manual cleanup. Intermediate files may remain.'):
-            self.proc.terminate()
-            self._append('Stop requested for top-level builder.\n')
+        if messagebox.askyesno('Stop build?', 'Stop the builder AND its child compiler processes? Completed shader cache entries will be retained; an interrupted batch can be retried.'):
+            proc = self.proc
+            self.stop_btn.configure(state='disabled')
+            self._append('Stopping builder and all active child processes...\n')
+            def kill_tree():
+                try:
+                    terminate_build_tree(proc)
+                    self.messages.put(('text', 'Stopped builder process tree.\n'))
+                except Exception as exc:
+                    self.messages.put(('text', 'Process-tree stop failed: ' + str(exc) + '\n'))
+            threading.Thread(target=kill_tree, daemon=True).start()
 
     def _drain(self):
         try:
