@@ -2,6 +2,11 @@
 
 ## HookLinkWindows Alpha V1.1.6 (2026-11-19)
 
+- Repaired native iOS host compilation failures reported after successful shader generation: `nvn_mtl.m` now restores the pinned original NXnative compressed-alias texture, deferred-unbind, and depth/stencil feedback declarations and handles an Objective-C texture return through its existing resolver helper.
+- Resolved duplicate `front_screen_max_fps()` implementations in `front_ios.m` while preserving the newer live screen refresh-rate logic and adding the missing `<stdatomic.h>` include.
+- Added source-contract regression tests to detect missing host declarations and conflicting screen-rate implementations before Alpha packaging.
+- Full cross-compiled host and IPA have not yet been verified on the developer's Apple SDK and Metal toolchain.
+
 - Retained up to 61 shader workers while introducing separate Metal compiler/linker session admission, default 24 sessions on Windows. Cache hits remain unaffected.
 - Added a configurable Metal-concurrency control in GUI Advanced settings and a default 8 GiB available-RAM reserve; compilation pauses new Metal work during pressure, with periodic `[METAL]` diagnostics, and fails clearly rather than indefinitely starving Windows.
 - Fixed GUI Stop to request termination of the Windows builder and child compiler process tree with `taskkill /T /F` before killing just the parent.

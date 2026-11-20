@@ -2397,7 +2397,9 @@
     "engine/dm/tools/patch_nso.py",
     "engine/dm/tools/shader_cache.py",
     "engine/docs/reference/frame-rate.md",
-    "engine/scripts/build_ipa_from_nsp.py"
+    "engine/scripts/build_ipa_from_nsp.py",
+    "engine/dm/gfx/nvn/nvn_mtl.m",
+    "engine/dm/ios/Sources/front_ios.m"
   ],
   "deleted_paths": [
     "engine/dm/games/0100606026F12000/shader_facts_manual.tsv",
@@ -2408,12 +2410,22 @@
     "engine/dm/tools/tests/test_jump_copies.py",
     "engine/dm/tools/tests/test_jump_guarded.py"
   ],
-  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout. Alpha V1.1.4 restores HookLink's MEMBAR-as-device-fence rewrite in the original NXnative dmsh_rewrite.py; this path is now an intentional integration overlay. Alpha V1.1.5 reconciles c1_guard.py byte-for-byte with pinned seedds/nxnative after V1.1.4 failed loading cb_extent.py; this removes the obsolete HookLink-only guard overlay.",
+  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout. Alpha V1.1.4 restores HookLink's MEMBAR-as-device-fence rewrite in the original NXnative dmsh_rewrite.py; this path is now an intentional integration overlay. Alpha V1.1.5 reconciles c1_guard.py byte-for-byte with pinned seedds/nxnative after V1.1.4 failed loading cb_extent.py; this removes the obsolete HookLink-only guard overlay. Alpha V1.1.6 includes host compilation repairs discovered after V1.1.5 completed shader generation: both native files have explicit integrated hashes and remain tracked as intentional engine overlays.",
   "integration_overrides": {
     "engine/dm/gfx/tools/dmsh_rewrite.py": {
       "upstream_sha": "12b0039dde59368b0962a62325b1d63715fd728b",
       "integrated_sha": "332678869b1799212fb5a5b3892c458875027ca3",
       "reason": "Preserve HookLink MEMBAR device-scope fence semantics while retaining original NXnative rewrites"
+    },
+    "engine/dm/gfx/nvn/nvn_mtl.m": {
+      "upstream_sha": "4c9493f0196f95e226a790177529fc792c258a61",
+      "integrated_sha": "d252a0ec297605b0e0a83d76cb59fb4cf7e6655f",
+      "reason": "V1.1.6 host compile repair: restore original NXnative compressed-alias and deferred-unbind declarations, depth/stencil feedback declarations, and correct a borrowed Objective-C texture result cast without replacing HookLink graphics code"
+    },
+    "engine/dm/ios/Sources/front_ios.m": {
+      "upstream_sha": "56a858d836f03978b370527fa1b527966b3b378b",
+      "integrated_sha": "b3f0d41227accfcbaaa742baa8f66deffa7d89a1",
+      "reason": "V1.1.6 host compile repair: remove older HookLink duplicate screen-fps implementation; preserve newer screen_refresh and include stdatomic.h"
     }
   }
 }

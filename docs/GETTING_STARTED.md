@@ -4,6 +4,10 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.6: fix iOS host compilation after shader generation
+
+A V1.1.5 build progressed through shader generation and 269/269 iOS host compilation inputs, then Clang rejected `nvn_mtl.m` (missing compressed-texture alias and depth/stencil feedback declarations, a missing deferred-unbind definition, and an unbridged Objective-C pointer) and `front_ios.m` (duplicate screen-rate implementation and missing `<stdatomic.h>`). The native host source in V1.1.6 has narrow repairs ported from the pinned original NXnative while retaining HookLink's graphics code. Offline integration tests check these interfaces; **the cross-compiled iOS host and final IPA have not yet been verified**. Keep your existing build directory and shader caches; use Build IPA, not New clean.
+
 ### Alpha 1.1.6: conserve system memory without reducing shader workers
 
 Keep Auto shader workers enabled (up to 61 on supported CPUs) if desired. Under **Advanced settings**, use the separate **Parallel Metal compiler sessions** control (24 by default, valid 1–61). Metal compilers are only launched when Windows has at least 8 GiB available physical memory; pressure and session cap appear as `[METAL]` lines in the GUI. If free memory stays below that reserve for three minutes, the build stops with a diagnostic instead of launching more memory-intensive compilers. This is a protective limiter, not proof of a leak fix. Use the same build directory and preserve completed shader cache entries. The GUI **Stop** button now attempts to stop the entire descendant process tree, not only the top-level builder.

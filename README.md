@@ -54,6 +54,8 @@ For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Window
 
 ## Alpha V1.1.6 changes
 
+**Native iOS host compilation repair.** After V1.1.5 completed shader generation, Windows Clang failed compiling `nvn_mtl.m` and `front_ios.m`. V1.1.6 restores missing declarations for compressed-alias texture writes, deferred render-target unbinding, depth/stencil feedback and the Objective-C texture resolver; it also removes the duplicate iOS screen-rate function, retaining the newer dynamic phone/TV refresh-rate implementation with C atomics. New source-contract tests cover these merge omissions. **This does not yet establish a successful full host compilation, IPA, or on-device rendering.** Preserve the shader cache and existing build directory.
+
 **Windows resource-safety Alpha** following a 61-worker run that saturated 64 GiB RAM and made Windows nearly unresponsive. The 61 shader workers remain available, while actual Metal compile/link sessions now have an independent 24-session default and an 8 GiB physical-RAM admission reserve (configure Metal sessions in Advanced settings). Pauses and capacity report as `[METAL]` lines in the GUI. The Stop button now requests termination of the live builder's process tree on Windows, not just its top-level Python process. This does not claim a proven memory-leak root cause or a completed IPA build; diagnostic observations in full builds are still needed. Leave existing shader caches in place.
 
 ## Previous Alpha V1.1.5 changes
