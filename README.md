@@ -22,12 +22,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.2.1](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.2.2](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.1-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.1-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.2-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.2-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -38,12 +38,12 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.2.1 — experimental Windows port (November 2026).**
+**Alpha V1.2.2 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
-| Windows GUI, package creation and automated regression tests | **194 Windows tests passed** for V1.2.0; V1.2.1 adds audio scheduling source-contract checks, with CI verification required for this release |
-| Source integration | Original NXnative base integrated with HookLink-specific modifications and Windows overlays; see [Engine and upstream](#engine-and-upstream) |
+| Windows GUI, package creation and automated regression tests | **199 Windows tests passed** on the V1.2.2 full-NXnative integration candidate; end-to-end IPA and phone verification remain outstanding |
+| Source integration | Complete original NXnative `d2fd78b402f9` integrated by three-way merge with HookLink custom changes and Windows overlays retained; see [Engine and upstream](#engine-and-upstream) |
 | Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Verified by developer for V1.2.0** on iPhone 18 Pro Max/iOS 27.2: gameplay and graphics work. V1.2.1 audio scheduling fix still needs device validation |
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
 | Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |
@@ -51,6 +51,10 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 The developer has confirmed that a Windows-generated V1.2.0 IPA reaches playable gameplay with correct graphics and controls on an iPhone 18 Pro Max (iOS 27.2). The same build exhibited audio static/popping caused by logged underruns. V1.2.1 ports an upstream scheduling fix for that audio issue; its iPhone runtime result remains unverified.
 
 For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+
+## Alpha V1.2.2 — complete original NXnative update
+
+This release merges the entire latest original [NXnative main](https://github.com/seedds/nxnative/commit/d2fd78b402f92d5a83b78987e49aba22e8626719) into HookLink and HookLinkWindows through a three-way source merge. HookLink's X2.0.1 engine changes and the Windows build integration remain preserved where they conflict; `ENGINE_PIN_FILES.json` enumerates every modified integrated upstream file and its original Git blob hash. Previously omitted original source files have been restored, apart from two explicitly documented non-Windows translator binaries. **The Windows regression suite passed (199 tests); successful iOS cross-compilation and iPhone runtime behavior for this broad engine update have not yet been verified.** For diagnostics use [the full-sync provenance report](docs/FULL_NXNATIVE_SYNC_CANDIDATE.md). Keep your working V1.2.1 IPA and shader-cache backup while testing.
 
 ## Alpha V1.2.1 — audio renderer real-time scheduling
 
