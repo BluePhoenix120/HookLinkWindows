@@ -22,12 +22,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.1.9](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.1.10](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.9-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.9-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.10-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.1.10-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -38,21 +38,25 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.1.9 — experimental Windows port (November 2026).**
+**Alpha V1.1.10 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
 | Windows GUI, package creation and automated regression tests | **164 Windows tests passed** for the V1.1.2 candidate; V1.1.3 adds shader-builder integration tests, but has not passed an end-to-end iOS build |
 | Source integration | Original NXnative base integrated with HookLink-specific modifications and Windows overlays; see [Engine and upstream](#engine-and-upstream) |
-| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Not yet verified end to end for V1.1.9** |
+| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Not yet verified end to end for V1.1.10** |
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
 | Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |
 
-The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the V1.1.9 engine renders and functions correctly** this project is still in Alpha after all.
+The developer has previously run Windows-generated builds on an iPhone 18 Pro Max with iOS 27.2, but that **does not establish that the V1.1.10 engine renders and functions correctly** this project is still in Alpha after all.
 
 For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
-## Alpha V1.1.9 pool-spare / demand recorder host compiler repair
+## Alpha V1.1.10 — remaining native host call/variable repairs
+
+V1.1.9 reached native Clang compilation but failed on four mismatched `nvn_mtl.m` regions: the pool-entry function was missing its `uint32_t *lead` parameter; compressed-texture copy called `bcp_after` without an earlier `bcp_before` result; the display-link callback used undefined `tol`; and `link_drain_note` was called with only three of its five arguments. V1.1.10 restores the 10-argument pool-entry interface and compressed-texture pairing, uses a 2 ms display-link tolerance consistent with the pinned NXnative hold margin, and passes the unlatched timing sentinel (-1, 0) into the existing 5-argument drain helper. No memory scheduler/Job Object or shader worker changes are included. The full native iOS compilation, IPA, and phone runtime are still **unverified**. Keep the existing build cache and retry **Build IPA**.
+
+## Previous Alpha V1.1.9 pool-spare / demand recorder host compiler repair
 
 The V1.1.8 iOS host compile advanced past the archive helpers and then failed in `nvn_mtl.m` because the demand recorder was defined twice, while the pool-spare reuse functions referenced declarations and helpers removed in the previous engine merge. V1.1.9 removes the byte-identical duplicate and restores the pinned NXnative pool-spare type, capacity, accounting, and `spare_live` / `spare_out` helpers. The original V1.1.5 Windows pipeline, shader workers, and cache remain unchanged; V1.1.6 memory/job controls are **not** included. Offline integration tests run in CI, but a real iOS host compile, IPA, and on-device rendering **remain unverified**. Reuse the existing shader cache and select **Build IPA**, not **New clean**.
 
