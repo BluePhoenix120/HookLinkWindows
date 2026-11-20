@@ -4,6 +4,10 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.6: conserve system memory without reducing shader workers
+
+Keep Auto shader workers enabled (up to 61 on supported CPUs) if desired. Under **Advanced settings**, use the separate **Parallel Metal compiler sessions** control (24 by default, valid 1–61). Metal compilers are only launched when Windows has at least 8 GiB available physical memory; pressure and session cap appear as `[METAL]` lines in the GUI. If free memory stays below that reserve for three minutes, the build stops with a diagnostic instead of launching more memory-intensive compilers. This is a protective limiter, not proof of a leak fix. Use the same build directory and preserve completed shader cache entries. The GUI **Stop** button now attempts to stop the entire descendant process tree, not only the top-level builder.
+
 ### Alpha 1.1.5: fix shader analysis import after Metal compilation
 
 V1.1.4 successfully built all 42,848 shaders and reached 52,980 iOS Metal compilations, then failed while running `cb_extent.py` because its imported `memo_reflection` function was missing from the retained HookLink `c1_guard.py`. V1.1.5 restores the original NXnative guard module (matching the pinned upstream file), including its memo-key normalization and regression tests. Keep your existing build directory and use it for a retry; do not select **New clean…**. The shader-chain compatibility checks may still require regenerating affected outputs, but this guard change does not intentionally change shader translation semantics.
