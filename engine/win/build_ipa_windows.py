@@ -17,6 +17,13 @@ SHIM = WIN / 'pyshim'
 
 
 def main():
+    # Before any downstream compilers or Python workers are launched, join a
+    # non-inheritable Windows Job Object. If the builder exits, Windows kills
+    # any remaining descendants rather than retaining orphan metal.exe,
+    # metallib.exe, spirv-cross.exe, or conhost.exe processes.
+    if os.name == 'nt':
+        from build_job import protect_builder_tree
+        protect_builder_tree()
     if sys.platform == 'darwin': sys.exit('win/build_ipa_windows.py is the Windows and Linux driver: on a Mac run scripts/build_ipa_from_nsp.py')
     if os.name != 'nt': os.environ['NXW_LINUX'] = '1'   # Linux: the shim's mappings with native tools, and the Metal Developer Tools for Windows under Wine (win/toolchain.py cmd)
     for bad in ('--prepare-xcode',):
