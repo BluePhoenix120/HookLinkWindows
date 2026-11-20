@@ -26,7 +26,8 @@ X2_BASE = "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf"
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 # Intentional Windows source-distribution exception: upstream includes a prebuilt
 # non-Windows translator executable; the Windows builder compiles its own DLL.
-PLATFORM_BINARY_EXCLUSIONS = {"dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate"}
+PLATFORM_BINARY_EXCLUSIONS = {"dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate",
+                              "dm/gfx/tools/spirv_cross_bin/spirv-cross"}
 
 
 def cmd(*argv: str, cwd: Path = ROOT, check: bool = True) -> subprocess.CompletedProcess:
@@ -105,7 +106,12 @@ def sync(target: str) -> None:
 
         # Overlay the full, tracked Windows engine. Unlike the former importer,
         # this does NOT skip any modified files before merging new upstream.
-        cmd("rsync", "-a", "--delete", "--exclude=.git/", str(ROOT / "engine") + "/", str(work) + "/")
+        # Do not delete original NXnative source files omitted by old Windows imports.
+        # Apply changed Windows files over the reconstructed HookLink/original tree;
+        # preserve every original source path unless explicitly excluded below.
+        cmd("rsync", "-a", "--exclude=.git/", str(ROOT / "engine") + "/", str(work) + "/")
+        for name in sorted(PLATFORM_BINARY_EXCLUSIONS):
+            (work / name).unlink(missing_ok=True)
         git("add", "--all", "--force", cwd=work)
         if git("diff", "--cached", "--quiet", cwd=work, check=False).returncode:
             git("commit", "-m", "Preserve complete HookLinkWindows engine source on recorded HookLink/NXnative ancestor", cwd=work)
