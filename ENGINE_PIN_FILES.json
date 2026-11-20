@@ -2410,7 +2410,7 @@
     "engine/dm/tools/tests/test_jump_copies.py",
     "engine/dm/tools/tests/test_jump_guarded.py"
   ],
-  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout. Alpha V1.1.4 restores HookLink's MEMBAR-as-device-fence rewrite in the original NXnative dmsh_rewrite.py; this path is now an intentional integration overlay. Alpha V1.1.5 reconciles c1_guard.py byte-for-byte with pinned seedds/nxnative after V1.1.4 failed loading cb_extent.py; this removes the obsolete HookLink-only guard overlay. Alpha V1.1.7 is based directly on V1.1.5 and adds only native iOS host compile fixes and their tests; V1.1.6 memory and process-management changes are intentionally absent. Alpha V1.1.8 restores the pinned original NXnative Metal 4 archive-management helper block omitted from the previous merge; all other V1.1.5-based behavior remains unchanged.",
+  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout. Alpha V1.1.4 restores HookLink's MEMBAR-as-device-fence rewrite in the original NXnative dmsh_rewrite.py; this path is now an intentional integration overlay. Alpha V1.1.5 reconciles c1_guard.py byte-for-byte with pinned seedds/nxnative after V1.1.4 failed loading cb_extent.py; this removes the obsolete HookLink-only guard overlay. Alpha V1.1.7 is based directly on V1.1.5 and adds only native iOS host compile fixes and their tests; V1.1.6 memory and process-management changes are intentionally absent. Alpha V1.1.8 restores the pinned original NXnative Metal 4 archive-management helper block omitted from the previous merge; all other V1.1.5-based behavior remains unchanged. Alpha V1.1.9 removes a duplicated demand recorder and restores missing pinned NXnative pool-spare structures/counters/helpers required by the existing pool table implementation; no V1.1.6 Windows memory-process changes.",
   "integration_overrides": {
     "engine/dm/gfx/tools/dmsh_rewrite.py": {
       "upstream_sha": "12b0039dde59368b0962a62325b1d63715fd728b",
@@ -2419,8 +2419,8 @@
     },
     "engine/dm/gfx/nvn/nvn_mtl.m": {
       "upstream_sha": "4c9493f0196f95e226a790177529fc792c258a61",
-      "integrated_sha": "774cf96dde6a460a10676fe638751aba931f9783",
-      "reason": "V1.1.7 host compile repairs plus V1.1.8 restoration of complete pinned NXnative archive-check, archive planning, address-space admission, and bundle-open functions (no V1.1.6 scheduling/lifetime features)"
+      "integrated_sha": "a666092f6785aeaadcc1b273772fcc791a96225d",
+      "reason": "V1.1.5-based iOS host compilation repairs through V1.1.9, including pinned NXnative archive helpers, deduplicated demand recorder and restored complete pool-spare declarations/helper functions"
     },
     "engine/dm/ios/Sources/front_ios.m": {
       "upstream_sha": "56a858d836f03978b370527fa1b527966b3b378b",

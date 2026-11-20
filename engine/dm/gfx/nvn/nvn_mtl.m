@@ -11089,14 +11089,6 @@ static void arch_miss_note(const pso_key *k) { if (g_arch_miss.n < (1u << 16)) n
 // (2 performance cores shared with the game), about 1 s in the prepare step before the first frame; Castle Town asked for ~400 and finished ~60 a minute, and what had not
 // finished by the end of the run was never listed. Listed at once, the next start's prepare step builds every one of them. The later line from the built pipeline is a
 // duplicate, dropped at load. DM_PSO_DEMAND_RECORD=0 records only built pipelines, as before (submit thread)
-static nvn_hmap g_demand_rec = {.klen = sizeof(pso_key)};
-static void demand_record(const pso_key *k, NvShader *vs, NvShader *fs) {
-    static int on = -1; if (on < 0) { const char *ev = getenv("DM_PSO_DEMAND_RECORD"); on = !(ev && !strcmp(ev, "0")); }
-    if (!on || nvn_hm_get(&g_demand_rec, k) || g_demand_rec.n >= (1u << 16)) return;
-    nvn_hm_put(&g_demand_rec, k, (void *)1);
-    pso_skey sk; char shex[sizeof sk * 2 + 1]; pso_skey_from(k, vs, fs, 0, NULL, &sk); pso_skey_hex(&sk, shex);
-    pso_user_record("R\t%s\n", shex);
-}
 static MTLRenderPipelineDescriptor *pso_desc_pull(const pso_key *k, NvShader *vs, NvShader *fs) {   // pso_desc's pipeline with the pulling entry point and no vertex descriptor
     id<MTLFunction> pf = pull_fn(vs); if (!pf) return nil;
     MTLRenderPipelineDescriptor *d = pso_desc(k, vs, fs, nil, 0);
@@ -12523,8 +12515,14 @@ static void pool_seen_scan(void) {
 // spares nearly every patch made a new buffer, and each new buffer and each one let go was a residency commit (a kernel call): about 8 % of the replay thread's time on an M5 at 30 fps.
 // 64 spares hold four frames of them, about 21 MB of Ocarina of Time's 320 KB tables (kid-with-sword-remake FF8: about 11 % fewer instructions per draw on a Mac, long frames after an
 // area load 103 -> 6; HookLink VX1)
-enum { POOL_SPARES = 64 };
-static struct { __strong id<MTLBuffer> buf; uint64_t fence; } g_pool_spare[POOL_SPARES]; static int g_npool_spare; static uint64_t g_pool_made, g_pool_reused;
+enum { POOL_SPARE_MAX = 64, POOL_SPARE_BYTES = 16 << 20 };
+static size_t g_pool_spare_cap = POOL_SPARE_BYTES;   // a variable for t_pool_replay
+typedef struct { __strong id<MTLBuffer> buf; uint64_t fence, build, lpos; int k; } pool_spare;   // k: the table (g_psnap) of build whose state at log position lpos it holds; -1 none
+static pool_spare g_pool_spare[POOL_SPARE_MAX]; static int g_npool_spare; static uint64_t g_pool_spare_bytes, g_pool_made, g_pool_reused;
+// Patches: into a spare of their own table, the entries that took, copied whole because the table had no spare of its own, none finished or the log had moved past them; the time they took
+static uint64_t g_stat_pool_replayed, g_stat_pool_replay_n, g_stat_pool_copied[3], g_stat_pool_take_ns;
+static int spare_live(const pool_spare *s) { return s->k >= 0 && g_plog[s->k].build == s->build; }
+static id<MTLBuffer> spare_out(int i) { id<MTLBuffer> b = g_pool_spare[i].buf; g_pool_spare_bytes -= b.length; g_pool_spare[i] = g_pool_spare[--g_npool_spare]; g_pool_spare[g_npool_spare].buf = nil; return b; }
 static id<MTLBuffer> pool_table_take(size_t need) {
     size_t len = (need + 0xffff) & ~(size_t)0xffff; uint64_t done = g_done; int o = -1;
     for (int i = 0; i < g_npool_spare; i++) { const pool_spare *s = &g_pool_spare[i];

@@ -4,6 +4,10 @@ This guide covers **building your own local iOS application from your own Ocarin
 
 > **Status:** The original port and one iPhone build were tested by the project's developer. This GUI release candidate has **not** passed a clean Windows machine build or complete end-to-end device installation. Some steps depend on third-party tools and terms that users must review.
 
+### Alpha 1.1.9: pool-spare and demand-recording host merge repair
+
+After V1.1.8 advanced through the previous compiler errors, `nvn_mtl.m` still failed on duplicate `g_demand_rec`/`demand_record` and missing pool-spare declarations, fields, helpers and counters. V1.1.9 repairs these native code integrations from pinned original NXnative, retaining the V1.1.5-based Windows builder and excluding V1.1.6 memory scheduler and Job Object changes. Preserve your existing build folder and shader caches, select **Build IPA** instead of **New clean**. A complete iOS host cross-compile has not yet been verified.
+
 ### Alpha 1.1.8: missing archive-management helpers after V1.1.7
 
 V1.1.7 got past the initial `nvn_mtl.m` and `front_ios.m` errors but then failed compiling Metal 4 archive management (`arch_file_check` undeclared, malformed `arch_plan` body). The integrated source also lacked `arch_vm_room`, `arch_admit`, and `pso_bundle_open` despite referencing them. Alpha 1.1.8 restores these helpers from the exact pinned NXnative source and adds offline integration tests, without adopting V1.1.6 memory/process changes. Keep the existing work directory and shader cache; retry **Build IPA** without selecting **New clean**. A complete native iOS compile and final IPA remain unverified.

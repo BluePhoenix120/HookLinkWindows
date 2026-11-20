@@ -1,5 +1,12 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.1.9 (2026-11-19)
+
+- Fixed V1.1.8 native host `nvn_mtl.m` build: removed duplicate global `g_demand_rec` and identical `demand_record()` definition while keeping early demand recording behavior.
+- Repaired missing `pool_spare` type, byte and count limits, statistics counters, `spare_live()` and `spare_out()` in the already existing pool table patch/reuse path. Restored matching definitions from pinned original NXnative `0b5fd6020093407af8bb5ad166e78e00bd2b7242` rather than introducing new runtime features.
+- Added focused Windows source-contract regression tests for these host merge errors.
+- Retained V1.1.5 baseline, V1.1.7/V1.1.8 native compilation fixes, existing shader cache and 61 worker behavior; **no** V1.1.6 RAM scheduler/Job Object changes. Real iOS host compilation, IPA creation and iPhone execution still unverified.
+
 ## HookLinkWindows Alpha V1.1.8 (2026-11-19)
 
 - Corrected the `nvn_mtl.m` compile failure after V1.1.7: missing `arch_file_check`, malformed `arch_plan`, shadowed local `p`, and omitted `arch_vm_room`, `arch_admit`, and `pso_bundle_open` implementations.
