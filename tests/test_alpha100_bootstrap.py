@@ -124,6 +124,7 @@ class TestPinnedEngineSourceIdentity(unittest.TestCase):
         self.assertIn((version, data['nxnative_commit']), (
             ('3.0', self.X2),
             ('3.0.1', '0b5fd6020093407af8bb5ad166e78e00bd2b7242'),
+            ('3.0.1', 'd2fd78b402f92d5a83b78987e49aba22e8626719'),
         ))
         self.assertEqual(bootstrap.verify_source_identity(root), (version, data['nxnative_commit']))
 
