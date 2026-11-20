@@ -11,6 +11,8 @@
 import os, re, sys, json, shutil, ctypes, hashlib, threading, subprocess, collections
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'tools'))
 import romfs, shader_cache, shader_lib   # the libraries of an earlier build may be one file (shader_lib.py), read in place
+from metal_budget import MetalBudget
+METAL_BUDGET = MetalBudget()  # only Metal compilations; J and shader batching remain unchanged
 STAMPS = 'metallib/filled.json'   # the earlier builds' folders already read
 
 FORMAT = b'dmsh_mtlcache 2'   # earlier prefill could misclassify an unsampled library from another compiler
@@ -49,7 +51,9 @@ class Cache:
 
     def _compile(self, target, msl, lib):
         air = os.path.join(self.work, f'mtlcache-{target}-{os.getpid()}-{threading.get_ident()}.air')
-        try: self.targets[target][2](msl, air, lib)
+        try:
+            with METAL_BUDGET.slot():
+                self.targets[target][2](msl, air, lib)
         finally:
             if os.path.exists(air): os.unlink(air)
 
