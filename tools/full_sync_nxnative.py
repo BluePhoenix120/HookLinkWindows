@@ -90,7 +90,9 @@ def sync(target: str) -> None:
         git("remote", "add", "official", ORIGINAL, cwd=work)
         git("fetch", "--quiet", "--filter=blob:none", "official", previous, target, X2_BASE, cwd=work)
         git("merge-base", "--is-ancestor", previous, target, cwd=work)
-        git("merge-base", "--is-ancestor", X2_BASE, target, cwd=work)
+        # X2_BASE is a historical dsi-hub fork snapshot, not on original NXnative main.
+        # It is a valid diff reference, but must not be asserted as a direct ancestor.
+        git("cat-file", "-e", X2_BASE + "^{commit}", cwd=work)
 
         print("HookLink source:", hook_commit, flush=True)
         print("Original NXnative old:", previous, flush=True)
