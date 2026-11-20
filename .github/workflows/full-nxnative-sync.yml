@@ -1,0 +1,122 @@
+name: Full latest NXnative sync with HookLink/Windows preservation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/full-nxnative-sync.yml'
+      - 'tools/full_sync_nxnative.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: full-nxnative-integration
+  cancel-in-progress: false
+
+jobs:
+  merge-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    outputs:
+      candidate_sha: ${{ steps.publish.outputs.candidate_sha }}
+      candidate_ref: ${{ steps.publish.outputs.candidate_ref }}
+      upstream_sha: ${{ steps.prepare.outputs.target }}
+    steps:
+      - name: Checkout complete HookLinkWindows fork without modifying main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Record exact latest original NXnative main and start isolated branch
+        id: prepare
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=$(git ls-remote https://github.com/seedds/nxnative.git refs/heads/main | awk '{print $1}')
+          [[ "$target" =~ ^[0-9a-f]{40}$ ]]
+          candidate="integration/nxnative-full-${target:0:12}"
+          if git ls-remote --exit-code origin "refs/heads/$candidate" >/dev/null 2>&1; then
+            echo "Candidate branch $candidate already exists; inspect rather than replacing it." >&2
+            exit 1
+          fi
+          git switch -c "$candidate"
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
+          echo "Full original NXnative source target: $target"
+      - name: Merge ALL original NXnative changes into HookLink plus retained Windows source
+        shell: bash
+        env:
+          TARGET: ${{ steps.prepare.outputs.target }}
+        run: |
+          set -euo pipefail
+          python3 -B tools/full_sync_nxnative.py --target "$TARGET"
+      - name: Review candidate source and filename audit before pushing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A -f -- engine ENGINE_PIN.json ENGINE_PIN_FILES.json tests/test_engine_pin.py tests/test_engine_sync_manifest.py tests/test_audio_producer_rt_contracts.py docs/FULL_NXNATIVE_SYNC_CANDIDATE.md
+          python3 -B tools/release_audit.py .
+          git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check
+          git diff --cached --stat | tail -100
+          test "$(git show :ENGINE_PIN.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["nxnative_commit"])')" = '${{ steps.prepare.outputs.target }}'
+          test "$(git show :ENGINE_PIN.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["release"])')" = 'Alpha V1.2.1'
+          test -z "$(git ls-files -u)"
+          if git diff --cached --quiet; then
+            echo "No files changed; refusing empty sync" >&2; exit 1
+          fi
+      - name: Push complete integration candidate, never main or release
+        id: publish
+        shell: bash
+        env:
+          CANDIDATE: ${{ steps.prepare.outputs.candidate }}
+          TARGET: ${{ steps.prepare.outputs.target }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "candidate: merge all seedds/nxnative changes through ${TARGET:0:12}, preserve HookLink and Windows"
+          git push origin "HEAD:refs/heads/$CANDIDATE"
+          echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "candidate_ref=$CANDIDATE" >> "$GITHUB_OUTPUT"
+          echo "Complete latest-NXnative candidate: $CANDIDATE"
+
+  windows-check:
+    needs: merge-candidate
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact full-upstream candidate SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.merge-candidate.outputs.candidate_sha }}
+          fetch-depth: 1
+      - name: Set up Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Run all Windows tests, including provenance and integration contracts
+        shell: pwsh
+        run: |
+          python -B -m unittest discover -s tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Full-sync candidate has Windows regression failures; do not merge main' }
+          python -B tools/release_audit.py .
+          if ($LASTEXITCODE -ne 0) { throw 'Source release audit failed' }
+      - name: Package Windows GUI without publishing an unverified release
+        shell: pwsh
+        run: |
+          ./tools/build_windows_gui_exe.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'GUI packaging failed' }
+          if (!(Test-Path 'dist/HookLinkWindows.exe')) { throw 'GUI executable missing' }
+      - name: Upload candidate GUI for development only
+        uses: actions/upload-artifact@v4
+        with:
+          name: NXnative-full-sync-candidate-GUI
+          path: dist/HookLinkWindows.exe
+          if-no-files-found: error
