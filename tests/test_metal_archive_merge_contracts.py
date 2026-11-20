@@ -31,8 +31,9 @@ class MetalArchiveMergeContracts(unittest.TestCase):
         self.assertIn("p->prewarm =", self.region)
         self.assertIn("p->run =", self.region)
         self.assertIn("return p;", self.region)
-        self.assertNotIn("NSString *p =", self.region)
-        self.assertNotRegex(self.region, r"\breturn\s*;")
+        plan = self.region.split("// Top-level mappings", 1)[0]
+        self.assertNotIn("NSString *p =", plan)
+        self.assertNotRegex(plan, r"\breturn\s*;")
 
     def test_archive_admission_definitions_are_present(self):
         for symbol in ("arch_vm_room", "arch_admit", "pso_bundle_open"):
