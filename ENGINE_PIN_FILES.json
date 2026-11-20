@@ -2399,7 +2399,8 @@
     "engine/docs/reference/frame-rate.md",
     "engine/scripts/build_ipa_from_nsp.py",
     "engine/dm/gfx/nvn/nvn_mtl.m",
-    "engine/dm/ios/Sources/front_ios.m"
+    "engine/dm/ios/Sources/front_ios.m",
+    "engine/dm/host/hle_audren.c"
   ],
   "deleted_paths": [
     "engine/dm/games/0100606026F12000/shader_facts_manual.tsv",
@@ -2426,6 +2427,11 @@
       "upstream_sha": "56a858d836f03978b370527fa1b527966b3b378b",
       "integrated_sha": "b3f0d41227accfcbaaa742baa8f66deffa7d89a1",
       "reason": "Isolated V1.1.5 native iOS host compile repair: single screen FPS implementation with stdatomic"
+    },
+    "engine/dm/host/hle_audren.c": {
+      "upstream_sha": "2b32130a5bf5f3031d87da80ccd2a2d4eaec02ce",
+      "integrated_sha": "2cc3bdc5a034e5a024cef80437775cc4c1dab871",
+      "reason": "Narrow backport of seedds/nxnative 2edad1828de247aaf46c53cb288357cb65e84be0 (5 ms Mach real-time scheduling for the audren producer); keep pinned upstream base unchanged."
     }
   }
 }

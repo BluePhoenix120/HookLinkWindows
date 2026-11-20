@@ -1,5 +1,12 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.1 (2026-11-20)
+
+- Backported the narrowly scoped NXnative audio producer deadline fix from [`seedds/nxnative@2edad182`](https://github.com/seedds/nxnative/commit/2edad1828de247aaf46c53cb288357cb65e84be0) into `engine/dm/host/hle_audren.c`. The worker requests a preemptible Mach time-constraint policy (5 ms period/deadline, 1 ms requested computation budget) after output setup, and restores standard scheduling before teardown. If rejected, audio continues with the original scheduling; `DM_AUDREN_RT=0` disables the new policy for A/B diagnosis.
+- Verified the *previous* V1.2.0 Windows-built IPA runs Ocarina of Time on an iPhone 18 Pro Max (iOS 27.2), with visible gameplay and working controls. The device logs show serious popping/static from audio underruns (4,870 underruns across 90,000 callbacks in one session) despite a 5 ms iOS audio buffer and fast audio mixing. The new V1.2.1 fix is **not yet verified on this iPhone**.
+- Retained the V1.2.0 working graphics, shaders, compiler/memory behavior, four-block audio queue and 4.5 ms pacing. Added Windows source-contract tests and a manifest override recording the audio backport without falsely advancing the pinned NXnative base.
+- Windows CI verifies the source and packages the complete ZIP/GUI EXE. On an intentional Alpha version bump on `main`, CI creates a regular (not prerelease) release only after successful testing and packaging. Full clean-install and V1.2.1 iPhone audio validation remain outstanding.
+
 ## HookLinkWindows Alpha V1.2.0 (2026-11-19)
 
 - Repaired the V1.1.9 native host iOS compilation failures in `nvn_mtl.m`: restored the `uint32_t *lead` parameter of `pool_entry` and its two call sites, reintroduced compressed-alias pairing initialization in the buffer-to-texture copy, defined the display-link tolerance used by frame pacing, and passed the two missing parameters to `link_drain_note`.

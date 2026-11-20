@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 2  # compare release metadata to the previous main commit
       - name: Set up Python for GUI packaging
         uses: actions/setup-python@v5
         with:
@@ -92,3 +93,26 @@ jobs:
             & gh release create $tag $zip $exe --repo $repo --verify-tag --title "HookLinkWindows $tag" --notes 'Experimental Windows GUI release. Windows x64 ZIP contains the full source tree and standalone GUI EXE. Building an IPA still requires external tools and user-provided inputs. Clean-install end-to-end reproducibility is not yet verified.' --latest
           }
           if ($LASTEXITCODE -ne 0) { throw "Failed to publish release assets for $tag" }
+
+      - name: Publish regular Alpha release when the version changes on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $oldJson = git show 'HEAD^:ENGINE_PIN.json'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect previous version metadata' }
+          $oldVersion = ($oldJson | Out-String | ConvertFrom-Json).release
+          $newVersion = (Get-Content -LiteralPath 'ENGINE_PIN.json' -Raw | ConvertFrom-Json).release
+          if ($oldVersion -eq $newVersion) { Write-Host 'No version bump: release not published'; exit 0 }
+          if ($newVersion -notmatch '^Alpha V(\d+\.\d+\.\d+)$') { throw "Unsupported Alpha version format: $newVersion" }
+          $tag = 'v' + ($newVersion -replace '^Alpha V', '') + '-alpha.1'
+          $repo = '${{ github.repository }}'
+          & gh release view $tag --repo $repo --json name *> $null
+          if ($LASTEXITCODE -eq 0) { Write-Host "Release $tag already exists: refusing to replace it"; exit 0 }
+          $zip = 'dist/HookLinkWindows-Windows-x64.zip'
+          $exe = 'dist/HookLinkWindows.exe'
+          foreach ($file in @($zip, $exe)) { if (!(Test-Path -LiteralPath $file)) { throw "Missing release asset: $file" } }
+          $notes = 'Experimental Windows GUI release. V1.2.1 backports the upstream 5 ms real-time audio producer deadline for crackling/underruns. The Windows-built V1.2.0 IPA ran on an iPhone 18 Pro Max; the V1.2.1 audio fix has not yet been verified on an iPhone. ZIP contains full source and GUI EXE; building an IPA requires external tools and user-provided input.'
+          & gh release create $tag $zip $exe --repo $repo --target '${{ github.sha }}' --title "HookLinkWindows $newVersion" --notes $notes --latest
+          if ($LASTEXITCODE -ne 0) { throw "Failed to publish regular release $tag" }
