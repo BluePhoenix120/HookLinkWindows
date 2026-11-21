@@ -72,7 +72,8 @@ def resolve(path, ours, base, windows):
         p = run("git", "merge-file", "--diff3", "-p", *map(str, files), check=False)
     if p.returncode == 0:
         return p.stdout, "clean Windows delta"
-    if p.returncode != 1 or path not in EXPECTED_CONFLICTS:
+    # git merge-file returns the number of conflict blocks, not just 1.
+    if p.returncode < 1 or path not in EXPECTED_CONFLICTS:
         raise RuntimeError(f"Unexpected conflict in {path} ({p.returncode})")
     source = p.stdout.decode("utf-8")
     # Git diff3 chunks: upstream+HookLink (ours), older HookLink (base),
