@@ -1,13 +1,17 @@
 {
   "nxnative_repo": "https://github.com/seedds/nxnative.git",
   "from_commit": "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf",
-  "nxnative_commit": "0b5fd6020093407af8bb5ad166e78e00bd2b7242",
+  "nxnative_commit": "d2fd78b402f92d5a83b78987e49aba22e8626719",
   "hooklink_engine_commit": "698b46bc5b14510fffc0a4b8fd4bf78309004e4c",
-  "engine_integration_commit": "19528cf1e3115e64ecc8f02ab555ed0341579c09",
+  "engine_integration_commit": "4c7473846bf0df7b2af2d7f881fc9e2989821c8b",
   "changed_paths": [
     {
+      "path": "engine/.github/workflows/tests.yml",
+      "sha": "ba1c854d0f4f7d2b9034e410de428004147462a8"
+    },
+    {
       "path": "engine/README.md",
-      "sha": "c892a3b2f95fb77135941f95fc6074b58689a9f1"
+      "sha": "8c0353245e1223164eaaef3d296c83eec6d1800d"
     },
     {
       "path": "engine/dm/games/0100000000010000/README.md",
@@ -18,12 +22,56 @@
       "sha": "a5e26c9a70980f04e694ca44416bed38825987a9"
     },
     {
+      "path": "engine/dm/games/0100000011D90000/README.md",
+      "sha": "950119f906fb7b23635b01fd8de50f553f88987f"
+    },
+    {
       "path": "engine/dm/games/010015100B514000/README.md",
-      "sha": "ef3b3966357f83bf1ef1c779865b1e4bedda240c"
+      "sha": "98df198913d1a5e289f02f8842a68652efd71cb0"
     },
     {
       "path": "engine/dm/games/010015100B514000/shader_map.tsv",
       "sha": "9d8da157c032537dd5c4f676da8b453a3898a47e"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/README.md",
+      "sha": "b79ced21234f8f98f30f5414502f21acab19d303"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/game.tsv",
+      "sha": "0867e75eb6bd97f72cf6056356338812571c4602"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/pso_manifest.tsv",
+      "sha": "75ef3a749e1d4a0428ccae25d9ab97e5e8bfe8d4"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/shader_facts.tsv",
+      "sha": "5790f7d0d57f24afc45ae25b1e8a48092ce9b033"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/shader_map.tsv",
+      "sha": "8f8e87ad7b20d32f6a7959d9315d93a288ac512e"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/shader_map.tsv.conflicts.tsv",
+      "sha": "25a574000ae7dea18f4c47cf6b190aca93db0e5c"
+    },
+    {
+      "path": "engine/dm/games/01001C8016B4E000/shader_pairs.tsv",
+      "sha": "5c8e1de4bdc71c56377621c834c09ef5997fc469"
+    },
+    {
+      "path": "engine/dm/games/01001F5010DFA000/shader_map.tsv",
+      "sha": "e6c7efc955d4cea7115e01a3e081b24d61e66b17"
     },
     {
       "path": "engine/dm/games/0100217023F6C000/README.md",
@@ -32,6 +80,26 @@
     {
       "path": "engine/dm/games/0100217023F6C000/smoke.tsv",
       "sha": "c216bd30357fc33540a79205a3fa943288d20b97"
+    },
+    {
+      "path": "engine/dm/games/010026300BA4A000/README.md",
+      "sha": "45a78ff392691eb1d63c8a0aec642345b012f646"
+    },
+    {
+      "path": "engine/dm/games/010026300BA4A000/game.tsv",
+      "sha": "fa014f2173fe20cd56c1ff1d1a6b2ce94e0aaf55"
+    },
+    {
+      "path": "engine/dm/games/010026300BA4A000/pso_manifest.tsv",
+      "sha": "f2a94033a3523160f03f289d0143a9e9704785db"
+    },
+    {
+      "path": "engine/dm/games/010026300BA4A000/shader_map.tsv",
+      "sha": "3e718296f59c754584c208a2b5634f9ee27b861d"
+    },
+    {
+      "path": "engine/dm/games/010029B0118E8000/README.md",
+      "sha": "fd45464f5933ab3b0de1df6c274aded36dfa9a9b"
     },
     {
       "path": "engine/dm/games/010029D00E740000/README.md",
@@ -118,6 +186,50 @@
       "sha": "8e9f33238948dc7af13b41063c3680055f96ab68"
     },
     {
+      "path": "engine/dm/games/01003FC01670C000/README.md",
+      "sha": "256144f5d089bdb204d82f0a3eb7e36a6d4e1897"
+    },
+    {
+      "path": "engine/dm/games/01003FC01670C000/shader_map.tsv",
+      "sha": "adc98d142ca9462d613fa435009f2b8417f445d2"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/README.md",
+      "sha": "811aa8794b48ded7091a46b94640ad49d8178744"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/game.tsv",
+      "sha": "af5db5ccd3d264caf6e37ebfa048fffddf29d2e4"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/pso_manifest.tsv",
+      "sha": "5c304ab2fed4facde0f783da9324f02e011c018f"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/shader_facts.tsv",
+      "sha": "2fe8b54b068e9a53ec3a2f4775402dadf3720916"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/shader_map.tsv",
+      "sha": "84f50be118169d36d31bf739f65eb3369eb69f29"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010042D00D900000/shader_pairs.tsv",
+      "sha": "1f1440da7c2dcfa0fc9e23a56a96f5a3cd3de8f0"
+    },
+    {
       "path": "engine/dm/games/010044500C182000/README.md",
       "sha": "93580d0ef6c7c85ee2dffdb4752aed57de76ca46"
     },
@@ -158,16 +270,112 @@
       "sha": "2ceafd01ce48e2d092f86124d92786e397ad1bcb"
     },
     {
+      "path": "engine/dm/games/01004680124E6000/README.md",
+      "sha": "271857c28aa3c49872824de6806d92602c09debd"
+    },
+    {
+      "path": "engine/dm/games/01004680124E6000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/01004680124E6000/game.tsv",
+      "sha": "97a05e7f5c66d0bc3d737e12e3e4a3c98a201295"
+    },
+    {
+      "path": "engine/dm/games/01004680124E6000/pso_manifest.tsv",
+      "sha": "3fd66a1c10ceb77cf2bab2f1f64545beb5508658"
+    },
+    {
+      "path": "engine/dm/games/01004680124E6000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/01004680124E6000/shader_map.tsv",
+      "sha": "cf3251feb99374816882ae5a17ba756321d18171"
+    },
+    {
+      "path": "engine/dm/games/01004680124E6000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/01004680124E6000/shader_pairs.tsv",
+      "sha": "05d44ddadbcff266303c737a5afa7b5b67599674"
+    },
+    {
       "path": "engine/dm/games/010049900F546002/README.md",
-      "sha": "eef98988e6e12f7247fe0a581e22048378373ece"
+      "sha": "4599520cb02a8faa97c9b16317f7025bc5eae7f2"
     },
     {
       "path": "engine/dm/games/01004A4010FEA000/README.md",
       "sha": "944b920d1bfed4533a47eb3e04bf8a365b1c01a2"
     },
     {
+      "path": "engine/dm/games/01004B800AF5A000/README.md",
+      "sha": "9846e4aaf3c47e6dea79c0c0259ff451bde28c08"
+    },
+    {
+      "path": "engine/dm/games/01004B800AF5A000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/01004B800AF5A000/game.tsv",
+      "sha": "7cf789bab8d3c9f0125568a5b72c8c4a4ffd273d"
+    },
+    {
+      "path": "engine/dm/games/01004B800AF5A000/pso_manifest.tsv",
+      "sha": "211c05ca9dcbc11ac642c2591e62f00e7940f60d"
+    },
+    {
+      "path": "engine/dm/games/01004B800AF5A000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/01004B800AF5A000/shader_map.tsv",
+      "sha": "4abd2cd0c9910939d2710a35083caa73674884cf"
+    },
+    {
+      "path": "engine/dm/games/01004B800AF5A000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/01004B800AF5A000/shader_pairs.tsv",
+      "sha": "547263500b14560a1a7fed627299ca01526e22f5"
+    },
+    {
       "path": "engine/dm/games/01004D300C5AE000/README.md",
-      "sha": "69b7a726d055bc30866b149ccabecb017a152729"
+      "sha": "ba8428c073bfd62e2441aa3370cac4e9f726da9a"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/README.md",
+      "sha": "af51700a5a621ab4e6e184da077dcb59157d80a6"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/game.tsv",
+      "sha": "b3e63c85394c2bdd3cb5ad9a41f385863f5267a0"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/pso_manifest.tsv",
+      "sha": "0ca5ca600d01d9c34fd08eebd0b67a729ee8c37b"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/shader_map.tsv",
+      "sha": "2ab549cb0f5a8e4d6f3037ea005f4e550bd86b35"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010050F00BC1A000/shader_pairs.tsv",
+      "sha": "b3d2cdd1bf4cbf725be5ef18541fcd2c215d6fef"
     },
     {
       "path": "engine/dm/games/0100535012974000/README.md",
@@ -179,11 +387,47 @@
     },
     {
       "path": "engine/dm/games/010056B015FE8000/README.md",
-      "sha": "0b7ee11c24c9d6212583b14e417b96c1f0b2629b"
+      "sha": "570dff5eb16b21c1432ecb684d376d7dc35f1e8f"
     },
     {
       "path": "engine/dm/games/010056B015FE8000/smoke.tsv",
       "sha": "3ab62e941f47e2a15d4f8bcf6e62c0e1aed11b59"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/README.md",
+      "sha": "e0f9ea51d5b9fca63ddef854e919ce268aa52c0b"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/game.tsv",
+      "sha": "a23c4ebf9d64996abfe5b8eea76e2b972f2a564a"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/pso_manifest.tsv",
+      "sha": "ac9aaff2f3fe995f752cfe8402547e0ba8a732bb"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/shader_map.tsv",
+      "sha": "0827dc76a1173b81bb88ca3b9c5510260f320de2"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010057A01E4D4000/shader_pairs.tsv",
+      "sha": "0cd55cf2b1cd1bfdb9d5953367347ff607a7ee92"
     },
     {
       "path": "engine/dm/games/01005CA01580E000/README.md",
@@ -198,8 +442,56 @@
       "sha": "158f613dd5651411b1a419717e61b89eb64800f7"
     },
     {
+      "path": "engine/dm/games/010064800F66A000/README.md",
+      "sha": "4e198fbcffd57f79c1fa64af7f03e9e4775d3f71"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/game.tsv",
+      "sha": "628d8afc133e4bc68c8cd4e2f9aa845d4ae58677"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/pso_manifest.tsv",
+      "sha": "0ca5ca600d01d9c34fd08eebd0b67a729ee8c37b"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/shader_map.tsv",
+      "sha": "f362a3734eb93259f944fa2339febc3ba7a8e968"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010064800F66A000/shader_pairs.tsv",
+      "sha": "05dabae09b16640ce918ad5c26c722a4219a9c19"
+    },
+    {
+      "path": "engine/dm/games/010069401ADB8000/README.md",
+      "sha": "8d6eff4d2c5f18a4304b51636c3b3e789f6a6c1a"
+    },
+    {
+      "path": "engine/dm/games/010069401ADB8000/shader_map.tsv",
+      "sha": "189d8b449f4ff52a851f0979c4930e4316b64c28"
+    },
+    {
       "path": "engine/dm/games/01006A800016E000/README.md",
-      "sha": "f8faf87d6603a840e3e23f326919ca810e1c3907"
+      "sha": "c1f541e72a6e4683b014e5743816b27f5ff7015c"
+    },
+    {
+      "path": "engine/dm/games/01006A800016E000/shader_map.tsv",
+      "sha": "b81df95b85ee95ed1429da0de92b5a55b8f07a97"
     },
     {
       "path": "engine/dm/games/01006BB00C6F0000/README.md",
@@ -255,7 +547,7 @@
     },
     {
       "path": "engine/dm/games/01007EF00011E000/README.md",
-      "sha": "d10d14e7535bdbb114001403121687be805dec86"
+      "sha": "a30aa689153accdebc3d3682525bc170beb9d9bf"
     },
     {
       "path": "engine/dm/games/01007EF00011E000/shader_facts.tsv",
@@ -270,6 +562,118 @@
       "sha": "96f827aa19a16171b2bc2aff0b05bd9f9095a88d"
     },
     {
+      "path": "engine/dm/games/0100801011C3E000/README.md",
+      "sha": "5318265221172bf4d71387c25442fc487f1cae6c"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/game.tsv",
+      "sha": "c933264088455a3fe85c5db6b29c15be4b58c5c6"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/patches.py",
+      "sha": "8048fa20b87181ddc7d465fad8559146245dbaf4"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/pso_manifest.tsv",
+      "sha": "0ca5ca600d01d9c34fd08eebd0b67a729ee8c37b"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/shader_facts.tsv",
+      "sha": "fb2fba21233a50f58b5e2e487a794d2853c8b3d6"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/shader_map.tsv",
+      "sha": "6cf4fad2d672e02d74d77e244d56b9c2dfc8665a"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100801011C3E000/shader_pairs.tsv",
+      "sha": "26515c9a83bd94b07e7c9a4af7ff05fac9fbc141"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/README.md",
+      "sha": "a6b0ebd158e548555eea89f351de8ceb1b929b5b"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/game.tsv",
+      "sha": "26a3163bb9d7f68d1de4c108b16bdc36a8d6d3c8"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/pso_manifest.tsv",
+      "sha": "5c304ab2fed4facde0f783da9324f02e011c018f"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/shader_map.tsv",
+      "sha": "216ef530c9aecad59ea88e91651e42384f643ff1"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100830004FB6000/shader_pairs.tsv",
+      "sha": "4febc55c9cd166f827b3b5bad31aacb5ee4d7dec"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/README.md",
+      "sha": "31ba7bf409959c8468b506a1d48874de9721449f"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/game.tsv",
+      "sha": "91403b58e917d8df04dd90936bc1ef2413513dfa"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/pso_manifest.tsv",
+      "sha": "ebf6fcbf36e77c903fa3cee058f5801c0ad407d9"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/shader_facts.tsv",
+      "sha": "3bd5a824597df3f93fc8f24fef469999cf74f004"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/shader_map.tsv",
+      "sha": "f71d79bca1a8fd3ca15c9839d192e67d792063d3"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010087701B092000/shader_pairs.tsv",
+      "sha": "69b3ca8cadcf9378f11aa63e927f3a2c48822b30"
+    },
+    {
       "path": "engine/dm/games/01008BC024FDE000/README.md",
       "sha": "09b7c8ba390e140198a23220e0824fc560078077"
     },
@@ -278,12 +682,108 @@
       "sha": "8d0e2b4c0105d8aeb62983b2b951011e360cbf09"
     },
     {
+      "path": "engine/dm/games/01008D300C50C000/README.md",
+      "sha": "188fea36af0680e2d5316fbec32ba98d06820eab"
+    },
+    {
+      "path": "engine/dm/games/01008D300C50C000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/01008D300C50C000/game.tsv",
+      "sha": "6d84ae26b489b2712fa91ca1f062002d3f38ce89"
+    },
+    {
+      "path": "engine/dm/games/01008D300C50C000/pso_manifest.tsv",
+      "sha": "12c356a39e64cbab1e7396e4a9f1b1a865643f99"
+    },
+    {
+      "path": "engine/dm/games/01008D300C50C000/shader_facts.tsv",
+      "sha": "e665d364f085a82c81df76cd72761e2ef0812fed"
+    },
+    {
+      "path": "engine/dm/games/01008D300C50C000/shader_map.tsv",
+      "sha": "41abcc1a56f673016525b53d9bf569946ee1e953"
+    },
+    {
+      "path": "engine/dm/games/01008D300C50C000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/01008D300C50C000/shader_pairs.tsv",
+      "sha": "0c9b29b3b8a6abd72517176a06543e4ef23be680"
+    },
+    {
+      "path": "engine/dm/games/01008F4014A74000/README.md",
+      "sha": "0191aeab9f2dea46686ab8ab4ae5fc1ef4e526fb"
+    },
+    {
+      "path": "engine/dm/games/01008F4014A74000/game.tsv",
+      "sha": "ba8fc9ec8e23dd39a5e34c5f8f2ae1cdf51bc528"
+    },
+    {
+      "path": "engine/dm/games/01008F4014A74000/pso_manifest.tsv",
+      "sha": "f2a94033a3523160f03f289d0143a9e9704785db"
+    },
+    {
+      "path": "engine/dm/games/01008F4014A74000/shader_map.tsv",
+      "sha": "a80b422b591c884ac99702016feaf44fa467c126"
+    },
+    {
       "path": "engine/dm/games/01008F6008C5E000/README.md",
       "sha": "310b07cfdad15c6131e1fd1810c1e08d0754efae"
     },
     {
+      "path": "engine/dm/games/01009BC00C38A000/README.md",
+      "sha": "3b71913a9e1ee29ec61600b16661a29d2246f55c"
+    },
+    {
       "path": "engine/dm/games/0100A00019DE0000/README.md",
       "sha": "5227d6a74b240e197191f8b731921cb585fd9af5"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/README.md",
+      "sha": "85dcf8e732336e270c41d207344d3b670d7385d0"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/game.tsv",
+      "sha": "eae3c0c9bd611d16ba6ceb4ab1e0fc8d4f842b3b"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/histogram_37.py",
+      "sha": "c74b5adf38ac311d0946156ee1e1878764e4c37a"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/pso_manifest.tsv",
+      "sha": "51df78cb390d49acab37a940a1d2fd7d74e817ef"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/shader_facts.tsv",
+      "sha": "7f505e084cabbfde7d014e58db31f76cea79bace"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/shader_facts_manual.tsv",
+      "sha": "21f2cf64add18586855f4c8180439bcc4395bf3a"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/shader_map.tsv",
+      "sha": "48d8f76e0ac5e498d6c5cfd441331ffa89eb209c"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100A0800E9C4000/shader_pairs.tsv",
+      "sha": "4b5ef1cbd08c7650ea33ad704b045d3e3c713c0f"
     },
     {
       "path": "engine/dm/games/0100A3501946E000/README.md",
@@ -371,7 +871,11 @@
     },
     {
       "path": "engine/dm/games/0100B7C00933A000/README.md",
-      "sha": "2d5506502d481db883a55122bab8027e7857dffa"
+      "sha": "0c5da5352938b49a976a4eaf2d3e78e249c790f4"
+    },
+    {
+      "path": "engine/dm/games/0100B7C00933A000/shader_map.tsv",
+      "sha": "147f570634a6a8a6b4a9a8301e809df41911619e"
     },
     {
       "path": "engine/dm/games/0100B8A026F14000/README.md",
@@ -387,7 +891,47 @@
     },
     {
       "path": "engine/dm/games/0100BF00112C0000/README.md",
-      "sha": "a3e4855acdae28ddceffa87d1d3262fe4435c2ec"
+      "sha": "92fc7ae851c64aa2fda9eb6f2fe8f0750267756e"
+    },
+    {
+      "path": "engine/dm/games/0100BF00112C0000/patches.py",
+      "sha": "9f083883c9cd72f314034c0d333eaf7a361e3af3"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/README.md",
+      "sha": "11b9a9400d5286013657bb478103d2fd5b5fc238"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/game.tsv",
+      "sha": "ab213aac6b21b1ab03962d934ed6c114254ee861"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/pso_manifest.tsv",
+      "sha": "597d345f2504ed0f32819baea1717ecd8e032856"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/shader_facts.tsv",
+      "sha": "22266a2e21cf3598f31655d441a3f1979c812431"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/shader_map.tsv",
+      "sha": "f42d2fa13d0e98630f984a397b9271b92bc3ad12"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100BF500207C000/shader_pairs.tsv",
+      "sha": "122f69befd0a07151bb34e7f6677d5b895a03478"
     },
     {
       "path": "engine/dm/games/0100C1F0051B6000/README.md",
@@ -410,8 +954,80 @@
       "sha": "fc2b0e2b33de067dd1eeae4f711a2c8705424133"
     },
     {
+      "path": "engine/dm/games/0100CD701434C000/README.md",
+      "sha": "ca82fb9976fe763d886acbc098ac1f13c669e890"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/game.tsv",
+      "sha": "afbd4a23272193a6ecb5b8d84b0c36deafc3551a"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/pso_manifest.tsv",
+      "sha": "0ca5ca600d01d9c34fd08eebd0b67a729ee8c37b"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/pso_pairs.tsv",
+      "sha": "ba923d7bc8eb2c77cd6555b9b670d29f60f59b61"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/shader_facts.tsv",
+      "sha": "ab527df2a65a43df17a5510fa66c85d3174e9413"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/shader_map.tsv",
+      "sha": "4b0ea9cc94fae82bfa26bbd38522a521ab4191ac"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100CD701434C000/shader_pairs.tsv",
+      "sha": "36231b0b48b8ad60b95f0bb19a30dcc000387927"
+    },
+    {
       "path": "engine/dm/games/0100CE4010AAC000/README.md",
       "sha": "4f1bc9bee2cc4cc52b087e69e941c1444abd1050"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/README.md",
+      "sha": "9f3247259266cd27040dcc7e98976455dfb6d79d"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/game.tsv",
+      "sha": "a1a58a344351550649128b043e84f03075fae424"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/pso_manifest.tsv",
+      "sha": "4620515f1088edd80157c5015babdc91f5e48217"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/shader_facts.tsv",
+      "sha": "29de53c43df7a3acce0c64da0330920679375d11"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/shader_map.tsv",
+      "sha": "4981042635a1c5df1e0e0aec021c24a001909524"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100D440269E8000/shader_pairs.tsv",
+      "sha": "5ba20b6d36cb399e089f458200ece70c34e7fb90"
     },
     {
       "path": "engine/dm/games/0100D4900E82C000/README.md",
@@ -448,6 +1064,58 @@
     {
       "path": "engine/dm/games/0100D4900E82C000/shader_pairs.tsv",
       "sha": "1a14cda46a5ec1baa5a51a36901071c17662de96"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/README.md",
+      "sha": "7b74bc292bbe8bd516111cf8c3bfa5aa63fb7748"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/game.tsv",
+      "sha": "46ea399cad67633e8903a02dc91f74e4ca0497fb"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/pso_manifest.tsv",
+      "sha": "0a7a975438cf5264ba0d7f420db0310a6c6adad7"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/shader_facts.tsv",
+      "sha": "c53f33bb1f4cfcfc14a12406aa7de4a0707170ff"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/shader_map.tsv",
+      "sha": "a194ed19e7e5adfaea3b749903d0f8aacefd2295"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/0100D5501857E000/shader_pairs.tsv",
+      "sha": "ac32dd3e8e7de6b9e9141a8f83214dc650cb8206"
+    },
+    {
+      "path": "engine/dm/games/0100D71004694000/README.md",
+      "sha": "a9cbc5e0c139eac99ca71dadf1c1baf0e574fe8d"
+    },
+    {
+      "path": "engine/dm/games/0100D71004694000/game.tsv",
+      "sha": "34e57877d49b24301388a150f4647e637ba93e94"
+    },
+    {
+      "path": "engine/dm/games/0100D800117F4000/README.md",
+      "sha": "ee8ed4c749e75f3b8ea0e72e76ae09b5988a7139"
+    },
+    {
+      "path": "engine/dm/games/0100D800117F4000/game.tsv",
+      "sha": "46bcba1cc374f741311e1afa6e860e6e949f1290"
     },
     {
       "path": "engine/dm/games/0100DA801624E000/README.md",
@@ -494,8 +1162,16 @@
       "sha": "e9b28b68629c2220e630c31c12a2f19ea0bcd39f"
     },
     {
+      "path": "engine/dm/games/0100EB100AB42000/README.md",
+      "sha": "73c2a4df6b30d0c81e1c7d31cfbfe3a83947a652"
+    },
+    {
+      "path": "engine/dm/games/0100EB100AB42000/shader_map.tsv",
+      "sha": "d4e4b458642acf904b5e048e9430db6c9ca36886"
+    },
+    {
       "path": "engine/dm/games/0100F2C0115B6000/README.md",
-      "sha": "cb23ade812453e167efdb7e6d80471b3d8b04020"
+      "sha": "2bc630019d0d4f2e90c840e4358281c8d06681dc"
     },
     {
       "path": "engine/dm/games/0100F2C0115B6000/shader_facts.tsv",
@@ -516,6 +1192,50 @@
     {
       "path": "engine/dm/games/0100F43008C44000/shader_map.tsv",
       "sha": "e7edf5f58b95cfe93eac999bc59be67d102bbdd5"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/README.md",
+      "sha": "17d6d2189f9263a7ed7d0865c0dc7699524c02a4"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/game.tsv",
+      "sha": "9035f1a21bc59d2224edf14a42f49220c372d00d"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/pso_manifest.tsv",
+      "sha": "0b46924bc6f1d00f8019eae7aaa32659e53a54fb"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/pso_pairs.tsv",
+      "sha": "84f5e8e1f0455f2a84747872f625ad83ececddbb"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/shader_facts.tsv",
+      "sha": "d9c6be1bb476bc63221bfd62f02ee48954cbe7db"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/shader_map.tsv",
+      "sha": "fc3b7d71c5fca8fd134b3bc578472cb139bc12b9"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/shader_pairs.tsv",
+      "sha": "13870b246a98ad6bd8acf56b8a6f030040e9116d"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/smoke.tsv",
+      "sha": "27f13f66872fba6235a8bc5f8fa02e6aa1b19938"
+    },
+    {
+      "path": "engine/dm/games/040015100B514001/validated.tsv",
+      "sha": "3f9c8d8d729fb2ffcc83376b9dce7436e64828bc"
     },
     {
       "path": "engine/dm/games/0400245021D2C000/README.md",
@@ -547,11 +1267,23 @@
     },
     {
       "path": "engine/dm/games/0400486024DEC000/README.md",
-      "sha": "80ff4629d0779445ff9e65b01962af8726f0a048"
+      "sha": "6c518b6aafb4828fbb939c29ec931b56275ebc20"
+    },
+    {
+      "path": "engine/dm/games/0400486024DEC000/game.tsv",
+      "sha": "63905872e2c57d52b80c0b409aeb7b1b40f67181"
+    },
+    {
+      "path": "engine/dm/games/0400486024DEC000/patches.py",
+      "sha": "2e7727a06e20b7981fa213d7140b9d3c22a3394d"
     },
     {
       "path": "engine/dm/games/0400486024DEC000/pso_manifest.tsv",
-      "sha": "ab3c6719cab4b748d0df6ebe21a0f4de3a8c8b0d"
+      "sha": "960afcedc90c6fd12d935088536240a4ae3ef4df"
+    },
+    {
+      "path": "engine/dm/games/0400486024DEC000/shader_map.tsv",
+      "sha": "9ef92bd405824ebda5e4fc87a91a0321120192d2"
     },
     {
       "path": "engine/dm/games/0400569027BF4000/README.md",
@@ -595,7 +1327,7 @@
     },
     {
       "path": "engine/dm/games/040074A01BF12000/README.md",
-      "sha": "fc826e2445c08476b812d36386198165c8b7af0a"
+      "sha": "a823e64eae5e1367f0cc2cd3b507b0c9ba7c7631"
     },
     {
       "path": "engine/dm/games/040074A01BF12000/shader_map.tsv",
@@ -618,16 +1350,20 @@
       "sha": "644fa7c27cf648a262412a82c138d786c3fe9322"
     },
     {
+      "path": "engine/dm/games/0400921025B32000/shader_map.tsv",
+      "sha": "ee55a42a03e66229fc32408b820adda039d336ef"
+    },
+    {
       "path": "engine/dm/games/0400A3A01EE4C000/README.md",
       "sha": "6ce540e513a9ff78509c0059289e328a80bc94a2"
     },
     {
       "path": "engine/dm/games/0400C3F00006E000/README.md",
-      "sha": "3d5015647e54f1bfe10cb551698f9ed9375e5dee"
+      "sha": "ee656d1da43bde9f29c57579a34274510b3cf4fc"
     },
     {
       "path": "engine/dm/games/0400C3F00006E000/shader_map.tsv",
-      "sha": "dbfebb2b01e0e1d3847ed01a5b6801fc2335034e"
+      "sha": "5ae32a068cb15d07d203400a7202ae942b025996"
     },
     {
       "path": "engine/dm/games/0400C76024710000/README.md",
@@ -643,23 +1379,27 @@
     },
     {
       "path": "engine/dm/games/0400E88025B1A000/README.md",
-      "sha": "8618aaa3908141af0ed8256a4bef0bd98cb03bae"
+      "sha": "01971dcdea7127eac4503b0fff076d7c18daed32"
     },
     {
       "path": "engine/dm/games/README.md",
-      "sha": "4cfd4c5e578c13b59e72f3ef5bc7a19d9ebc6568"
+      "sha": "acfdd0c26e524d2edbeb8dcfc93bbabfd73df00b"
+    },
+    {
+      "path": "engine/dm/games/game.py",
+      "sha": "ffecd5232664a6647efaff417372bb541ed77283"
     },
     {
       "path": "engine/dm/games/profile_guess.py",
-      "sha": "cca426c3354b70764c519f9aba211e5290f91b15"
+      "sha": "4f5af7ba5460b7af502e1c78c138f3cdf36a82d6"
     },
     {
       "path": "engine/dm/games/settings.py",
-      "sha": "5179b0bacb7d3896352d635496cf3f295648bebc"
+      "sha": "08c7270ff2c1fc06fdfddd04d2ec877548b96190"
     },
     {
       "path": "engine/dm/games/settings.tsv",
-      "sha": "9661d1f160907a0fd28d4a3cc50d39018034fadc"
+      "sha": "f8b1c585975df1400182c34ff1e2d223141187d7"
     },
     {
       "path": "engine/dm/gfx/gl/gl_aliases.h",
@@ -667,11 +1407,15 @@
     },
     {
       "path": "engine/dm/gfx/gl/hle_gl.m",
-      "sha": "b26fb536537a3d993e0f3d55f750b85a8e2c618f"
+      "sha": "aa398f882c3167ca42158d4c5e7ea3d5aabfa4fc"
     },
     {
       "path": "engine/dm/gfx/hle_nv.c",
       "sha": "beed242319373bde3223ad33fa677236d2653102"
+    },
+    {
+      "path": "engine/dm/gfx/hle_vi.c",
+      "sha": "664dd8dc0b7cb681d6ded2f679ff2597f26c1ac5"
     },
     {
       "path": "engine/dm/gfx/msl/accel.metal",
@@ -686,6 +1430,14 @@
       "sha": "f68fe211179576df2f7a93d8f92d0cd9653dc496"
     },
     {
+      "path": "engine/dm/gfx/msl/gl_ff.metal",
+      "sha": "8ef0a7f58ffa613d452df7272432841d734d0598"
+    },
+    {
+      "path": "engine/dm/gfx/msl/ndve_engine.metal",
+      "sha": "237dffd30c95d77b6c8fa63f3a4d5db1f0dd0653"
+    },
+    {
       "path": "engine/dm/gfx/msl/pair.metal",
       "sha": "aa6fa9a57531afe907784011ca6c6bd379bfa55f"
     },
@@ -694,12 +1446,20 @@
       "sha": "dbe3e567c690e4ea6bd3753742eee400826da2c2"
     },
     {
+      "path": "engine/dm/gfx/nvn/dmsh_chain.h",
+      "sha": "db0046e8fcb83ee8dccf30674ceddd608f3edcf5"
+    },
+    {
       "path": "engine/dm/gfx/nvn/hle_nvn.c",
-      "sha": "7a859104b6422cb7e1f1938b7ec183ec048839f2"
+      "sha": "d2a2cfb1f41d27185a94dcb47d0838e3c97e846d"
     },
     {
       "path": "engine/dm/gfx/nvn/include/nvn.h",
       "sha": "12d7bdb1a35525462adc8cacc2b646cf90a49c94"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/msl_image.h",
+      "sha": "77cb6d97a7e79b5df65fc173993b38dba2df7d6b"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_accel.h",
@@ -726,8 +1486,12 @@
       "sha": "4b7e71bb37494875f2bf838a8d65d2a749fe1bef"
     },
     {
+      "path": "engine/dm/gfx/nvn/nvn_fstep.h",
+      "sha": "df3b773c8873f5a3f040ef12ce7d92aff669b46e"
+    },
+    {
       "path": "engine/dm/gfx/nvn/nvn_geometry.inc",
-      "sha": "0d1331cf095053de5cdb51da8dbc9b38d996ef93"
+      "sha": "d2194501a12e4498345b8d2a5ca1b86faec97678"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_link_drain.h",
@@ -739,27 +1503,27 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_mtl.h",
-      "sha": "cd2119c59de64acee23f0817dfd6b3dde34cf502"
+      "sha": "b477aad12424577f927d3d51f38011746e6acdd0"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_mtl.m",
-      "sha": "4c9493f0196f95e226a790177529fc792c258a61"
+      "sha": "9a83b441f7155baa69a1ec6524a65d1353aef779"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_ndve.inc",
-      "sha": "e9b03f8906ad5486fc9234ea4f6308990dc49e1f"
+      "sha": "b4c9d6d12ba73de9a701a577fe0abd4f5148bd89"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_obj.h",
-      "sha": "bf56444e2040b83a66a7de4aa036b58f06b0beb8"
+      "sha": "16fc3f150660afc657b5494b884c1cbd7b3b7fc1"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_owner.h",
-      "sha": "8f21839fd7404ae5cc7fd77bdc9893a7562b1f11"
+      "sha": "6a36b65c7068e181fdc76bc09fd7827ff33eab78"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_owner.m",
-      "sha": "c9e2f74b25238dbb6f8d9baa99985fe3f2416bc6"
+      "sha": "c11b65f4ba2bc1f386e66966ee5c1e4b5409309a"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_protos.h",
@@ -771,7 +1535,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_queue.inc",
-      "sha": "ef60b85a21a513d9881bbdb97186b3090294a00f"
+      "sha": "7ca5cc085402b98e451e4fb081624ebe399b6bb0"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_raytrace.h",
@@ -787,7 +1551,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_rec.h",
-      "sha": "e8a79454d3d6493734983e22431b8d560f5bc2f4"
+      "sha": "9ac811c86b27cbb550ab65181d6f79453fc01779"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_refl.h",
@@ -811,7 +1575,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/Makefile",
-      "sha": "0282af555f2965ba9079bc3c4c8d65716071b74e"
+      "sha": "bffc9d35ce71e68f32688d38c6924fc5fab1535e"
     },
     {
       "path": "engine/dm/gfx/tests/ampere_orin/ampere_orin.sass",
@@ -898,6 +1662,10 @@
       "sha": "674e2e2ae0c088b2273e5053933aef2051208d7b"
     },
     {
+      "path": "engine/dm/gfx/tests/t_arena_trim.m",
+      "sha": "0939cd735e0d83599fb8ce10beb4779288eccf20"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_args_gen.m",
       "sha": "0bcb1ad29c31e868584ae239d29dbcd86658cd80"
     },
@@ -906,16 +1674,36 @@
       "sha": "a81e0ae33aeff602668ca9e352ced967d6ee951a"
     },
     {
+      "path": "engine/dm/gfx/tests/t_bind_stages.m",
+      "sha": "242739a217b292b8456c97594423b71438c8b88d"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_blend_zero.m",
-      "sha": "182433da11f5126b75c46e5abb2b93c7e141a992"
+      "sha": "473ab122a418a506fc156f42e89860537974e4e8"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_buffer_image_bias.m",
+      "sha": "c6c042527036fcb3aba7924291205eb94e2fd4ee"
     },
     {
       "path": "engine/dm/gfx/tests/t_capture.c",
       "sha": "5d2fb9c693af7b24f264265dbfc7c5f9d9d16891"
     },
     {
+      "path": "engine/dm/gfx/tests/t_cbs_fault.m",
+      "sha": "fa15d503b0af9085c5af6c5b0ff001d74383de10"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_compressed_copy.m",
+      "sha": "26cd576b52984afd3c207d9545b6a6509e474559"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_compute_loops.m",
       "sha": "c1ae331c98f82648341aa303d97e4e09f3832e2d"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_counter_clock.m",
+      "sha": "70aa0a7979882c29a2a69cf2c90c431bbec813af"
     },
     {
       "path": "engine/dm/gfx/tests/t_cpu_storage.m",
@@ -926,12 +1714,20 @@
       "sha": "467e7145c84099bc9590cbb7c21468802571bc21"
     },
     {
+      "path": "engine/dm/gfx/tests/t_dead_targets.m",
+      "sha": "7bb69a2a3480b8ac9ea476d967d33b2d252ef4db"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_descriptor_pools.m",
-      "sha": "52245a31187fbc87ac3973e59cae17f01336353f"
+      "sha": "a60a1f096f870e5e685c8b231628c7cfec44e713"
     },
     {
       "path": "engine/dm/gfx/tests/t_deswz_gpu.m",
       "sha": "b534c86499cb41b5375f79dd8d3d9e4ef5f094ab"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_direct_upload.m",
+      "sha": "02b492cb49249ff67a6fa5d70a8e540386be8b5f"
     },
     {
       "path": "engine/dm/gfx/tests/t_dirty_race.c",
@@ -946,6 +1742,14 @@
       "sha": "a6d23326a2ed1d4a55dda520caafeb17f340fadf"
     },
     {
+      "path": "engine/dm/gfx/tests/t_dispatch_pipeline.m",
+      "sha": "7f20247ef360f5df0b04a95af5b77040553662e5"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_dispatch_zero.m",
+      "sha": "79fa044f5ca9dc538807190d34914179deb26454"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_dlss_mfx.m",
       "sha": "7e778c3f94d9f49237e3c64a870a2a38d556d70c"
     },
@@ -958,12 +1762,24 @@
       "sha": "5018a289209eecbeed65de70f6d1eba3a6690558"
     },
     {
+      "path": "engine/dm/gfx/tests/t_fstep.c",
+      "sha": "865d79e25381e28cfc426c02a4535fc35fe55ed4"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_geometry.m",
       "sha": "59bdb74c540d316f28644f3d4e51a25eb9a417d1"
     },
     {
+      "path": "engine/dm/gfx/tests/t_geometry_mesh.m",
+      "sha": "7698be6bcd6760c02c0e135684d88a51cc9da345"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_gfx_suspend.c",
+      "sha": "5c1bbe596d41d73925a219d3e6f6eb5e5c68b4c9"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_gl_imports.m",
-      "sha": "e0944e49f8670ec4c2134e7496ac595b2f58da1a"
+      "sha": "3b72101ade55d40e0b4c9eba84ea0378534feaee"
     },
     {
       "path": "engine/dm/gfx/tests/t_global_memory.m",
@@ -982,12 +1798,24 @@
       "sha": "9ecc13505bc3bd3b8600edce3034a407e5cb0d9c"
     },
     {
+      "path": "engine/dm/gfx/tests/t_image_alias.m",
+      "sha": "5f9e4ff19fcb616a14a9b4a04130e735f6d242f8"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_image_usage.m",
       "sha": "954946baa599ceed3e228b2fddde19eb19c1e389"
     },
     {
+      "path": "engine/dm/gfx/tests/t_initial_uncached.m",
+      "sha": "e9799e5b48b23d73e88b4af1fa3a04a514435a09"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_lazy_clear_order.m",
-      "sha": "73f830cc0c8b60457340c0acc8e1ad48af53c55d"
+      "sha": "c18efff9c16965e0ebd00c04f4e5674c97ed3740"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_library_data.m",
+      "sha": "8175e86a803076ae3ebe81ae450e51d3700b2d0e"
     },
     {
       "path": "engine/dm/gfx/tests/t_link_drain.c",
@@ -1046,6 +1874,10 @@
       "sha": "55a2d0351b6e3f29b818f9ac09e8291dc69afb00"
     },
     {
+      "path": "engine/dm/gfx/tests/t_pool_notes.m",
+      "sha": "8af3b9d87765c05a69fad8c2ad1edcd00d2cad89"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_pool_replay.m",
       "sha": "8fbc64b154e8c9c2234603930bb2106eae00e817"
     },
@@ -1058,12 +1890,20 @@
       "sha": "9460f887c71c5d574f716908d5457ff01f96e627"
     },
     {
+      "path": "engine/dm/gfx/tests/t_present_crop.m",
+      "sha": "88f68f5fa28d9824de27973057dc7a621a7d4b74"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_present_rescue.m",
+      "sha": "e3a4481d67f4fa5aca50741379e7b54fc13c892a"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_pso_admission.m",
-      "sha": "0ec8242987d7c98ac3553b01d45b1174e6a9e881"
+      "sha": "a3531ba9d083d7edda9156671c739b898180938b"
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_archive.m",
-      "sha": "36dc305f6874d1334640707f086d3110e9900e32"
+      "sha": "385d4bb4eade9c1f1a36810e132d6abcb2e4102f"
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_bg_look.m",
@@ -1071,7 +1911,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_bundle.m",
-      "sha": "de7a05f09d3c2d859b9cce0e5ac430b4655775f3"
+      "sha": "6fad40078937b3f54268cc8af364b7d95e7de512"
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_demand_record.m",
@@ -1083,7 +1923,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_pending.m",
-      "sha": "536d7bb0157427321544d15422a1ebed6a3526ae"
+      "sha": "e64dca48394c44395c140bee966701daedf22757"
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_prewarm.m",
@@ -1103,7 +1943,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_warm.m",
-      "sha": "cf76e8c80839466e3bb3ab327fd2ad5a3149baec"
+      "sha": "216af48ffde9196872e2d1ab9c22319ecfe7d6e6"
     },
     {
       "path": "engine/dm/gfx/tests/t_pull.m",
@@ -1127,11 +1967,15 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_render_enable_queue.m",
-      "sha": "d8d0daec17d1eeb2ed6d46b62e58f91f95d10ec3"
+      "sha": "b90ec2fffdea115e80a4716bd7edac5fb6fa4707"
     },
     {
       "path": "engine/dm/gfx/tests/t_res_cb.m",
       "sha": "aeb3aa2c2605cb6fbe70cda833c9dc5b2f4fd13f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_res_commit.m",
+      "sha": "c0b214c56817b9235a09d1441402f870532e3f41"
     },
     {
       "path": "engine/dm/gfx/tests/t_rop_round.m",
@@ -1139,11 +1983,15 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_rt_recycle.m",
-      "sha": "c995f15b79ad237432a25176eb6321ae53088d4b"
+      "sha": "6bb1e375a4f05e6d8c1fcab49f3c0a2112884dea"
     },
     {
       "path": "engine/dm/gfx/tests/t_rt_unbind.m",
       "sha": "8ff3f9e3cadc9835a6e92687da5982584db42b59"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_sbw.m",
+      "sha": "2744c592e13463d95632e8cc433d0070a20a8fa1"
     },
     {
       "path": "engine/dm/gfx/tests/t_sparse_copy.m",
@@ -1151,11 +1999,19 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_sparse_layout.c",
-      "sha": "373c9ea3b8a5b071fad7d6537ecc822b61d7c807"
+      "sha": "525104647f7bbf01afc9b3b63be3da513cab6d36"
     },
     {
       "path": "engine/dm/gfx/tests/t_sparse_tiles.m",
       "sha": "f5a1ef291372fc41c1d27b805cbe1c4a16f0be9f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_stencil_view.m",
+      "sha": "0261fb646c377ef1f9c146d317aa75fd5a9e0528"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_storage_bounds.m",
+      "sha": "39c3fb1cf3ed89e5102f934db2fb67a39f8e0086"
     },
     {
       "path": "engine/dm/gfx/tests/t_storage_pair.m",
@@ -1190,36 +2046,84 @@
       "sha": "75227e280fada27e82a2e09791673391d14608bf"
     },
     {
+      "path": "engine/dm/gfx/tests/t_upload_idle.m",
+      "sha": "49033f2ff80baf0aa1d683bb1e11be94ebc6123c"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_upload_src.m",
-      "sha": "dfd1ecbb85c2bd879fe3301afb55cb7b0f11d5c5"
+      "sha": "4921241e119101a24a369a110f026a8450077320"
     },
     {
       "path": "engine/dm/gfx/tests/t_vc_lifetime.m",
       "sha": "09c1c5450016fd8a32256e9af0aaaafe899cdf5c"
     },
     {
+      "path": "engine/dm/gfx/tests/t_view_levels.m",
+      "sha": "128c2f3ea394495935db891028a677b990aaf1b9"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_view_swizzle.m",
-      "sha": "4679d55493a40b6afa1d09df80f66d06686ec391"
+      "sha": "fa6856a9ede50f51ec58f94a9057255661b45fa4"
     },
     {
       "path": "engine/dm/gfx/tests/t_vis_need.m",
       "sha": "8ae5a32a159bf9e6ba3660559c1c014d82e888b5"
     },
     {
+      "path": "engine/dm/gfx/tests/t_vk_1d.m",
+      "sha": "2bc06623df369f4e63bc2522b5df3623f1a5d1d2"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vk_argbuf.m",
+      "sha": "aa26ab731d873328bc2b12abe1ad820c70f94702"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vk_clear_attachments.m",
+      "sha": "1d184c8775b89ad563c69a432f7cccd406fc436d"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_vk_clear_int.m",
       "sha": "c4db2d97c7dd2aeac709e757e7ea9a710f108018"
     },
     {
+      "path": "engine/dm/gfx/tests/t_vk_cmds.m",
+      "sha": "d5b824dca7deef0f26e8b3202bfd171595fc1ee5"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vk_compute.m",
+      "sha": "9e98584861f65cc20b8daa321d4fe9c75616527c"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_vk_desc.m",
-      "sha": "a3037aaec4e55ca6948e82e848f3905f1f26e59a"
+      "sha": "2db4c8a1ed5711b9e3f5f4d6956eb8c9e16d829c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vk_dontcare.m",
+      "sha": "55147eaade0394aa87a5197e2236898880e23915"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vk_renderdragon.m",
+      "sha": "83a268d53202f748c1583208b921c056ea5ec5ac"
     },
     {
       "path": "engine/dm/gfx/tests/t_vpool_first_map.m",
       "sha": "4d13ad3e0bf9e56b617449ded85b4bb70cbe89b0"
     },
     {
+      "path": "engine/dm/gfx/tests/t_vs_unit.m",
+      "sha": "76a8ffb67572ca267d5dcadb70c713934ce05ee3"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_wait_event.m",
+      "sha": "31cbd7c80c34bef6526b49c12febcd78c05f0a09"
+    },
+    {
       "path": "engine/dm/gfx/tests/t_wline.m",
       "sha": "7280f95b456387b21fc04ddecd56e925edf1ba4f"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_zero_colour.m",
+      "sha": "f4191b443c1722d3b56d89a6c439b9dea0625071"
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_alpha.py",
@@ -1263,7 +2167,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_fetch.py",
-      "sha": "d9a4d312e9e2340d1fe8df8c87c39ee65378d3ae"
+      "sha": "a0173dbbac520340294b745102896e1f872dc887"
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_float_add.py",
@@ -1291,7 +2195,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_ldc_offset.py",
-      "sha": "f96e62cbd03701e6b0a075bb9892e371a7f018fb"
+      "sha": "47b53bc776abd8cf3cb202ba13f6021f002b335a"
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_logic.py",
@@ -1323,7 +2227,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_raw_noinline.py",
-      "sha": "2d0ee6491139d8e525d8dd2551dc8261033e5ae4"
+      "sha": "b8433d0974609eb317bbf589ee7b2846757b968e"
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_raw_pointers.py",
@@ -1378,12 +2282,36 @@
       "sha": "b84c0912c0f1488c0d182bed15d6718091571471"
     },
     {
+      "path": "engine/dm/gfx/tests/test_dmsh_vertex_ab.py",
+      "sha": "16d412cb21a760b26eabce78d7d7f10b9f4e20ee"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_dmsh_vsunit.py",
+      "sha": "ded53511c1401bc84134c5d634a6499e418757ec"
+    },
+    {
       "path": "engine/dm/gfx/tests/test_dmsh_wide.py",
-      "sha": "a73e3f99486ced436abcdf07d3683f915bf572bb"
+      "sha": "d63272108f9442013e9bdf7764eb94bbd432c9b8"
     },
     {
       "path": "engine/dm/gfx/tests/test_kit.py",
       "sha": "2fe5a2dd17eb92e531918145e8f949277983ccf9"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_mt_framework.py",
+      "sha": "5ad5d03cc6e1568da0105f1d644a8590fefdae4a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_ndve_engine.py",
+      "sha": "ac8c00a4a810690eda9b544bbc6f44fb46b71d39"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_needle.py",
+      "sha": "1b8fe8aacc6de73a17611b4e2ba8f26a0730239a"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_noire_shader.py",
+      "sha": "0978669c532a50111a299d14cd3ad02f24fca9f6"
     },
     {
       "path": "engine/dm/gfx/tests/test_nvn_rt_api.py",
@@ -1402,12 +2330,24 @@
       "sha": "fd44d729b059d96872a4214c26dc50738995e00e"
     },
     {
+      "path": "engine/dm/gfx/tests/test_table_scans.py",
+      "sha": "3345d2a44a35f1a76a4995c4166986e279a0666c"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_ttarch2.py",
+      "sha": "10707d85f93eac44b8a8054847df3a1f7acc06bc"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_ue3_cache.py",
+      "sha": "d7d375baf7d46bc10d219a636c8f7b329ae1d32c"
+    },
+    {
       "path": "engine/dm/gfx/tests/test_vbf.py",
       "sha": "b95ecc822b015c61936cfe4e1516b2912ade422b"
     },
     {
       "path": "engine/dm/gfx/tex/nvn_deswizzle.c",
-      "sha": "28de0b42eb031cb2efad7057393dd949fa389190"
+      "sha": "ed17a19188dbd0488a31c9ef4388ca9f983f9756"
     },
     {
       "path": "engine/dm/gfx/tex/nvn_deswizzle.h",
@@ -1446,8 +2386,12 @@
       "sha": "233325e55b4dea651d469e68e82e4ffa884dc62c"
     },
     {
+      "path": "engine/dm/gfx/tools/c1_guard.py",
+      "sha": "b3b66ee771ef64d6d7ffeced7f519854d014f82f"
+    },
+    {
       "path": "engine/dm/gfx/tools/cb_extent.py",
-      "sha": "f9f2b8c3e8680b7e647b976d354de458bc96aab5"
+      "sha": "54207b2d99064e2e2d17ddbb6b19a61809754e6c"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_alpha.py",
@@ -1456,6 +2400,14 @@
     {
       "path": "engine/dm/gfx/tools/dmsh_atomic.py",
       "sha": "10baa6be9f1391b36a52c777f581b4e313b4f87e"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_build.py",
+      "sha": "a552c8c998186806dd06ca2258cc4b053a3abe0f"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_chain.lock",
+      "sha": "90dd48a67aef82e0e065f5fca8faa3016d7ac8b7"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_chain.py",
@@ -1471,7 +2423,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_fetch.py",
-      "sha": "927d5b0c662ac888b128274dbb06946c06ffdd5f"
+      "sha": "c88e1608c99aaf378f3483fd2bc59d0e1d6a76ec"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_logic.py",
@@ -1480,6 +2432,10 @@
     {
       "path": "engine/dm/gfx/tools/dmsh_meshstage.py",
       "sha": "2104303e1fbc2b99cefbf5f15849ab258298a5be"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_mtlcache.py",
+      "sha": "9f9f46cc5f4480284ea1286b8bc874ea99b3b6fb"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_pull.metal",
@@ -1495,7 +2451,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_rewrite.py",
-      "sha": "12b0039dde59368b0962a62325b1d63715fd728b"
+      "sha": "97543ba3fdfb0901b96db3c8120ab4e5e0b2d08b"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_rt.py",
@@ -1507,19 +2463,39 @@
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_rt_compile.py",
-      "sha": "2f5fbcbbce6a1f3532d7e77706e9fe8de258e525"
+      "sha": "bddc475a60905d81f8f4916fd550ddaf8db87bb7"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_side.py",
-      "sha": "5810bcccb6814e055dc33fda9c7707d4b3d5fb62"
+      "sha": "60ae6607f3b118f7b9c931ef0e2758ca4c0aea5b"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_wide.py",
-      "sha": "fee22875ef958504b928a1c1277092744f77f12b"
+      "sha": "4b10deceb0654d0f31e111c55c3b68e9ab5b1195"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_xlate/Program.cs",
       "sha": "470e7289e767a4954f850d4cb90e87506f580b86"
+    },
+    {
+      "path": "engine/dm/gfx/tools/easf/README.md",
+      "sha": "6c549af11c9c86c48f40f35cdd067d1806549283"
+    },
+    {
+      "path": "engine/dm/gfx/tools/easf/chunkzip.py",
+      "sha": "8c6c827b35f09d26b5326982bc1e97f8595e3220"
+    },
+    {
+      "path": "engine/dm/gfx/tools/easf/fxo.py",
+      "sha": "cc0183899a920f8575c34aa93fc2bea761fd3a50"
+    },
+    {
+      "path": "engine/dm/gfx/tools/easf/keyfind.py",
+      "sha": "916cd1b46dfd903f78c9e75ebb515a58b4a5ab89"
+    },
+    {
+      "path": "engine/dm/gfx/tools/easf/reader.py",
+      "sha": "d4b2916e69b16cc2ef46d70c9736906475ea19a2"
     },
     {
       "path": "engine/dm/gfx/tools/gl_aliases.py",
@@ -1527,7 +2503,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/gl_shaders.py",
-      "sha": "c52bb0eb99d4c1378e7fca64ebdbb1aedd73a443"
+      "sha": "4d234a7b26941e880a72ee4313fdcf27bf55f6fd"
     },
     {
       "path": "engine/dm/gfx/tools/idtech4_programs.py",
@@ -1539,19 +2515,39 @@
     },
     {
       "path": "engine/dm/gfx/tools/pso_offline.py",
-      "sha": "a31607a829fea37e37f191427b70d739582d62de"
+      "sha": "a1ad37ced709e888520de2a8b0fe2694548b5d08"
+    },
+    {
+      "path": "engine/dm/gfx/tools/shader_split.py",
+      "sha": "cbfbf1914da10c00cdb75ad00c80da3f16c31c34"
+    },
+    {
+      "path": "engine/dm/gfx/tools/spirv_cross_bin/build.sh",
+      "sha": "2a3523aa64cdaaa1030d88d8bc306ae6073624cc"
     },
     {
       "path": "engine/dm/gfx/tools/spirv_cross_bin/ordered-ne.patch",
       "sha": "96c97416ce0c5c87d01f86e47fe58423eaabd4b2"
     },
     {
+      "path": "engine/dm/gfx/tools/ttdat.py",
+      "sha": "1be4df877999bf2bbd254dc104fe30ac18818f7a"
+    },
+    {
       "path": "engine/dm/gfx/tools/uepak.py",
-      "sha": "3bad3c52f59bb3aad85ca7ac966028520395fa1d"
+      "sha": "5c9a65c4fef07e4d0b42fd4b1eff5131b0c06c2b"
+    },
+    {
+      "path": "engine/dm/gfx/tools/vk_shaders.py",
+      "sha": "7999e63303f62f779144652884ee639c8dc7bf51"
     },
     {
       "path": "engine/dm/gfx/vk/hle_vk.m",
-      "sha": "8810721bbcb545c23a012eb76241121728f26b4d"
+      "sha": "0c066d992b7cbf83eff02adbf0f2d681be87a20e"
+    },
+    {
+      "path": "engine/dm/host/Makefile",
+      "sha": "fea687b5aa23d66777fc846550fa358b5dc3bea8"
     },
     {
       "path": "engine/dm/host/account_users.h",
@@ -1571,7 +2567,7 @@
     },
     {
       "path": "engine/dm/host/dm.h",
-      "sha": "054616cc435daef3a0ce82f28e6047fa30f25f1a"
+      "sha": "a065f9fee5e3182a3731b0341f76a6d06473e575"
     },
     {
       "path": "engine/dm/host/front.h",
@@ -1579,7 +2575,7 @@
     },
     {
       "path": "engine/dm/host/front_mac.m",
-      "sha": "d80024f7676653b169f77450725ea2f20dde8784"
+      "sha": "1372a83152bd91b855405528a30a33aa07fa3676"
     },
     {
       "path": "engine/dm/host/front_role.h",
@@ -1591,7 +2587,7 @@
     },
     {
       "path": "engine/dm/host/hle.h",
-      "sha": "562409b5a516627c84a68457d5f7838b9648751d"
+      "sha": "892a334574aebda38cb2adbae136bd08eb286ecc"
     },
     {
       "path": "engine/dm/host/hle_account.c",
@@ -1603,11 +2599,11 @@
     },
     {
       "path": "engine/dm/host/hle_audio.c",
-      "sha": "3b1a4c4fdb1ea3a0ada370edf2b329ffdb844aff"
+      "sha": "45b0cd115e50c8610b0d286e3604e31dbebc5741"
     },
     {
       "path": "engine/dm/host/hle_audren.c",
-      "sha": "2b32130a5bf5f3031d87da80ccd2a2d4eaec02ce"
+      "sha": "81e2f7e5eaadfa293a157784ae5c68e2307c86c4"
     },
     {
       "path": "engine/dm/host/hle_audren_sv.c",
@@ -1631,11 +2627,15 @@
     },
     {
       "path": "engine/dm/host/hle_hid.c",
-      "sha": "cc3b61e4165e5a31d2f5c951ef423ed5a2739229"
+      "sha": "2a367725892cb23241ec0bb7fb6870b25426e227"
+    },
+    {
+      "path": "engine/dm/host/hle_irs.c",
+      "sha": "bdf580537e797f47a46da4951da005187bf7004e"
     },
     {
       "path": "engine/dm/host/hle_movie.c",
-      "sha": "8857047a14f6831251bc8e0ef00fda92187fb87e"
+      "sha": "6776cc443c692dab2686f33cedb2b3819dcce84d"
     },
     {
       "path": "engine/dm/host/hle_movie_av1.c",
@@ -1658,16 +2658,32 @@
       "sha": "f9d838759bfd461f4989962e236f439143efeb7a"
     },
     {
+      "path": "engine/dm/host/hle_oe.c",
+      "sha": "188e415c0f984180279c0ad354ed1c0378970f86"
+    },
+    {
       "path": "engine/dm/host/hle_offline.c",
-      "sha": "9b94a0477761cbdda76c765481a97c024ccd91cb"
+      "sha": "e019ce373914515badbc9bff4f7fe385f9fc64ec"
     },
     {
       "path": "engine/dm/host/hle_os.c",
-      "sha": "0a41eef07b4fb80c9ded466ca4eb2d4225bf7cc3"
+      "sha": "eb3476d62f39abf6d724599bbc34e06b6df3ec42"
+    },
+    {
+      "path": "engine/dm/host/hle_ro.c",
+      "sha": "be566ea2ac4d7f7cf28976a9919f2ad426a169e4"
+    },
+    {
+      "path": "engine/dm/host/hle_sdk16.c",
+      "sha": "96abc5aabc8d0d5145945926ce940dd776761118"
     },
     {
       "path": "engine/dm/host/hle_sf.c",
       "sha": "5470a992a6d6f26cc68b3228d3a5313c0a4413bf"
+    },
+    {
+      "path": "engine/dm/host/hle_svc.c",
+      "sha": "f594cf962ed178658e8f395cf9e85ba476d3ab5c"
     },
     {
       "path": "engine/dm/host/hle_table.c",
@@ -1675,19 +2691,19 @@
     },
     {
       "path": "engine/dm/host/hle_thread.c",
-      "sha": "f9732f5b106eeab0f5b75aeb8889341d05a7f34d"
+      "sha": "dbcd30c59c60335be754e2997c27c331fe37bd93"
     },
     {
       "path": "engine/dm/host/hle_time.c",
-      "sha": "8679bc4d1adde0e9e9eb6f65fbef0d8a059b0b24"
+      "sha": "7e75f14961503dd49d0a8c38fe50c04be3678540"
     },
     {
       "path": "engine/dm/host/loader.c",
-      "sha": "7f04e5e73fa36a691f8714fb7fa738e9692cd3ee"
+      "sha": "9c989d40649254aaacd8f4f8fa3602209280db12"
     },
     {
       "path": "engine/dm/host/main.c",
-      "sha": "e046b207376745b9c4a12d9cca92cc59cfb79c00"
+      "sha": "f3a634b3e91b5ae1ca4ef27a9f6e25643b83ea2b"
     },
     {
       "path": "engine/dm/host/motion_apple.h",
@@ -1722,8 +2738,12 @@
       "sha": "eb270d679b19028e9a17f62050622a9ece41a6dc"
     },
     {
+      "path": "engine/dm/host/romfs_image.h",
+      "sha": "687b41cff1fe3aa11eb2ad9c8cc032172d7cc180"
+    },
+    {
       "path": "engine/dm/host/tests/Makefile",
-      "sha": "844b82f22453e028d07071fdaab4c835a0e1408d"
+      "sha": "120cda483d487804eb04a4392593bf582473b662"
     },
     {
       "path": "engine/dm/host/tests/audio_input_platform_stub.c",
@@ -1747,7 +2767,7 @@
     },
     {
       "path": "engine/dm/host/tests/t_audio_device.c",
-      "sha": "eafb13b8041fea02b362ecc87e7704442bdc3802"
+      "sha": "7083a1d1d95919578cb7de2021a5d07072e134fb"
     },
     {
       "path": "engine/dm/host/tests/t_audio_input.c",
@@ -1763,15 +2783,15 @@
     },
     {
       "path": "engine/dm/host/tests/t_audio_stats.c",
-      "sha": "c594ccc615e0d4659e6ee220182ed7a289681a11"
+      "sha": "69ae08b54d64fabdd325638274f36ced3ab263d7"
     },
     {
       "path": "engine/dm/host/tests/t_audren_layout.c",
-      "sha": "fe44e916e91c0b56d6e20178b4a764f695579e23"
+      "sha": "73354d4b7f5445d1f3d23eb1eb4a7c357ee35265"
     },
     {
       "path": "engine/dm/host/tests/t_audren_work.c",
-      "sha": "0745da516e36d1816a8a55c2efecd7dcb7736559"
+      "sha": "901d1b45db5d46c7b5da610fd257378c8382d3a2"
     },
     {
       "path": "engine/dm/host/tests/t_codec_opus.c",
@@ -1779,11 +2799,15 @@
     },
     {
       "path": "engine/dm/host/tests/t_codec_video.c",
-      "sha": "1b86336768a75b90330e4cfb5347c3fbc92e00a9"
+      "sha": "65c144e0892e77ff97e3c767239d9596fe928100"
     },
     {
       "path": "engine/dm/host/tests/t_condvar.c",
       "sha": "90a06e712a2eb55464fec80d097d5586541f9d06"
+    },
+    {
+      "path": "engine/dm/host/tests/t_condvar_stub.c",
+      "sha": "903d63e709f4cd7c57ccbfc4c42ca319c39d98c1"
     },
     {
       "path": "engine/dm/host/tests/t_friends.c",
@@ -1791,7 +2815,7 @@
     },
     {
       "path": "engine/dm/host/tests/t_front_role.c",
-      "sha": "05b45f51a581763d5762bd5c935de2a842cae1ed"
+      "sha": "5fd1188a38546552051cf7fff9ffc9c9855af3ae"
     },
     {
       "path": "engine/dm/host/tests/t_fs.c",
@@ -1810,12 +2834,20 @@
       "sha": "eb94ba716b90331d470abf4ed3a508b0c9ba81ef"
     },
     {
+      "path": "engine/dm/host/tests/t_heap_size.c",
+      "sha": "c3077fa1b33e7ef9d6b4e2d6f4e9a3b2c046b4e4"
+    },
+    {
       "path": "engine/dm/host/tests/t_hid.c",
-      "sha": "b11a239e60bd7a6199eff715b4ce32c61e1f3cad"
+      "sha": "6bbc417197f6f499574b0606e965de844e418495"
     },
     {
       "path": "engine/dm/host/tests/t_jc1.c",
       "sha": "a6c5334d80bbf40e0854fc75e93236de943fb51e"
+    },
+    {
+      "path": "engine/dm/host/tests/t_language.c",
+      "sha": "acf2779c0cc1f2f169fdfc216453f06398c1dbc3"
     },
     {
       "path": "engine/dm/host/tests/t_motion_apple.m",
@@ -1831,15 +2863,23 @@
     },
     {
       "path": "engine/dm/host/tests/t_movie_avc.c",
-      "sha": "df4b764b6213412d67291dbf6e53e0c2d3ff89fe"
+      "sha": "4aae79dd8150e249298233e217cde0b12430b30d"
     },
     {
       "path": "engine/dm/host/tests/t_movie_vpx.c",
-      "sha": "bfcefad0403e35a1b99c6a5f6dc036260c166161"
+      "sha": "4bbf3c65ec81b1aeb27170d6ec9b6abff015205d"
+    },
+    {
+      "path": "engine/dm/host/tests/t_nro.c",
+      "sha": "834887fa89ba069d3c49e6fb5a438614e28f704a"
     },
     {
       "path": "engine/dm/host/tests/t_objmap.c",
-      "sha": "eb4a135680f301c45ab737fe21a59a2daeca72ad"
+      "sha": "bd7ab34ff34975c56480161bacb5d615545537d6"
+    },
+    {
+      "path": "engine/dm/host/tests/t_oe.c",
+      "sha": "d88843a7e91146ccde78cc85472ef58501bc19a1"
     },
     {
       "path": "engine/dm/host/tests/t_output_stream.c",
@@ -1854,20 +2894,48 @@
       "sha": "07511446a66cdbb9704cb518ef1e9043726ee969"
     },
     {
+      "path": "engine/dm/host/tests/t_preempt.c",
+      "sha": "64a2d23e2f05f33f73858a3303c316372c80efa0"
+    },
+    {
       "path": "engine/dm/host/tests/t_server_environment.c",
       "sha": "c06b5a7a9a0c5c93ab7deddf9e727ef3aa5afe9c"
     },
     {
       "path": "engine/dm/host/tests/t_sf.c",
-      "sha": "9d8ef5f605432744419856f6e4aad3e24a91d4ca"
+      "sha": "496064b9a7a591a10dc9bbc202c4af6a88117698"
+    },
+    {
+      "path": "engine/dm/host/tests/t_svc_memory.c",
+      "sha": "584ed3181eca2a5ae9d387465e930b8367932f91"
+    },
+    {
+      "path": "engine/dm/host/tests/t_symbols.c",
+      "sha": "a2a4c09b3f18b7d31c6c45a505484b553ecdaa93"
+    },
+    {
+      "path": "engine/dm/host/tests/t_sync_wait.c",
+      "sha": "b14707215228362f4f89a657f7d91431fc30d483"
+    },
+    {
+      "path": "engine/dm/host/tests/t_system_event.c",
+      "sha": "8c23a9f07603e98fb000e56152db881021bd7567"
     },
     {
       "path": "engine/dm/host/tests/t_time.c",
-      "sha": "0696a81edff72ed2bdbaa6826a2dbc02a3a65630"
+      "sha": "b2e5a160206cdd262b872926b802e3d9742eac4b"
     },
     {
       "path": "engine/dm/host/user_select_mac.h",
       "sha": "3ed5a7fa3f0b11f53506557aedd11608e93072af"
+    },
+    {
+      "path": "engine/dm/ios/Sources/DmGameMenu.h",
+      "sha": "784727b32871d6c0b6449e325da605fef9de2016"
+    },
+    {
+      "path": "engine/dm/ios/Sources/DmGamepad.m",
+      "sha": "4910e4e839c4c5b5d398b16cbc0a182757c5db64"
     },
     {
       "path": "engine/dm/ios/Sources/DmIOS-Bridging-Header.h",
@@ -1875,19 +2943,43 @@
     },
     {
       "path": "engine/dm/ios/Sources/GameMenu.swift",
-      "sha": "205e27753e5d366740d1117dbb9dd2a6dec9f865"
+      "sha": "35fbceae3342ab52e6005ce10454c7ec85a6b755"
+    },
+    {
+      "path": "engine/dm/ios/Sources/Launcher.swift",
+      "sha": "0f9d8b66396a729eaa7152d0db041304f1a3b005"
     },
     {
       "path": "engine/dm/ios/Sources/LauncherRow.swift",
-      "sha": "ec2d2b1955bc967b2653758c8cb3fcd8794e9033"
+      "sha": "e6f79ea8b3287977eaf1303e0afa8b75286d6357"
     },
     {
       "path": "engine/dm/ios/Sources/LauncherSettings.swift",
-      "sha": "c003978b365549c40da49fe0ee57408a5b9a22cd"
+      "sha": "c0006c00735709cddcc0fe5735cc36eec770a345"
     },
     {
       "path": "engine/dm/ios/Sources/front_ios.m",
-      "sha": "56a858d836f03978b370527fa1b527966b3b378b"
+      "sha": "188a249debd264b429f6e9223995ba7511fa74fb"
+    },
+    {
+      "path": "engine/dm/ios/Sources/main.m",
+      "sha": "6185a7a67fdc53e2f378a1b19e38203dddee9f75"
+    },
+    {
+      "path": "engine/dm/ios/project.yml",
+      "sha": "d89d0aed8f74672aaa183ee95d1162e3f3e7bad2"
+    },
+    {
+      "path": "engine/dm/ios/tests/duo/Sources/DuoRuntimeStubs.m",
+      "sha": "24058a75758dfb19b17cb9cfb840683369acc0f0"
+    },
+    {
+      "path": "engine/dm/ios/tests/duo/Tests/DuoHarnessTests.m",
+      "sha": "bb08ed67daf1be53a8a1521dd19cf8df22af918f"
+    },
+    {
+      "path": "engine/dm/ios/tests/launcher_storage_check.swift",
+      "sha": "e3a38a15b29381ffd100c4f8254cfea55490d27d"
     },
     {
       "path": "engine/dm/ios/tests/test_entitlements.py",
@@ -1895,19 +2987,31 @@
     },
     {
       "path": "engine/dm/ios/tests/test_xcode_workflow.py",
-      "sha": "b1fdd2b69756b9708c5e5bebd483562e60206cc2"
+      "sha": "69ce12e600d18a7b163ddc515cfdcae02d204b34"
+    },
+    {
+      "path": "engine/dm/ios/tools/build_ipa.sh",
+      "sha": "64a92e8cbd906aaa9f52c409091ffc5616a01d8e"
+    },
+    {
+      "path": "engine/dm/ios/tools/pack_ipa.py",
+      "sha": "bf5158586b576f261d305e814f5136c4fd0c1596"
     },
     {
       "path": "engine/dm/ios/tools/stage_resources.sh",
-      "sha": "5414fa9b0a2a2f208aa2d21d29eae3625a328767"
+      "sha": "890872cd934cb14dbf9e8e60eed4691c94a9ab22"
     },
     {
       "path": "engine/dm/mac/Launcher.swift",
-      "sha": "054e19fc274e2cdfba3e4786a7e8ff2803871a54"
+      "sha": "88d9440068d4997689991b547242ee06f1210996"
     },
     {
       "path": "engine/dm/mac/launcher.c",
       "sha": "ae7edfbef7c3d38f6c5cd134fa0264169b7ca370"
+    },
+    {
+      "path": "engine/dm/mac/pack_app.py",
+      "sha": "134682b95af5d553319d82f8634cdd68be634e55"
     },
     {
       "path": "engine/dm/sanitizers/ignorelist.txt",
@@ -2090,6 +3194,10 @@
       "sha": "f1b54101d200c13ccf5c6a06343d8ae96689d2df"
     },
     {
+      "path": "engine/dm/tools/aes.py",
+      "sha": "664e2ffa94ce59962499a3949b20eb36849c4531"
+    },
+    {
       "path": "engine/dm/tools/audio_channel_check.py",
       "sha": "0d03406ecac0cd17f822ce81bbbddc447638fd9e"
     },
@@ -2102,24 +3210,44 @@
       "sha": "9f7dad842a842e3d30d7c07582d07ddaf50f4c90"
     },
     {
+      "path": "engine/dm/tools/fuzz/fuzz_uepak.py",
+      "sha": "d28086a848a95938160a29f17e5eb7e58c3b1009"
+    },
+    {
       "path": "engine/dm/tools/impact_map.tsv",
-      "sha": "d20c6b1f2ed2682bdd02a73542cedfbde61e243d"
+      "sha": "5cfed8f0e8de50ffb090a263b92a04e3c1deb779"
     },
     {
       "path": "engine/dm/tools/jump_solver.py",
-      "sha": "ebcb60ff49b2a7f60e62545c47e2cb2f798a97ea"
+      "sha": "5d969b0fcd57e599e04e26c1d8cb53924152cdaf"
     },
     {
       "path": "engine/dm/tools/lint_c_baseline.tsv",
-      "sha": "b9802b1108be60a28ec303c3b55035a1d457caa2"
+      "sha": "0ceade1e67abc687c328ed1b9e203da3ebb3cbf3"
     },
     {
       "path": "engine/dm/tools/lint_python_baseline.tsv",
-      "sha": "494a351f6fcebef52034ba399b45d8094e11f2b3"
+      "sha": "02d1ebb499d739e255b3b42031fef685690f11a3"
+    },
+    {
+      "path": "engine/dm/tools/make_ext_font.py",
+      "sha": "ce002b59650e25089af37d492633fe80ce3f049e"
+    },
+    {
+      "path": "engine/dm/tools/make_shared_fonts.py",
+      "sha": "a88b8bb793563cceb2f98ecc299d32eca15f205b"
+    },
+    {
+      "path": "engine/dm/tools/nacp.py",
+      "sha": "3ab8c93fd823cf6e9c24faade92f4bf9e1a10572"
     },
     {
       "path": "engine/dm/tools/nso_code.py",
       "sha": "23b7abf08f50a4c8a8acf38dbc484d1eef2bd5d9"
+    },
+    {
+      "path": "engine/dm/tools/nso_match.py",
+      "sha": "92d7654762155aea4a1e77d0068762925ea77dfb"
     },
     {
       "path": "engine/dm/tools/nso_syms.py",
@@ -2128,6 +3256,18 @@
     {
       "path": "engine/dm/tools/nx_extract/Program.cs",
       "sha": "a5c041a5d738b95dc416e5d7593173ee97b891f7"
+    },
+    {
+      "path": "engine/dm/tools/nx_extract_bin/nx_extract",
+      "sha": "4d69248c77791cf6d41b00ad15a6fad037520e74"
+    },
+    {
+      "path": "engine/dm/tools/patch_nso.py",
+      "sha": "54a80096de4ba944e6e118fea53011cb4d91f3fb"
+    },
+    {
+      "path": "engine/dm/tools/shader_cache.py",
+      "sha": "065d364d597219b1aef9f05e1df97d4c93fd53bb"
     },
     {
       "path": "engine/dm/tools/shader_lib.py",
@@ -2140,6 +3280,10 @@
     {
       "path": "engine/dm/tools/tests/fixtures/pool_callables.m",
       "sha": "6e4dc085916ed6617592c21c5fdcfa01da486fa8"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_aes.py",
+      "sha": "d91be137f3146b6821fda6973a43f4c4eef7e6d2"
     },
     {
       "path": "engine/dm/tools/tests/test_audio_channel_check.py",
@@ -2166,12 +3310,16 @@
       "sha": "4269f2d9ccd86fe3f87ebf31f0862871b6bf17e2"
     },
     {
+      "path": "engine/dm/tools/tests/test_easf.py",
+      "sha": "d6e5522c99db4c35d543cf6c2d9202d5afe8b89e"
+    },
+    {
       "path": "engine/dm/tools/tests/test_gl_aliases.py",
       "sha": "91ccd9bcc13dcc8c7e7606697890ed842d22a959"
     },
     {
       "path": "engine/dm/tools/tests/test_gl_shaders.py",
-      "sha": "565927e7983dc1d0f1501ab171cf825a75de417d"
+      "sha": "dd3bb0ae15ba150c44d3ca4b66613c8e842b5215"
     },
     {
       "path": "engine/dm/tools/tests/test_global_memory.py",
@@ -2191,11 +3339,31 @@
     },
     {
       "path": "engine/dm/tools/tests/test_jump_solver.py",
-      "sha": "d392dcf86d1791c4aed2f7aadada9e1ab2208b0c"
+      "sha": "89abdb6ee2cd07ebb3f4d98ad024b54e6571b015"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_languages.py",
+      "sha": "4e8f02f930617cb76b834d841bc6bb76191366cf"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_launcher_settings.py",
+      "sha": "db5bfb597ff22b2bb165c47efa34c95ed47ea301"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nro_graphics.py",
+      "sha": "30d467a4d8d54b624ef34a23e661d546f02b6d70"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nro_pack.py",
+      "sha": "bc908abf2dae085263dad9d45940ba7246610c2d"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_nso_match.py",
+      "sha": "222b2a694fb18af9ee36d919d366ff52156d437e"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_alias.py",
-      "sha": "04f75c5e465a7f9746ac685301095f298646d409"
+      "sha": "3305a1e73e43aaef3bf7da0a550c5f7adfe6c332"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_chain.py",
@@ -2211,11 +3379,11 @@
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_mac_app.py",
-      "sha": "8cbb6becb5eeb2c8bf80601e4cf05c0348ad0f81"
+      "sha": "542f320b6971b067fe2d782dd37109db182816e9"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_nup.py",
-      "sha": "dbe2f9efd8036657474230c12ae8f9475b774234"
+      "sha": "43b2ffc53d36b6821ba2f59b613fe7317956069f"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_scan.py",
@@ -2226,12 +3394,16 @@
       "sha": "dfa7cd5e7ce7cfe868d8f3b5dce5e9f21e147d0e"
     },
     {
+      "path": "engine/dm/tools/tests/test_player_env.py",
+      "sha": "a62565e425f1e24d40ee66e84e85ec01321ff4ca"
+    },
+    {
       "path": "engine/dm/tools/tests/test_profile_guess.py",
-      "sha": "aafe6734046200edeb2d46b3589c97d976dbd89b"
+      "sha": "e04f5ce6770261795bda5fb56b7b28f07ed25031"
     },
     {
       "path": "engine/dm/tools/tests/test_pso_offline.py",
-      "sha": "9551d86de25050596e4f3010331b35006ea98bc3"
+      "sha": "5ebd74a3a66349e33d593a3fa53a1e4929c5a5b1"
     },
     {
       "path": "engine/dm/tools/tests/test_regress.py",
@@ -2243,7 +3415,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_settings.py",
-      "sha": "1b180c8bb32f90717828c7b7475c4e5869ffc3bc"
+      "sha": "57d3e4164c61f82f4015d70e37766030350d577e"
     },
     {
       "path": "engine/dm/tools/tests/test_shader_cache.py",
@@ -2255,15 +3427,19 @@
     },
     {
       "path": "engine/dm/tools/tests/test_shader_rewrites.py",
-      "sha": "2b06873ecb97afb193b97c13b12cba3aa9671810"
+      "sha": "1c7d6aed2332fd823c6552596d607f5aeba0c4dc"
     },
     {
       "path": "engine/dm/tools/tests/test_shader_toolchain_cache.py",
-      "sha": "2d4111423ecbd4dd611377f0161cd149e62db2f5"
+      "sha": "b8a5f4d16b703af864108ab73b190852f2ef95b2"
     },
     {
       "path": "engine/dm/tools/tests/test_spirv_cross_pin.py",
       "sha": "2ed926a2ab81b039c0f97d5c59e251c574cbb69a"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_adjacent.py",
+      "sha": "97fb9ff1e074d2413400df5f5d7a5ab924ca0eb6"
     },
     {
       "path": "engine/dm/tools/tests/test_split_bahs_entries.py",
@@ -2278,6 +3454,18 @@
       "sha": "39d30fe945c2cd88c1787de7e49b79ccbc4cfebe"
     },
     {
+      "path": "engine/dm/tools/tests/test_split_ipk.py",
+      "sha": "27333a84bf366ef50479eb0150fc5c90734fac97"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_nxcx.py",
+      "sha": "7c400fc1f36749d893306b783e0d26fb1d815b93"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_redengine.py",
+      "sha": "33026cfa612858f5d038c0048abeb499780eb119"
+    },
+    {
       "path": "engine/dm/tools/tests/test_split_representatives.py",
       "sha": "d4e2b90bcf82ccc5b7ca37a6e7218a3723e97a6f"
     },
@@ -2286,12 +3474,36 @@
       "sha": "8d8b28b7039090a49420dbf7f2be05fe642d09df"
     },
     {
+      "path": "engine/dm/tools/tests/test_split_sharc.py",
+      "sha": "0f1e8885b38a78151ae258e0f5893b3b50602da6"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_split_ttdat.py",
+      "sha": "87e8b39d5703697a5821f603a90e013888b978b6"
+    },
+    {
       "path": "engine/dm/tools/tests/test_tail_call.py",
       "sha": "ab48fa76c42dd387c38f53cb50d403cda0c60b8f"
     },
     {
+      "path": "engine/dm/tools/tests/test_uepak_v8.py",
+      "sha": "4172857791d9e6abc032239523abd7c01810a559"
+    },
+    {
       "path": "engine/dm/tools/tests/test_uepak_v9.py",
       "sha": "9c6e9baaa08a25dcff4e8deff5a59056ec4419c1"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_unity_text_glslc.py",
+      "sha": "d61c50595cae7a1b2211e10791189796555d4a43"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_vk_renderdragon.py",
+      "sha": "0558ae3b791f6d22da197fd944e02a054181c2d9"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_vk_shaders.py",
+      "sha": "bc4361048ce7673a2ddef52ad225faf03cf11275"
     },
     {
       "path": "engine/dm/tools/tests/test_x18_select.py",
@@ -2299,19 +3511,19 @@
     },
     {
       "path": "engine/docs/agents/game-patches.md",
-      "sha": "770409cf0b881b3f46b064ea43e41034ba3a0384"
+      "sha": "e7f7dcac3fa530f7f647974dd274447897175063"
     },
     {
       "path": "engine/docs/agents/symptoms.md",
-      "sha": "87f6b4c83b6f1b530327deed75e7c7fd18b5158c"
+      "sha": "ee60ebfdf70f2363f679c667d73ff67da2858c90"
     },
     {
       "path": "engine/docs/development.md",
-      "sha": "e85b88c583bec65437fa6c04858833243f7edabe"
+      "sha": "9600f1ffd99bec3b9ed9ac77368aa74fc86ae943"
     },
     {
       "path": "engine/docs/env_switches.tsv",
-      "sha": "4777c7c19a0e0da4930a233111b602a991df2542"
+      "sha": "1b8f780695ecc497997b159d4f8e21912c677d7d"
     },
     {
       "path": "engine/docs/frontends.md",
@@ -2327,111 +3539,625 @@
     },
     {
       "path": "engine/docs/reference/audio.md",
-      "sha": "31489a4efd1cc78702e77f3392e9c90225e686a5"
+      "sha": "9e327edcd9301f586973963a25f32ccf475db0fd"
+    },
+    {
+      "path": "engine/docs/reference/frame-rate.md",
+      "sha": "2c655b74deb7dbe71fd1c8dc06c4a680e4d78002"
     },
     {
       "path": "engine/docs/reference/memory.md",
-      "sha": "701c88298b937854ce868399857515afb8dd03b8"
+      "sha": "721ff2ddff91fa9965108d68cbc095cb90f0bc25"
     },
     {
       "path": "engine/docs/reference/movies.md",
-      "sha": "74a0ed6d9177962d5bf5e6d81aaa8930904f6283"
+      "sha": "c12d3b7193f034bfe3a25703a49fb1b8a627ef47"
     },
     {
       "path": "engine/docs/reference/nvn-objects.md",
-      "sha": "58f99edb832853373c5890202ff3189daf4fa02b"
+      "sha": "73a4580e8c701e26320543119c60cbcb6334768e"
     },
     {
       "path": "engine/docs/reference/packing.md",
-      "sha": "d1e1af0efa087caf8cac79de3bce2967bbcd93be"
+      "sha": "5864cc14dcce7642aaaf63dd866d29c8ce5f6621"
     },
     {
       "path": "engine/docs/reference/rendering.md",
-      "sha": "fbdbc1f9ff8cef0043cf8e9546bee72bd5fb9124"
+      "sha": "183a5f28872a683d4dffc9b24ea489f6e583c687"
     },
     {
       "path": "engine/docs/reference/rewriter.md",
-      "sha": "c974be7cfb5007e527ed701afe604eaa0569e759"
+      "sha": "3916d1088e0aed36b964bef398d5eaad9fd19308"
     },
     {
       "path": "engine/docs/reference/services.md",
-      "sha": "56a9822279731020e804e94b566470fc83eae0c8"
+      "sha": "702c7124566837da9b88a389cbf4a9935d903edc"
     },
     {
       "path": "engine/docs/reference/shaders.md",
-      "sha": "1affa42575325d4a7d377acc2cf274b319115ac0"
+      "sha": "977d8d52ae400a3c72dc4c1c635ad5711c305427"
     },
     {
       "path": "engine/docs/reference/threads.md",
-      "sha": "c4551d032b8935f518f2bfeaba989794495d9290"
+      "sha": "baae11933d242ccf3f69e784721620af90a975bd"
     },
     {
       "path": "engine/docs/settings.md",
-      "sha": "824da490c78e363b22c167845bcb6b7bd82ee169"
+      "sha": "6bc995c668d5e20a00384536630b7337b8244e02"
     },
     {
       "path": "engine/scripts/bug_report.py",
       "sha": "be6593ae598aaf40142217bf8142a8e8ab22304e"
     },
     {
+      "path": "engine/scripts/build_ipa_from_nsp.py",
+      "sha": "80a1172aa149506ade7615d5685bb38ea3ee2b17"
+    },
+    {
       "path": "engine/scripts/pack_nup.py",
-      "sha": "0ba213b6568c6ee894b88471c113b9a7d8cce096"
+      "sha": "52ab7882905827bf79fb4a243c0ae41ae3a1b196"
     },
     {
       "path": "engine/scripts/regress.py",
-      "sha": "baab974297e4069385d9b5f5a033735c2c1694d4"
+      "sha": "7ac2537ae2fc7e8c785f79901c8c385fcd9aef52"
     }
   ],
   "windows_overlays": [
+    "engine/.github/workflows/tests.yml",
+    "engine/HOOKLINK.md",
+    "engine/dm/games/010056B015FE8000/README.md",
+    "engine/dm/games/0100CAA026246000/README.md",
+    "engine/dm/games/0400486024DEC000/README.md",
+    "engine/dm/games/0400486024DEC000/game.tsv",
+    "engine/dm/games/0400486024DEC000/patches.py",
+    "engine/dm/games/0400486024DEC000/pso_manifest.tsv",
+    "engine/dm/games/README.md",
+    "engine/dm/games/game.py",
+    "engine/dm/games/settings.py",
+    "engine/dm/games/settings.tsv",
+    "engine/dm/gfx/msl/fgmv.metal",
+    "engine/dm/gfx/msl/ndve_engine.metal",
     "engine/dm/gfx/nvn/dmsh_chain.h",
+    "engine/dm/gfx/nvn/hle_nvn.c",
+    "engine/dm/gfx/nvn/msl_image.h",
+    "engine/dm/gfx/nvn/nvn_fstep.h",
+    "engine/dm/gfx/nvn/nvn_geometry.inc",
+    "engine/dm/gfx/nvn/nvn_mtl.m",
+    "engine/dm/gfx/nvn/nvn_ndve.inc",
+    "engine/dm/gfx/nvn/nvn_owner.h",
+    "engine/dm/gfx/nvn/nvn_owner.m",
+    "engine/dm/gfx/nvn/nvn_rec.h",
+    "engine/dm/gfx/tests/Makefile",
+    "engine/dm/gfx/tests/t_alias_retire.m",
+    "engine/dm/gfx/tests/t_arena_trim.m",
+    "engine/dm/gfx/tests/t_dead_targets.m",
+    "engine/dm/gfx/tests/t_direct_upload.m",
+    "engine/dm/gfx/tests/t_file_wire.m",
+    "engine/dm/gfx/tests/t_framegen.m",
+    "engine/dm/gfx/tests/t_fstep.c",
+    "engine/dm/gfx/tests/t_pool_notes.m",
+    "engine/dm/gfx/tests/t_pool_retired.m",
+    "engine/dm/gfx/tests/t_pso_unwrap.m",
+    "engine/dm/gfx/tests/t_render_enable_queue.m",
+    "engine/dm/gfx/tests/t_sbw.m",
+    "engine/dm/gfx/tests/t_view_swizzle.m",
+    "engine/dm/gfx/tests/test_ndve_engine.py",
+    "engine/dm/gfx/tools/c1_guard.py",
     "engine/dm/gfx/tools/dmsh_build.py",
-    "engine/dm/gfx/tools/dmsh_rewrite.py",
     "engine/dm/gfx/tools/dmsh_chain.lock",
+    "engine/dm/gfx/tools/dmsh_rewrite.py",
     "engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate",
     "engine/dm/gfx/tools/shader_split.py",
     "engine/dm/gfx/tools/spirv_cross_bin/build.sh",
     "engine/dm/gfx/tools/spirv_cross_bin/spirv-cross",
-    "engine/dm/ios/tools/build_ipa.sh",
-    "engine/dm/mac/pack_app.py",
-    "engine/dm/tools/nx_extract_bin/nx_extract",
-    "engine/dm/tools/patch_nso.py",
-    "engine/dm/tools/shader_cache.py",
-    "engine/docs/reference/frame-rate.md",
-    "engine/scripts/build_ipa_from_nsp.py",
-    "engine/dm/gfx/nvn/nvn_mtl.m",
+    "engine/dm/gfx/tools/tool_lock.py",
+    "engine/dm/host/Makefile",
+    "engine/dm/host/frame_mode.h",
+    "engine/dm/host/hle_audio.c",
+    "engine/dm/host/hle_svc.c",
+    "engine/dm/host/hle_thread.c",
+    "engine/dm/host/loader.c",
+    "engine/dm/host/main.c",
+    "engine/dm/host/mic_apple.h",
+    "engine/dm/host/mic_apple.m",
+    "engine/dm/host/romfs_image.h",
+    "engine/dm/host/tests/Makefile",
+    "engine/dm/host/tests/t_input_stream.c",
+    "engine/dm/host/tests/t_svc_memory.c",
+    "engine/dm/ios/Sources/DmGameMenu.h",
+    "engine/dm/ios/Sources/DmGamepad.m",
+    "engine/dm/ios/Sources/GameMenu.swift",
+    "engine/dm/ios/Sources/InventoryManager.swift",
+    "engine/dm/ios/Sources/Launcher.swift",
+    "engine/dm/ios/Sources/LauncherRow.swift",
+    "engine/dm/ios/Sources/LauncherSettings.swift",
+    "engine/dm/ios/Sources/SaveEditor.swift",
     "engine/dm/ios/Sources/front_ios.m",
-    "engine/dm/host/hle_audren.c"
+    "engine/dm/ios/Sources/main.m",
+    "engine/dm/ios/project.yml",
+    "engine/dm/ios/tests/launcher_storage_check.swift",
+    "engine/dm/ios/tools/build_ipa.sh",
+    "engine/dm/ios/tools/compile_check.py",
+    "engine/dm/ios/tools/pack_ipa.py",
+    "engine/dm/ios/tools/save-editor/LICENSE",
+    "engine/dm/ios/tools/save-editor/editor.html",
+    "engine/dm/ios/tools/save-editor/inventory-driver.js",
+    "engine/dm/mac/Launcher.swift",
+    "engine/dm/mac/pack_app.py",
+    "engine/dm/tools/gpuprof.py",
+    "engine/dm/tools/native_tools.sh",
+    "engine/dm/tools/patch_nso.py",
+    "engine/dm/tools/proc_group.py",
+    "engine/dm/tools/romfs.py",
+    "engine/dm/tools/romfs_image.py",
+    "engine/dm/tools/shader_cache.py",
+    "engine/dm/tools/tests/test_launcher_settings.py",
+    "engine/dm/tools/tests/test_oot_frame_step.py",
+    "engine/dm/tools/tests/test_player_env.py",
+    "engine/dm/tools/tests/test_settings.py",
+    "engine/docs/agents/game-patches.md",
+    "engine/docs/agents/symptoms.md",
+    "engine/docs/development.md",
+    "engine/docs/env_switches.tsv",
+    "engine/docs/reference/frame-rate.md",
+    "engine/docs/reference/memory.md",
+    "engine/docs/reference/movies.md",
+    "engine/docs/reference/nvn-objects.md",
+    "engine/docs/reference/rendering.md",
+    "engine/docs/settings.md",
+    "engine/scripts/bench.py",
+    "engine/scripts/build_ipa_from_nsp.py",
+    "engine/scripts/push_romfs.sh",
+    "engine/win/LINUX.md",
+    "engine/win/README.md",
+    "engine/win/TUTORIAL.md",
+    "engine/win/arm64_emu.py",
+    "engine/win/build_app.py",
+    "engine/win/build_ipa_windows.py",
+    "engine/win/compile_check.py",
+    "engine/win/doctor.py",
+    "engine/win/glslc_emu.py",
+    "engine/win/ios/DataHelp.m",
+    "engine/win/ios/GameMenu.m",
+    "engine/win/ios/Launcher.m",
+    "engine/win/ios/compat_rt.c",
+    "engine/win/ios/nxw_unzip.c",
+    "engine/win/love_shaders.py",
+    "engine/win/macho_sign.py",
+    "engine/win/metal_host_diagnostics.py",
+    "engine/win/mods.py",
+    "engine/win/oodle_emu.py",
+    "engine/win/pyshim/nxw_flock.py",
+    "engine/win/pyshim/sitecustomize.py",
+    "engine/win/rewrite_parallel.py",
+    "engine/win/sdk/extract_xip.py",
+    "engine/win/sdk_auto_cuts.py",
+    "engine/win/tests/test_win.py",
+    "engine/win/toolchain.example.json",
+    "engine/win/toolchain.py",
+    "engine/win/xcrun.py"
+  ],
+  "integration_overrides": {
+    "engine/.github/workflows/tests.yml": {
+      "upstream_sha": "ba1c854d0f4f7d2b9034e410de428004147462a8",
+      "integrated_sha": "06064670284684173d00db2162dac739ef60f8ac",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/010056B015FE8000/README.md": {
+      "upstream_sha": "570dff5eb16b21c1432ecb684d376d7dc35f1e8f",
+      "integrated_sha": "0b7ee11c24c9d6212583b14e417b96c1f0b2629b",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/0400486024DEC000/README.md": {
+      "upstream_sha": "6c518b6aafb4828fbb939c29ec931b56275ebc20",
+      "integrated_sha": "72a64dc403c2aa96accfb3114dc9bc14e983016d",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/0400486024DEC000/game.tsv": {
+      "upstream_sha": "63905872e2c57d52b80c0b409aeb7b1b40f67181",
+      "integrated_sha": "940c2c7e4e4cad4732b44369aef596674bbe314c",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/0400486024DEC000/patches.py": {
+      "upstream_sha": "2e7727a06e20b7981fa213d7140b9d3c22a3394d",
+      "integrated_sha": "a6c3646bc4bf30130278176745084e8a0e1f0e5a",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/0400486024DEC000/pso_manifest.tsv": {
+      "upstream_sha": "960afcedc90c6fd12d935088536240a4ae3ef4df",
+      "integrated_sha": "ab3c6719cab4b748d0df6ebe21a0f4de3a8c8b0d",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/README.md": {
+      "upstream_sha": "acfdd0c26e524d2edbeb8dcfc93bbabfd73df00b",
+      "integrated_sha": "f600e1d4de34eb94bec751c374be20bc4582bb21",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/game.py": {
+      "upstream_sha": "ffecd5232664a6647efaff417372bb541ed77283",
+      "integrated_sha": "5525fa928ae77cfc1e85d018d55431166f69ddb1",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/settings.py": {
+      "upstream_sha": "08c7270ff2c1fc06fdfddd04d2ec877548b96190",
+      "integrated_sha": "5179b0bacb7d3896352d635496cf3f295648bebc",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/games/settings.tsv": {
+      "upstream_sha": "f8b1c585975df1400182c34ff1e2d223141187d7",
+      "integrated_sha": "9661d1f160907a0fd28d4a3cc50d39018034fadc",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/msl/ndve_engine.metal": {
+      "upstream_sha": "237dffd30c95d77b6c8fa63f3a4d5db1f0dd0653",
+      "integrated_sha": "3de90427dcdb8f25aa9fed33a99f009865b9fe73",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/dmsh_chain.h": {
+      "upstream_sha": "db0046e8fcb83ee8dccf30674ceddd608f3edcf5",
+      "integrated_sha": "18597bdfc0e85ebfec33c006285d4090ac44721f",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/hle_nvn.c": {
+      "upstream_sha": "d2a2cfb1f41d27185a94dcb47d0838e3c97e846d",
+      "integrated_sha": "bf95ca5c427bb01d435f9393469345329098bb55",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/msl_image.h": {
+      "upstream_sha": "77cb6d97a7e79b5df65fc173993b38dba2df7d6b",
+      "integrated_sha": "8e2c278b05a15e84af4ab5c9001247f84c45fce9",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/nvn_fstep.h": {
+      "upstream_sha": "df3b773c8873f5a3f040ef12ce7d92aff669b46e",
+      "integrated_sha": "9ace200b90f1b802f0182a284438894299b28bc7",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/nvn_geometry.inc": {
+      "upstream_sha": "d2194501a12e4498345b8d2a5ca1b86faec97678",
+      "integrated_sha": "0d1331cf095053de5cdb51da8dbc9b38d996ef93",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/nvn_mtl.m": {
+      "upstream_sha": "9a83b441f7155baa69a1ec6524a65d1353aef779",
+      "integrated_sha": "992bea8fe6708e4e372e83bea5b6d75ac404ddd1",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/nvn_ndve.inc": {
+      "upstream_sha": "b4c9d6d12ba73de9a701a577fe0abd4f5148bd89",
+      "integrated_sha": "9264dc47520b73dcf10eb02686a7c4e1fd44eefe",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/nvn_owner.h": {
+      "upstream_sha": "6a36b65c7068e181fdc76bc09fd7827ff33eab78",
+      "integrated_sha": "493d16d154f650f09409d1fd5209a638a8443dfe",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/nvn_owner.m": {
+      "upstream_sha": "c11b65f4ba2bc1f386e66966ee5c1e4b5409309a",
+      "integrated_sha": "e81c68e665ebdfa5ae4563de81aaaf07ac90fdf3",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/nvn/nvn_rec.h": {
+      "upstream_sha": "9ac811c86b27cbb550ab65181d6f79453fc01779",
+      "integrated_sha": "31145a92f63c0e04c64df2f4df3cda76eaaf4ce4",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/Makefile": {
+      "upstream_sha": "bffc9d35ce71e68f32688d38c6924fc5fab1535e",
+      "integrated_sha": "fe837df04e7fa74c80a57c933fc3615e1c74e62c",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_arena_trim.m": {
+      "upstream_sha": "0939cd735e0d83599fb8ce10beb4779288eccf20",
+      "integrated_sha": "c162f3fb811446044c57f1eb2a8afa6c18f83bcc",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_dead_targets.m": {
+      "upstream_sha": "7bb69a2a3480b8ac9ea476d967d33b2d252ef4db",
+      "integrated_sha": "02a8c7ec24f44d64a2963e2f06d43e7af559f6a5",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_direct_upload.m": {
+      "upstream_sha": "02b492cb49249ff67a6fa5d70a8e540386be8b5f",
+      "integrated_sha": "5b8f1d289c4f455ff3a3613cf82b7d94cf49695a",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_fstep.c": {
+      "upstream_sha": "865d79e25381e28cfc426c02a4535fc35fe55ed4",
+      "integrated_sha": "b6ae3ed3f3ad8b12f21e5d2f43b1909ba0c76f94",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_pool_notes.m": {
+      "upstream_sha": "8af3b9d87765c05a69fad8c2ad1edcd00d2cad89",
+      "integrated_sha": "f9a8ec12a0b5ce2f2734e2970c1bb90e9b68cf4a",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_render_enable_queue.m": {
+      "upstream_sha": "b90ec2fffdea115e80a4716bd7edac5fb6fa4707",
+      "integrated_sha": "d8d0daec17d1eeb2ed6d46b62e58f91f95d10ec3",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_sbw.m": {
+      "upstream_sha": "2744c592e13463d95632e8cc433d0070a20a8fa1",
+      "integrated_sha": "fe175eeaf067d3bacb0e8a82bfc70f2acaa75946",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/t_view_swizzle.m": {
+      "upstream_sha": "fa6856a9ede50f51ec58f94a9057255661b45fa4",
+      "integrated_sha": "4679d55493a40b6afa1d09df80f66d06686ec391",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tests/test_ndve_engine.py": {
+      "upstream_sha": "ac8c00a4a810690eda9b544bbc6f44fb46b71d39",
+      "integrated_sha": "37ebc3dc282abea9150416c9831b98837b16bde1",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tools/c1_guard.py": {
+      "upstream_sha": "b3b66ee771ef64d6d7ffeced7f519854d014f82f",
+      "integrated_sha": "b3b66ee771ef64d6d7ffeced7f519854d014f82f",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tools/dmsh_build.py": {
+      "upstream_sha": "a552c8c998186806dd06ca2258cc4b053a3abe0f",
+      "integrated_sha": "1230c388dca5d350ad52dd0c884e15a26451bf69",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tools/dmsh_chain.lock": {
+      "upstream_sha": "90dd48a67aef82e0e065f5fca8faa3016d7ac8b7",
+      "integrated_sha": "82fb8dcfd9942c72665d434ee5714e7fc9189d05",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tools/dmsh_rewrite.py": {
+      "upstream_sha": "97543ba3fdfb0901b96db3c8120ab4e5e0b2d08b",
+      "integrated_sha": "163506d1aebc1df77e4939ebd6550fbf5a17a4ad",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tools/shader_split.py": {
+      "upstream_sha": "cbfbf1914da10c00cdb75ad00c80da3f16c31c34",
+      "integrated_sha": "ee6358626e8684f4dfcb5f325999a1713bb389eb",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/gfx/tools/spirv_cross_bin/build.sh": {
+      "upstream_sha": "2a3523aa64cdaaa1030d88d8bc306ae6073624cc",
+      "integrated_sha": "5181b8b4fa1da625074e6fa9b4003a148574fb52",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/Makefile": {
+      "upstream_sha": "fea687b5aa23d66777fc846550fa358b5dc3bea8",
+      "integrated_sha": "6dd54401f9439de13fbae05fdcabdd100eba1e4a",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/hle_audio.c": {
+      "upstream_sha": "45b0cd115e50c8610b0d286e3604e31dbebc5741",
+      "integrated_sha": "894ff2b56104e7398e542836f1168fc8fb9a354d",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/hle_svc.c": {
+      "upstream_sha": "f594cf962ed178658e8f395cf9e85ba476d3ab5c",
+      "integrated_sha": "818dfb64005546c1156930007092c791e93fc8a3",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/hle_thread.c": {
+      "upstream_sha": "dbcd30c59c60335be754e2997c27c331fe37bd93",
+      "integrated_sha": "e73ee66c6c90c184c98d3753b1313a3c98f20664",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/loader.c": {
+      "upstream_sha": "9c989d40649254aaacd8f4f8fa3602209280db12",
+      "integrated_sha": "362ef2db5915118ddef2c9b71353268f6faf09f6",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/main.c": {
+      "upstream_sha": "f3a634b3e91b5ae1ca4ef27a9f6e25643b83ea2b",
+      "integrated_sha": "e046b207376745b9c4a12d9cca92cc59cfb79c00",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/romfs_image.h": {
+      "upstream_sha": "687b41cff1fe3aa11eb2ad9c8cc032172d7cc180",
+      "integrated_sha": "2b41575e8dd5b945a3dc561c480bc07341d679cf",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/tests/Makefile": {
+      "upstream_sha": "120cda483d487804eb04a4392593bf582473b662",
+      "integrated_sha": "8b9f0803172c92f240ac09e249d452d108220fae",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/host/tests/t_svc_memory.c": {
+      "upstream_sha": "584ed3181eca2a5ae9d387465e930b8367932f91",
+      "integrated_sha": "a5592d82a8c9b8d5557163868be6627b65bca77b",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/DmGameMenu.h": {
+      "upstream_sha": "784727b32871d6c0b6449e325da605fef9de2016",
+      "integrated_sha": "e447902f6eeb8b0188f28a6e132d5a9105b7189b",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/DmGamepad.m": {
+      "upstream_sha": "4910e4e839c4c5b5d398b16cbc0a182757c5db64",
+      "integrated_sha": "cf9bf584e066d26f5b90a3302560b66c9b7d03cb",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/GameMenu.swift": {
+      "upstream_sha": "35fbceae3342ab52e6005ce10454c7ec85a6b755",
+      "integrated_sha": "205e27753e5d366740d1117dbb9dd2a6dec9f865",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/Launcher.swift": {
+      "upstream_sha": "0f9d8b66396a729eaa7152d0db041304f1a3b005",
+      "integrated_sha": "bc374c4e1b5dae488392f78f046171cb295c6733",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/LauncherRow.swift": {
+      "upstream_sha": "e6f79ea8b3287977eaf1303e0afa8b75286d6357",
+      "integrated_sha": "ec2d2b1955bc967b2653758c8cb3fcd8794e9033",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/LauncherSettings.swift": {
+      "upstream_sha": "c0006c00735709cddcc0fe5735cc36eec770a345",
+      "integrated_sha": "c003978b365549c40da49fe0ee57408a5b9a22cd",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/front_ios.m": {
+      "upstream_sha": "188a249debd264b429f6e9223995ba7511fa74fb",
+      "integrated_sha": "d3d40271fa3e6cc0d5259e6aa3e7a89e08f04243",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/Sources/main.m": {
+      "upstream_sha": "6185a7a67fdc53e2f378a1b19e38203dddee9f75",
+      "integrated_sha": "92479936233c07d644a524888b8e11c07daeb242",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/project.yml": {
+      "upstream_sha": "d89d0aed8f74672aaa183ee95d1162e3f3e7bad2",
+      "integrated_sha": "e254c41d4b3da4994382305a6114ef63ec719b08",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/tests/launcher_storage_check.swift": {
+      "upstream_sha": "e3a38a15b29381ffd100c4f8254cfea55490d27d",
+      "integrated_sha": "3680ad176c9d1dd47255b920e364095013d831fd",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/tools/build_ipa.sh": {
+      "upstream_sha": "64a92e8cbd906aaa9f52c409091ffc5616a01d8e",
+      "integrated_sha": "6b7d1ab6fd6dcc5d035badb3a0024f9d6f4b3d18",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/ios/tools/pack_ipa.py": {
+      "upstream_sha": "bf5158586b576f261d305e814f5136c4fd0c1596",
+      "integrated_sha": "5fc061cd0d5ea5716ccd5e6e9e1034c50e1e5986",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/mac/Launcher.swift": {
+      "upstream_sha": "88d9440068d4997689991b547242ee06f1210996",
+      "integrated_sha": "054e19fc274e2cdfba3e4786a7e8ff2803871a54",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/mac/pack_app.py": {
+      "upstream_sha": "134682b95af5d553319d82f8634cdd68be634e55",
+      "integrated_sha": "41f140171a42d6b4603fa33bc834faa16cc9b1e1",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/tools/patch_nso.py": {
+      "upstream_sha": "54a80096de4ba944e6e118fea53011cb4d91f3fb",
+      "integrated_sha": "df77e759b9a952dd5d26468e9dfd0bad8da9e462",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/tools/shader_cache.py": {
+      "upstream_sha": "065d364d597219b1aef9f05e1df97d4c93fd53bb",
+      "integrated_sha": "e62be02b6f39ba900ea520e4d575a5fcdd6bf376",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/tools/tests/test_launcher_settings.py": {
+      "upstream_sha": "db5bfb597ff22b2bb165c47efa34c95ed47ea301",
+      "integrated_sha": "e9a99a69b8c03d759aeb19cd2b33699b532e4d35",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/tools/tests/test_player_env.py": {
+      "upstream_sha": "a62565e425f1e24d40ee66e84e85ec01321ff4ca",
+      "integrated_sha": "e4ea677c34a784c2bfd2df3ed66b75183bfc1275",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/dm/tools/tests/test_settings.py": {
+      "upstream_sha": "57d3e4164c61f82f4015d70e37766030350d577e",
+      "integrated_sha": "1b180c8bb32f90717828c7b7475c4e5869ffc3bc",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/agents/game-patches.md": {
+      "upstream_sha": "e7f7dcac3fa530f7f647974dd274447897175063",
+      "integrated_sha": "794ce6d89e8e1a0bd185333a7be34e52c26a02bc",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/agents/symptoms.md": {
+      "upstream_sha": "ee60ebfdf70f2363f679c667d73ff67da2858c90",
+      "integrated_sha": "4b21f7ad53e7793d90061911b101aae898fbcd0d",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/development.md": {
+      "upstream_sha": "9600f1ffd99bec3b9ed9ac77368aa74fc86ae943",
+      "integrated_sha": "a3d86f93fdc343b421ab51abe2421b32cc8b0880",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/env_switches.tsv": {
+      "upstream_sha": "1b8f780695ecc497997b159d4f8e21912c677d7d",
+      "integrated_sha": "f938f6f5c7f6c1c4e82b96869fe8c222707a105c",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/reference/frame-rate.md": {
+      "upstream_sha": "2c655b74deb7dbe71fd1c8dc06c4a680e4d78002",
+      "integrated_sha": "b45572f263284f3acd5291e6a002221b26f33af1",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/reference/memory.md": {
+      "upstream_sha": "721ff2ddff91fa9965108d68cbc095cb90f0bc25",
+      "integrated_sha": "b190baa3b0387a1dbe1480d2847b0792551a317b",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/reference/movies.md": {
+      "upstream_sha": "c12d3b7193f034bfe3a25703a49fb1b8a627ef47",
+      "integrated_sha": "df408b1724e68baada9a66791413235a6b7196f4",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/reference/nvn-objects.md": {
+      "upstream_sha": "73a4580e8c701e26320543119c60cbcb6334768e",
+      "integrated_sha": "d0fd68b66ebbdd4138d0840e2ac43bf61f2ff2f6",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/reference/rendering.md": {
+      "upstream_sha": "183a5f28872a683d4dffc9b24ea489f6e583c687",
+      "integrated_sha": "bf598480a337c865032cef47fae5f1de987ed81b",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/docs/settings.md": {
+      "upstream_sha": "6bc995c668d5e20a00384536630b7337b8244e02",
+      "integrated_sha": "df23f21608b29af5f5b1a0c4572e58a04602cd44",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    },
+    "engine/scripts/build_ipa_from_nsp.py": {
+      "upstream_sha": "80a1172aa149506ade7615d5685bb38ea3ee2b17",
+      "integrated_sha": "25046001a3e3937ae006967bc674899343b3f122",
+      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+    }
+  },
+  "platform_binary_exclusions": [
+    {
+      "path": "engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate",
+      "upstream_sha": "6af7018dd748dea57e30866380bd804aee722c6c",
+      "reason": "Prebuilt non-Windows executable excluded from source-only Windows distribution"
+    },
+    {
+      "path": "engine/dm/gfx/tools/spirv_cross_bin/spirv-cross",
+      "upstream_sha": "639efc5209376ffa35054e777b205370eb82d803",
+      "reason": "Prebuilt non-Windows executable excluded from source-only Windows distribution"
+    }
   ],
   "deleted_paths": [
+    "engine/HOOKLINK.md",
     "engine/dm/games/0100606026F12000/shader_facts_manual.tsv",
     "engine/dm/games/01007EF00011E000/shader_facts_manual.tsv",
     "engine/dm/games/0100A9D01C446000/shader_facts_manual.tsv",
     "engine/dm/games/0100F2C0115B6000/shader_facts_manual.tsv",
     "engine/dm/games/0100F43008C44000/shader_facts_manual.tsv",
+    "engine/dm/gfx/msl/fgmv.metal",
+    "engine/dm/gfx/tests/t_alias_retire.m",
+    "engine/dm/gfx/tests/t_file_wire.m",
+    "engine/dm/gfx/tests/t_framegen.m",
+    "engine/dm/gfx/tests/t_pool_retired.m",
+    "engine/dm/gfx/tests/t_pso_unwrap.m",
+    "engine/dm/host/frame_mode.h",
+    "engine/dm/host/mic_apple.h",
+    "engine/dm/host/mic_apple.m",
+    "engine/dm/host/tests/t_input_stream.c",
+    "engine/dm/ios/Sources/InventoryManager.swift",
+    "engine/dm/ios/Sources/SaveEditor.swift",
+    "engine/dm/ios/tools/save-editor/LICENSE",
+    "engine/dm/ios/tools/save-editor/editor.html",
+    "engine/dm/ios/tools/save-editor/inventory-driver.js",
     "engine/dm/tools/tests/test_jump_copies.py",
-    "engine/dm/tools/tests/test_jump_guarded.py"
+    "engine/dm/tools/tests/test_jump_guarded.py",
+    "engine/dm/tools/tests/test_oot_frame_step.py"
   ],
-  "notes": "Merged original NXNative into HookLink engine, favoring HookLink in conflicting source hunks. Imported source Git blobs are verified; Windows-only files and source overlays are retained. The displayed SHA denotes original upstream ancestry, not an exact, unmodified original NXNative checkout. Alpha V1.1.4 restores HookLink's MEMBAR-as-device-fence rewrite in the original NXnative dmsh_rewrite.py; this path is now an intentional integration overlay. Alpha V1.1.5 reconciles c1_guard.py byte-for-byte with pinned seedds/nxnative after V1.1.4 failed loading cb_extent.py; this removes the obsolete HookLink-only guard overlay. Alpha V1.1.7 is based directly on V1.1.5 and adds only native iOS host compile fixes and their tests; V1.1.6 memory and process-management changes are intentionally absent. Alpha V1.1.8 restores the pinned original NXnative Metal 4 archive-management helper block omitted from the previous merge; all other V1.1.5-based behavior remains unchanged. Alpha V1.1.9 removes a duplicated demand recorder and restores missing pinned NXnative pool-spare structures/counters/helpers required by the existing pool table implementation; no V1.1.6 Windows memory-process changes. Alpha V1.2.0 repairs V1.1.9's four remaining native iOS compile-site incompatibilities in nvn_mtl.m only, with source-contract tests; no V1.1.6 memory or process changes.",
-  "integration_overrides": {
-    "engine/dm/gfx/tools/dmsh_rewrite.py": {
-      "upstream_sha": "12b0039dde59368b0962a62325b1d63715fd728b",
-      "integrated_sha": "332678869b1799212fb5a5b3892c458875027ca3",
-      "reason": "Preserve HookLink MEMBAR device-scope fence semantics while retaining original NXnative rewrites"
-    },
-    "engine/dm/gfx/nvn/nvn_mtl.m": {
-      "upstream_sha": "4c9493f0196f95e226a790177529fc792c258a61",
-      "integrated_sha": "feb0b36bda8f35bb942f86dce34d25b0a0d3373e",
-      "reason": "V1.1.5-based native iOS host compile repairs through V1.2.0: restores pinned pool_entry lead ABI, compressed-alias pairing initialization, display-link timing tolerance and complete link_drain_note call; keeps earlier archive and pool fixes"
-    },
-    "engine/dm/ios/Sources/front_ios.m": {
-      "upstream_sha": "56a858d836f03978b370527fa1b527966b3b378b",
-      "integrated_sha": "b3f0d41227accfcbaaa742baa8f66deffa7d89a1",
-      "reason": "Isolated V1.1.5 native iOS host compile repair: single screen FPS implementation with stdatomic"
-    },
-    "engine/dm/host/hle_audren.c": {
-      "upstream_sha": "2b32130a5bf5f3031d87da80ccd2a2d4eaec02ce",
-      "integrated_sha": "2cc3bdc5a034e5a024cef80437775cc4c1dab871",
-      "reason": "Narrow backport of seedds/nxnative 2edad1828de247aaf46c53cb288357cb65e84be0 (5 ms Mach real-time scheduling for the audren producer); keep pinned upstream base unchanged."
-    }
-  }
+  "reconstructed_hooklink_base": "35c4de4ebddb0cb6f5d63fa997698b7193313d38",
+  "windows_overlay_parent": "ef48158a8428e52e3e5a086115561b8b94640dba",
+  "notes": "Every original NXnative update through the exact target was three-way merged. Local conflicts favor HookLinkWindows; all different blobs are enumerated. This is an unvalidated candidate, not a verified iPhone build."
 }

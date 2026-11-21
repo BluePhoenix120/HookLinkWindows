@@ -1,5 +1,14 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.2 (2026-11-20)
+
+- Integrated **all changes** from original [seedds/nxnative](https://github.com/seedds/nxnative) main at exact commit [`d2fd78b402f9`](https://github.com/seedds/nxnative/commit/d2fd78b402f92d5a83b78987e49aba22e8626719), through a complete Git three-way merge rather than selected backports. The 121 original-NXnative commits since previous base `0b5fd602` were considered in the merge.
+- Retained HookLink engine modifications from [`dsi-hub/nxnative@698b46b`](https://github.com/dsi-hub/nxnative/commit/698b46bc5b14510fffc0a4b8fd4bf78309004e4c) and HookLinkWindows-specific Windows/iOS code, favoring custom changes only in overlapping merge conflicts. Exact original SHA and 76 remaining modified upstream-file overrides are recorded in `ENGINE_PIN_FILES.json`; no changed source file was silently skipped.
+- Restored originally omitted upstream source including EASF tools and `ttdat.py`, retaining only two explicit Windows-distribution exclusions for prebuilt non-Windows translator executables. Updated the GUI's original NXnative commit link.
+- Includes upstream AudioOut large-callback staging, audio real-time deadline, DualSense diagonal input bounds, refreshed Ocarina shader map and all other merged original-source changes. The shader chain remains `a58d7f1f4ef9`.
+- **Windows source audit, 199 regression tests and GUI packaging were verified on the merge candidate.** Full Windows-host iOS cross-compilation, end-to-end IPA generation and iPhone gameplay/audio validation of V1.2.2 are **not yet verified**. V1.2.1 remains available as a known-working graphics baseline.
+
+
 ## HookLinkWindows Alpha V1.2.1 (2026-11-20)
 
 - Backported the narrowly scoped NXnative audio producer deadline fix from [`seedds/nxnative@2edad182`](https://github.com/seedds/nxnative/commit/2edad1828de247aaf46c53cb288357cb65e84be0) into `engine/dm/host/hle_audren.c`. The worker requests a preemptible Mach time-constraint policy (5 ms period/deadline, 1 ms requested computation budget) after output setup, and restores standard scheduling before teardown. If rejected, audio continues with the original scheduling; `DM_AUDREN_RT=0` disables the new policy for A/B diagnosis.

@@ -42,6 +42,8 @@ _SUPPORTED_ENGINE_BASES = {
     # not substituted wholesale. ENGINE_PIN_FILES.json records both parents.
     ('3.0.1', '0b5fd6020093407af8bb5ad166e78e00bd2b7242',
      'https://github.com/seedds/nxnative.git'),
+    ('3.0.1', 'd2fd78b402f92d5a83b78987e49aba22e8626719',
+     'https://github.com/seedds/nxnative.git'),
 }
 _HOOKLINK_X201_ENGINE = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
 
