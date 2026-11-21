@@ -1,0 +1,35 @@
+name: Review recent original NXnative source update
+
+on:
+  push:
+    branches:
+      - fix/v1.2.4-native-merge
+    paths:
+      - 'tools/integrate_recent_original.py'
+      - '.github/workflows/integrate-recent-original.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/v1.2.4-native-merge
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compare EVERY original change and inspect real HookLink Windows conflicts
+        run: python3 -B tools/integrate_recent_original.py --report upstream-recent-review.md
+      - name: Upload complete report (including all conflicting hunks)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v124-complete-upstream-review
+          path: upstream-recent-review.md
+          if-no-files-found: warn
