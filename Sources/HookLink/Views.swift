@@ -260,8 +260,8 @@ struct PhonePage: View {
             if !app.isMac {
                 Toggle(isOn: $app.smallIPA) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Installing with AltStore, SideStore or LiveContainer")
-                        Text("Leaves out the GPU pipeline file (over 4 GB), which these installers cannot read. The first start then prepares the game's pipelines on the phone and takes longer. Not needed for iLoader or Sideloadly.").font(.caption).foregroundStyle(.secondary)
+                        Text("Build the pipelines on the phone")
+                        Text("Leaves out the GPU pipeline file (over 4 GB) and builds the game's pipelines for your phone's own GPU instead. The IPA is much smaller and fits every iPhone, but the first start (and the first start after an iOS update) shows \"Preparing pipelines\" for a long time; keep the phone plugged in and cool. Needed for AltStore, SideStore, LiveContainer and Sideloadly, which cannot sign the large file.").font(.caption).foregroundStyle(.secondary)
                     }
                 }
             }
