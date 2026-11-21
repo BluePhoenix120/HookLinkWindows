@@ -69,6 +69,19 @@ def three_way(ours, base, windows, temp, label):
         f.write_bytes(data)
     p = command("git", "merge-file", "--diff3", "-p", *(str(f) for f in names), check=False)
     if p.returncode:
+        text = p.stdout.decode("utf-8", "replace")
+        groups = []
+        lines = text.splitlines()
+        i = 0
+        while i < len(lines):
+            if lines[i].startswith("<<<<<<< "):
+                j = i + 1
+                while j < len(lines) and not lines[j].startswith(">>>>>>> "):
+                    j += 1
+                groups.append("\n".join(lines[i:min(j + 1, len(lines))]))
+                i = j
+            i += 1
+        print("CONFLICT_HUNKS " + label + " " + json.dumps({"count":len(groups),"hunks":[x[:7500] for x in groups][:12]}), flush=True)
         return None, "text merge has overlapping hunks"
     return p.stdout, None
 
