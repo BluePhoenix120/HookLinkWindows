@@ -1,5 +1,13 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.7 (2026-11-21)
+
+- Fixes the V1.2.6 Windows build's `plistlib.InvalidFileException: Invalid file` during **Check prerequisites / Build IPA**. The error arose in `engine/win/toolchain.py`, where the SDK auto-discovery sort loaded an invalid `SDKSettings.plist` without handling parse failures.
+- Reads `SDKSettings.json`, `SDKSettings.plist` and `SystemVersion.plist` defensively. A truncated or malformed plist no longer crashes SDK discovery; invalid candidates are skipped in favor of valid SDKs. Valid JSON is preferred when present, and a malformed optional build-version plist does not invalidate an otherwise valid SDK. The SDK's minimum iOS 26 version, headers and frameworks are still enforced—**this does not make a broken SDK valid or silently invent its version**.
+- Adds six regression tests covering a corrupt candidate ahead of a valid SDK, invalid explicit path fallback, invalid `SystemVersion.plist`, valid plist fallback, wrong JSON shape, and refusing malformed metadata when no valid SDK exists.
+- Keeps official NXnative pinned at `3e1ada5b96ac` and shader chain `f062f816dfb7`; game extraction, shader caches and existing build work directories need not be deleted. For a reported missing SDK after this fix, choose/reimport a complete valid iPhoneOS SDK in Toolchain setup. End-to-end IPA and iPhone testing remain outstanding.
+
+
 ## HookLinkWindows Alpha V1.2.6 (2026-11-21)
 
 - Fixes the confirmed V1.2.5 Windows rewrite crash (`AttributeError: module 'sdk_patches' has no attribute 'CUTS'`) when building Ocarina of Time v131072 from an existing extracted work directory. The Windows driver still accessed the former exact-build SDK `CUTS` registry, while the 50-commit upstream NXnative merge migrated those SDK address-region fixes into `MATCH_CUTS['sdk']` function-matched rules.
