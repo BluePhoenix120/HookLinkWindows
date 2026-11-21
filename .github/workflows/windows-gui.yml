@@ -104,7 +104,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Could not inspect previous version metadata' }
           $oldVersion = ($oldJson | Out-String | ConvertFrom-Json).release
           $newVersion = (Get-Content -LiteralPath 'ENGINE_PIN.json' -Raw | ConvertFrom-Json).release
-          if ($oldVersion -eq $newVersion) { Write-Host 'No version bump: release not published'; exit 0 }
+          if ($oldVersion -eq $newVersion) { Write-Host 'No version bump; checking whether the current version still needs its first successful release.' }
           if ($newVersion -notmatch '^Alpha V(\d+\.\d+\.\d+)$') { throw "Unsupported Alpha version format: $newVersion" }
           $tag = 'v' + ($newVersion -replace '^Alpha V', '') + '-alpha.1'
           $repo = '${{ github.repository }}'
@@ -115,7 +115,7 @@ jobs:
           foreach ($file in @($zip, $exe)) { if (!(Test-Path -LiteralPath $file)) { throw "Missing release asset: $file" } }
           $section = '## HookLinkWindows ' + $newVersion
           $history = Get-Content -LiteralPath 'CHANGELOG.md' -Raw
-          $pattern = '(?ms)^' + [regex]::Escape($section) + '\s*\r?\n(.*?)(?=^## HookLinkWindows |\z)'
+          $pattern = '(?ms)^' + [regex]::Escape($section) + '[^\r\n]*\r?\n(.*?)(?=^## HookLinkWindows |\z)'
           $match = [regex]::Match($history, $pattern)
           if (!$match.Success) { throw "No release notes in CHANGELOG.md for $newVersion" }
           $notes = $match.Groups[1].Value.Trim() + "`n`nThe complete Windows ZIP contains the engine source and GUI executable. IPA creation still requires external build tools and user-provided game assets; on-device behavior of this version requires testing."
