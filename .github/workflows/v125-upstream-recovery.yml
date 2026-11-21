@@ -1,4 +1,4 @@
-name: V1.2.5 candidate - reviewed 11-way upstream conflict reconciliation
+name: V1.2.5 candidate - test complete 50-commit integration
 
 on:
   push:
