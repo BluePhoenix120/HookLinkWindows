@@ -1,5 +1,13 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.6 (2026-11-21)
+
+- Fixes the confirmed V1.2.5 Windows rewrite crash (`AttributeError: module 'sdk_patches' has no attribute 'CUTS'`) when building Ocarina of Time v131072 from an existing extracted work directory. The Windows driver still accessed the former exact-build SDK `CUTS` registry, while the 50-commit upstream NXnative merge migrated those SDK address-region fixes into `MATCH_CUTS['sdk']` function-matched rules.
+- Uses the official upstream SDK-wide matcher instead of manufacturing a legacy fixed-build `CUTS` entry that would silently suppress upstream function matching in `patch_nso.py`. The Windows legacy SDK scanner remains available only for engines with neither a registered fixed-build patch nor SDK-wide match rules. Adds six regression tests for new and old SDK registry shapes, known fixed builds, and the wrapper/shim interface.
+- Retains the exact original NXnative pin `3e1ada5b96ac`, HookLink camera and renderer fixes, Windows compatibility paths, all existing shader outputs, and shader chain `f062f816dfb7`. The SDK compatibility fix does not require recompiling already valid shaders. Keeps existing build directories and caches; choose **Build IPA** again after updating to the V1.2.6 complete Windows package.
+- The three malformed `.zs` game-data warnings are independent of this Python exception; `Allow damaged assets` may permit the pack to continue, but does not repair the source files. Full Windows-to-IPA compilation and iPhone gameplay/audio verification remain outstanding.
+
+
 ## HookLinkWindows Alpha V1.2.5 (2026-11-21)
 
 - Integrates **all 50 official [seedds/nxnative](https://github.com/seedds/nxnative) commits** from `3ec5b785f37f` through `3e1ada5b96ac`, across 168 upstream source paths. Git three-way merging brings forward compatible shader splitter and translator improvements, NXSD/zstd support, Metal texture/encoder/archive changes, updated game profiles, and new Ocarina taller-screen functions.
