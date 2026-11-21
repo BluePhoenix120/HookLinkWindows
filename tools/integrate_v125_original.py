@@ -118,7 +118,7 @@ def main():
             else:
                 result,err=three_way(new,old,W,tmp)
                 if err is not None:
-                    conflicts[path]=err[:14000]
+                    conflicts[path]=err
                 else:
                     changes[path]=result
                     stats["three_way_clean"]+=1
