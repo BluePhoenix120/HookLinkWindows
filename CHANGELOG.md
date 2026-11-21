@@ -1,5 +1,12 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.4 (2026-11-20)
+
+- Fixes the **five native iOS Clang errors in V1.2.3** after all 42,847 iOS game shaders and 19 host Metal libraries were produced. The errors were in `dm/gfx/nvn/nvn_mtl.m` (undeclared `shot_ready`, two missing `present_now` producer event arguments, undeclared `elapsed`) and `nvn_ndve.inc` (stale `dp` reference). The corrected calls preserve the actual event value, screenshot synchronization, Metal 4 commit options, frame-generation handling, and HookLink NDVE lite path.
+- Advances **every original NXnative change** from `d2fd78b402f9` to `3ec5b785f37f` (four commits across 29 source paths): NUP shifted metadata/NACP validation, unsupported OpenGL fixed-function disables, audio output recovery after route-change stalls, and Ampere per-texel texture gather offsets. The original-first three-way review found **zero overlapping source conflicts** (18 original-only updates, eight clean merges; two Windows shader-chain metadata files retained and one non-Windows prebuilt binary excluded).
+- Updates the exact original SHA, all 3,895 original-source hashes, 77 documented integration overrides, and the shader-chain source identifier. GUI pre-build chain verification still must check the actual installed Windows translator and compiler, synchronize local lock/header with backups when needed, and **recompile shaders whose chain changed**, without deleting previously completed archives.
+- Adds native-compiler-error and upstream-audio/translator/metadata source regression tests. The Windows CI suite and EXE/ZIP packaging are required before release. **A full Windows-to-iOS native compilation, IPA, and on-device V1.2.4 gameplay/audio test are still unverified.** Preserve the last working IPA and shader caches until the new build succeeds.
+
 ## HookLinkWindows Alpha V1.2.3 (2026-11-20)
 
 - Fixes the **V1.2.2 Ocarina shader split failure** reproduced from Windows build output at stage 4/7. The split included false BAHS vertex key `ce0eba6c3584814d` at `AglShader.sharcb@0x1b41cc`, while the complete original NXnative shader map already excluded it. That false entry shifted 3,022 subsequent `vs_shader.bin` indices; the profile verification correctly aborted instead of compiling misindexed shader records.
