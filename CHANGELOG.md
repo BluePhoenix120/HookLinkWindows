@@ -1,5 +1,16 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.3 (2026-11-20)
+
+- Fixes the **V1.2.2 Ocarina shader split failure** reproduced from Windows build output at stage 4/7. The split included false BAHS vertex key `ce0eba6c3584814d` at `AglShader.sharcb@0x1b41cc`, while the complete original NXnative shader map already excluded it. That false entry shifted 3,022 subsequent `vs_shader.bin` indices; the profile verification correctly aborted instead of compiling misindexed shader records.
+- Restores original NXnative [PR #2943](https://github.com/seedds/nxnative/pull/2943) binary-record validation, candidate filtering and BAHS variation pairing in `engine/dm/gfx/tools/shader_split.py`. Retains other HookLinkWindows source modifications, updates the explicit integrated-source blob SHA in `ENGINE_PIN_FILES.json`, and adds five source/functional regression tests with synthetic record bytes.
+- The integration now reconstructs the engine **from original NXnative first** (`d2fd78b402f9`), merges real HookLink X2.0.1 changed hunks, then replays Windows-specific deltas by three-way source merge. Unlike V1.2.2, it does not prioritize older whole-file Windows/HookLink copies. The recorded source audit covers 3,895 upstream files, 77 integrated upstream overrides, 20 original/HookLink overlaps, six explicit Windows source resolutions, and two excluded non-Windows translator binaries; detailed provenance is in `docs/UPSTREAM_FIRST_ENGINE_INTEGRATION.md`.
+- Adds permanent Windows regression checks for newer NXnative functions previously missing from the port, including BAHS/KIT parsing, ray-tracing shader translation, NSO patching, shader-cache readers and IPA building. The Windows Metal compiler lock and shader-chain header remain Windows-specific and require verification in a full device-targeted build.
+- Keeps official NXnative base `d2fd78b402f92d5a83b78987e49aba22e8626719`, HookLink custom engine base `698b46bc5b14510fffc0a4b8fd4bf78309004e4c`, the Windows build stack, audio fixes, and shader-chain version unchanged.
+- The three invalid `.zs` texture files reported in the user's NUP remain a **separate game-data warning**. This update does not repair or redistribute game data.
+- Windows tests, the Windows GUI package and subsequent IPA/device runtime **require fresh verification**. V1.2.1 remains the last build personally confirmed to launch the game; V1.2.2's full original-engine merge was packaged but the shader split failed during local build.
+
+
 ## HookLinkWindows Alpha V1.2.2 (2026-11-20)
 
 - Integrated **all changes** from original [seedds/nxnative](https://github.com/seedds/nxnative) main at exact commit [`d2fd78b402f9`](https://github.com/seedds/nxnative/commit/d2fd78b402f92d5a83b78987e49aba22e8626719), through a complete Git three-way merge rather than selected backports. The 121 original-NXnative commits since previous base `0b5fd602` were considered in the merge.

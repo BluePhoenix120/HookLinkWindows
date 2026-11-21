@@ -113,6 +113,11 @@ jobs:
           $zip = 'dist/HookLinkWindows-Windows-x64.zip'
           $exe = 'dist/HookLinkWindows.exe'
           foreach ($file in @($zip, $exe)) { if (!(Test-Path -LiteralPath $file)) { throw "Missing release asset: $file" } }
-          $notes = 'Experimental Windows GUI release. V1.2.1 backports the upstream 5 ms real-time audio producer deadline for crackling/underruns. The Windows-built V1.2.0 IPA ran on an iPhone 18 Pro Max; the V1.2.1 audio fix has not yet been verified on an iPhone. ZIP contains full source and GUI EXE; building an IPA requires external tools and user-provided input.'
+          $section = '## HookLinkWindows ' + $newVersion
+          $history = Get-Content -LiteralPath 'CHANGELOG.md' -Raw
+          $pattern = '(?ms)^' + [regex]::Escape($section) + '\s*\r?\n(.*?)(?=^## HookLinkWindows |\z)'
+          $match = [regex]::Match($history, $pattern)
+          if (!$match.Success) { throw "No release notes in CHANGELOG.md for $newVersion" }
+          $notes = $match.Groups[1].Value.Trim() + "`n`nThe complete Windows ZIP contains the engine source and GUI executable. IPA creation still requires external build tools and user-provided game assets; on-device behavior of this version requires testing."
           & gh release create $tag $zip $exe --repo $repo --target '${{ github.sha }}' --title "HookLinkWindows $newVersion" --notes $notes --latest
           if ($LASTEXITCODE -ne 0) { throw "Failed to publish regular release $tag" }

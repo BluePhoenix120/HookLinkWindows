@@ -1,0 +1,57 @@
+name: Stage upstream-first V1.2.3 integration into draft PR
+
+on:
+  push:
+    branches:
+      - fix/v1.2.3-bahs-records
+    paths:
+      - 'tools/apply_upstream_first.py'
+      - '.github/workflows/apply-upstream-first.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v123-upstream-first-merge
+  cancel-in-progress: false
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout original branch only (no main modification)
+        uses: actions/checkout@v4
+        with:
+          ref: fix/v1.2.3-bahs-records
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply latest original NXnative then actual HookLink and Windows source hunks
+        run: python3 -B tools/apply_upstream_first.py
+      - name: Check Python syntax and complete source provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m py_compile engine/dm/gfx/tools/shader_split.py engine/dm/gfx/tools/dmsh_build.py engine/dm/gfx/tools/dmsh_rewrite.py engine/dm/tools/patch_nso.py engine/dm/tools/shader_cache.py engine/scripts/build_ipa_from_nsp.py
+          python3 -B -m unittest discover -s tests -p 'test_engine_sync_manifest.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_bahs_record_guard.py' -v
+          python3 -B tools/release_audit.py .
+          git add --all -- engine ENGINE_PIN.json ENGINE_PIN_FILES.json docs/UPSTREAM_FIRST_ENGINE_INTEGRATION.md
+          git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check
+          test -z "$(git ls-files -u)"
+          test "$(python3 -c 'import json; print(json.load(open("ENGINE_PIN.json"))["release"])')" = 'Alpha V1.2.3'
+          test "$(python3 -c 'import json; print(json.load(open("ENGINE_PIN.json"))["nxnative_commit"])')" = 'd2fd78b402f92d5a83b78987e49aba22e8626719'
+      - name: Push source integration to existing draft PR branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then echo "No changed source; refusing empty commit"; exit 1; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "V1.2.3 candidate: original NXnative first, HookLink and Windows hunks retained"
+          git push origin HEAD:refs/heads/fix/v1.2.3-bahs-records
+          echo "Draft PR source integrated: $(git rev-parse HEAD)"
