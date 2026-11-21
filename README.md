@@ -1,3 +1,9 @@
+## Alpha V1.2.5 — integrate 50 original NXnative commits without regressing HookLinkWindows
+
+This release merges **all 50 original [NXnative](https://github.com/seedds/nxnative) commits** from `3ec5b785` through [`3e1ada5b`](https://github.com/seedds/nxnative/commit/3e1ada5b96acb61293ac790bd6dd093a947abed6), affecting 168 original paths. All compatible upstream source is integrated through a real Git three-way merge. The 11 overlapping paths receive individually documented, source-hunk-level reconciliation rather than preserving stale whole Windows files.
+
+Notable upstream additions include efficient in-process shader archive reading and NXSD support, more robust Metal texture size validation and archive writes, revised memory and input handling, and Ocarina of Time's native taller-screen hooks. The integration preserves HookLink's tested v131072 iPhone camera/wide-view, 16 GiB alias reservation, movie timing, iOS launcher, audio, shader path normalization and Windows build tools. See [V1.2.5 upstream integration](docs/NXNATIVE_RECENT_UPSTREAM_V125.md) and [the changelog](CHANGELOG.md). **This upstream update requires a new Windows IPA and iPhone runtime test** before declaring V1.2.5 itself fully verified; keep existing working IPA/shader caches available.
+
 ## Alpha V1.2.4 — repair native Metal compilation and merge the latest original NXnative
 
 V1.2.3 compiled all 42,847 Ocarina iOS game shaders but stopped compiling the iOS host with five native errors. V1.2.4 restores screenshot synchronization (`shot_ready`), both present-callback producer event arguments, snapshot queue-commit timing (`elapsed`), and removes the obsolete NDVE `dp` reference while keeping HookLink's frame-generation and NDVE lite behavior.
@@ -28,12 +34,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.2.3](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.2.5](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.3-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.3-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.5-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.5-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -44,12 +50,12 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.2.3 — experimental Windows port (November 2026).**
+**Alpha V1.2.5 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
-| Windows GUI, package creation and automated regression tests | **199 Windows tests passed** on V1.2.2; V1.2.3 adds BAHS shader parsing regression tests (Windows CI verification required). Full IPA and phone testing remain outstanding |
-| Source integration | Complete original NXnative `d2fd78b402f9` integrated by three-way merge with HookLink custom changes and Windows overlays retained; see [Engine and upstream](#engine-and-upstream) |
+| Windows GUI, package creation and automated regression tests | V1.2.5 source regression tests and Windows GUI packaging must pass GitHub Actions before release; an on-device V1.2.5 test is still required |
+| Source integration | Complete original NXnative `3e1ada5b` integrated through 50 upstream commits, with HookLink/Windows source differences reviewed at the hunk level; see [Engine and upstream](#engine-and-upstream) |
 | Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Verified by developer for V1.2.0** on iPhone 18 Pro Max/iOS 27.2: gameplay and graphics work. V1.2.1 audio scheduling fix still needs device validation |
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
 | Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |

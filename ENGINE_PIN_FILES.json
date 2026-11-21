@@ -1,10 +1,10 @@
 {
   "nxnative_repo": "https://github.com/seedds/nxnative.git",
   "from_commit": "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf",
-  "nxnative_commit": "3ec5b785f37f8c87d78433f152914d89c4ef93c9",
+  "nxnative_commit": "3e1ada5b96acb61293ac790bd6dd093a947abed6",
   "hooklink_engine_commit": "698b46bc5b14510fffc0a4b8fd4bf78309004e4c",
   "engine_integration_commit": "c0c4aba1774690c82ba78b11d9a1551aeacedf09",
-  "engine_integration_policy": "upstream-first complete original NXnative up to 3ec5b785f37f; retain actual HookLink and Windows changes by three-way merge; local Windows chain revalidated before IPA",
+  "engine_integration_policy": "upstream-first complete original NXnative up to 3e1ada5b96ac; retain actual HookLink and Windows changes by three-way merge; local Windows chain revalidated before IPA",
   "changed_paths": [
     {
       "path": "engine/.clang-tidy",
@@ -92,7 +92,7 @@
     },
     {
       "path": "engine/README.md",
-      "sha": "f08dea346432e3b654b554d1d0b17fe18ec90b7f"
+      "sha": "ee1cd8a0ae5b08fb5db734bf31f273dca6b4cf7c"
     },
     {
       "path": "engine/dm/.gitignore",
@@ -2167,6 +2167,42 @@
       "sha": "64b0fe26ccc6773ceffc959d5eb4cd32fb1e8196"
     },
     {
+      "path": "engine/dm/games/010051C0134F8000/README.md",
+      "sha": "9f442e690fcc6c1d4b5d35735b87cab298cc67a3"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/game.tsv",
+      "sha": "f6a6bbd1a08ff40cd81570da2ce862955b14db83"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/pso_manifest.tsv",
+      "sha": "f69aa70b50c2df6877fa2695a7141e52edb93e2f"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/shader_facts.tsv",
+      "sha": "664cefb42fba0b3090c7c32aae43fcaf9037b9b1"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/shader_map.tsv",
+      "sha": "20019eda94186ac4b1ff7eb21940a224e56d2f78"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010051C0134F8000/shader_pairs.tsv",
+      "sha": "85d7eb011a84a62962327dd01d20cd77bee12a41"
+    },
+    {
       "path": "engine/dm/games/01005270232F2000/README.md",
       "sha": "bba3fd7476791243c7466311441fec5deb2077b2"
     },
@@ -2420,7 +2456,7 @@
     },
     {
       "path": "engine/dm/games/01005CA01580E000/README.md",
-      "sha": "23e8fe89986c1266f6a0509f911ef69a9c25c6de"
+      "sha": "c1135b7baeb3402a19cc28b97e98133a5d1accae"
     },
     {
       "path": "engine/dm/games/01005CA01580E000/bf_want.tsv",
@@ -2428,7 +2464,7 @@
     },
     {
       "path": "engine/dm/games/01005CA01580E000/game.tsv",
-      "sha": "af50363a21e99d9bceaa2e1c99e42858377b660a"
+      "sha": "c8c221bc2bf6f0769e0fe33d4b571d64f31dab4d"
     },
     {
       "path": "engine/dm/games/01005CA01580E000/pso_manifest.tsv",
@@ -2800,7 +2836,7 @@
     },
     {
       "path": "engine/dm/games/010067300059A000/README.md",
-      "sha": "6eeaaaf43be3f58bcbfd4dd62ce464ee1efb376d"
+      "sha": "dd692d4f523bf7db4ba038126eb41ef40f93b0f8"
     },
     {
       "path": "engine/dm/games/010067300059A000/bf_want.tsv",
@@ -3088,7 +3124,7 @@
     },
     {
       "path": "engine/dm/games/01006F8002326000/README.md",
-      "sha": "c260f36fc72599f6bb177574427c22001ed018e1"
+      "sha": "159f6f2e3740dd3e76b87d8da6af1224bc10b6b3"
     },
     {
       "path": "engine/dm/games/01006F8002326000/bf_want.tsv",
@@ -3104,7 +3140,7 @@
     },
     {
       "path": "engine/dm/games/01006F8002326000/patches.py",
-      "sha": "a4892787cc49f77ca179de1e08738fe527770bd0"
+      "sha": "9a3f629094b0f778f986bbd226a2364ec6db7434"
     },
     {
       "path": "engine/dm/games/01006F8002326000/pso_manifest.tsv",
@@ -3584,7 +3620,7 @@
     },
     {
       "path": "engine/dm/games/01007EF00011E000/README.md",
-      "sha": "a30aa689153accdebc3d3682525bc170beb9d9bf"
+      "sha": "76f23c7bf0430af7a0e4632f5c52aaf2c434836c"
     },
     {
       "path": "engine/dm/games/01007EF00011E000/bench.tsv",
@@ -3604,7 +3640,7 @@
     },
     {
       "path": "engine/dm/games/01007EF00011E000/patches.py",
-      "sha": "7e68a8b0f9ee703f6f82833b3965e40e17ae041a"
+      "sha": "5e462ac18bdc8f7d274d5f4f67ac44654cbc9285"
     },
     {
       "path": "engine/dm/games/01007EF00011E000/pso_manifest.tsv",
@@ -3924,7 +3960,7 @@
     },
     {
       "path": "engine/dm/games/01008CF01BAAC000/README.md",
-      "sha": "8d0e2b4c0105d8aeb62983b2b951011e360cbf09"
+      "sha": "f7892d9a486b6c2f4f694c3707354ac70cbb3845"
     },
     {
       "path": "engine/dm/games/01008CF01BAAC000/bf_want.tsv",
@@ -4127,6 +4163,46 @@
       "sha": "fec08e75a8a91faea32c51b5c00785621eb6bf61"
     },
     {
+      "path": "engine/dm/games/01008F2005154000/README.md",
+      "sha": "7e2f55d50e1369d902b7a9b2085ff18de1e02193"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/game.tsv",
+      "sha": "42a17e80589dbd757f494025f287f232c0678de6"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/patches.py",
+      "sha": "821b69980e60efd6648b421b6b78ea2e88feb719"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/pso_manifest.tsv",
+      "sha": "4620515f1088edd80157c5015babdc91f5e48217"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/shader_facts.tsv",
+      "sha": "b5d63ee883e52089a364859b2850f86ff95665ac"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/shader_map.tsv",
+      "sha": "106e7177a7f4f4477ab16068106da08f49be7640"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/01008F2005154000/shader_pairs.tsv",
+      "sha": "ac32dd3e8e7de6b9e9141a8f83214dc650cb8206"
+    },
+    {
       "path": "engine/dm/games/01008F4014A74000/README.md",
       "sha": "0191aeab9f2dea46686ab8ab4ae5fc1ef4e526fb"
     },
@@ -4317,6 +4393,46 @@
     {
       "path": "engine/dm/games/010093801237C000/shader_pairs.tsv",
       "sha": "fe09d00b11626e4fd1e1ce8d5a06afd9ab580b4d"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/README.md",
+      "sha": "e9a3a7578097542a5fc71f5728309475fcc3971d"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/bf_want.tsv",
+      "sha": "54caeb854fbd18fcd636b9eb05bbfcc9ee5c8847"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/game.tsv",
+      "sha": "d6469d57b22282a9ee69c28881a8d0f77036a84d"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/patches.py",
+      "sha": "1b0764ac2a3e6154b17ad08f5da4bcca70c9602d"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/pso_manifest.tsv",
+      "sha": "fa9dd8506a9b3bb95524c5d9623ed0ebe4a7eebc"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/pso_pairs.tsv",
+      "sha": "ccd04457450585143a21ae07f4cbb5f7997801da"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/shader_facts.tsv",
+      "sha": "3cd03f636c3be6507e50222b815b978d8ff3dcee"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/shader_map.tsv",
+      "sha": "e97a817761faee95de0c3ad74c0d43d7f79af9b6"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/shader_map.tsv.conflicts.tsv",
+      "sha": "35c1b4d22f25d1056ad48263c88c1518aa8276ca"
+    },
+    {
+      "path": "engine/dm/games/010095300B6A4000/shader_pairs.tsv",
+      "sha": "98541249af05cb6a482ebe9fd5ffa4da687fc0b6"
     },
     {
       "path": "engine/dm/games/0100965017338000/README.md",
@@ -5444,7 +5560,7 @@
     },
     {
       "path": "engine/dm/games/0100BF00112C0000/README.md",
-      "sha": "92fc7ae851c64aa2fda9eb6f2fe8f0750267756e"
+      "sha": "ca167e388192442fd12bb9bf0997c1ad07533652"
     },
     {
       "path": "engine/dm/games/0100BF00112C0000/bf_want.tsv",
@@ -5452,7 +5568,7 @@
     },
     {
       "path": "engine/dm/games/0100BF00112C0000/game.tsv",
-      "sha": "f837e88e0cce3dcd4dc7d7891b8b35033ecd8be6"
+      "sha": "a3ff259c709275a17003405713e3fd54ccf2b4bf"
     },
     {
       "path": "engine/dm/games/0100BF00112C0000/patches.py",
@@ -5632,7 +5748,7 @@
     },
     {
       "path": "engine/dm/games/0100C49025D3E000/README.md",
-      "sha": "fc2b0e2b33de067dd1eeae4f711a2c8705424133"
+      "sha": "95d9bf33707c46ef762bfee863893e30773d0020"
     },
     {
       "path": "engine/dm/games/0100C49025D3E000/bf_want.tsv",
@@ -5960,7 +6076,7 @@
     },
     {
       "path": "engine/dm/games/0100D440269E8000/README.md",
-      "sha": "9f3247259266cd27040dcc7e98976455dfb6d79d"
+      "sha": "3138b20652938d911cc03a4330bf3c2915b7cd61"
     },
     {
       "path": "engine/dm/games/0100D440269E8000/bf_want.tsv",
@@ -6584,7 +6700,7 @@
     },
     {
       "path": "engine/dm/games/0100F2C0115B6000/README.md",
-      "sha": "2bc630019d0d4f2e90c840e4358281c8d06681dc"
+      "sha": "13a77d4c45a02aefe6129a8b31b5eafbe88ae46a"
     },
     {
       "path": "engine/dm/games/0100F2C0115B6000/bf_want.tsv",
@@ -6888,7 +7004,7 @@
     },
     {
       "path": "engine/dm/games/0400380020056000/README.md",
-      "sha": "a25a28cc7950219dfc0faea7cc95d7ad97bd3afd"
+      "sha": "468069976d9390d1a798cf077d04111dda0ab2b4"
     },
     {
       "path": "engine/dm/games/0400380020056000/bf_want.tsv",
@@ -6912,7 +7028,7 @@
     },
     {
       "path": "engine/dm/games/0400380020056000/shader_map.tsv",
-      "sha": "29496566476b8e05a4d4b7e2a651b4af861819fa"
+      "sha": "5fb383c01f8036848bb5a4fdfe2fb66c38fb2094"
     },
     {
       "path": "engine/dm/games/0400380020056000/shader_map.tsv.conflicts.tsv",
@@ -6996,7 +7112,7 @@
     },
     {
       "path": "engine/dm/games/0400486024DEC000/README.md",
-      "sha": "4a522287a5db436810dd200a7d0c34fd655a0a6d"
+      "sha": "8f736d7164e1fec244559daa677f8e3c7417bc19"
     },
     {
       "path": "engine/dm/games/0400486024DEC000/bench.tsv",
@@ -7004,11 +7120,11 @@
     },
     {
       "path": "engine/dm/games/0400486024DEC000/game.tsv",
-      "sha": "63905872e2c57d52b80c0b409aeb7b1b40f67181"
+      "sha": "5fe097d9b23dd92c9f1e2677e928ede071fb82c2"
     },
     {
       "path": "engine/dm/games/0400486024DEC000/patches.py",
-      "sha": "2e7727a06e20b7981fa213d7140b9d3c22a3394d"
+      "sha": "722644602f08137f4790faa617bbca8eb0630b0f"
     },
     {
       "path": "engine/dm/games/0400486024DEC000/pso_manifest.tsv",
@@ -7037,6 +7153,10 @@
     {
       "path": "engine/dm/games/0400486024DEC000/shader_seen.tsv",
       "sha": "e994c28fb319ec8710a99ff9ec3e65a8575e6ff5"
+    },
+    {
+      "path": "engine/dm/games/0400486024DEC000/shape_anchor.c",
+      "sha": "1e97e7736bc5ffa0150246b2270a084a7ec6fe18"
     },
     {
       "path": "engine/dm/games/0400569027BF4000/README.md",
@@ -7112,7 +7232,7 @@
     },
     {
       "path": "engine/dm/games/040074A01BF12000/README.md",
-      "sha": "c742dd332efce3c7cd3dfe0d3f4c4bcaefd6de87"
+      "sha": "ba71e57c04718d0f49928fe1af84594eaa29c601"
     },
     {
       "path": "engine/dm/games/040074A01BF12000/game.tsv",
@@ -7208,7 +7328,7 @@
     },
     {
       "path": "engine/dm/games/04008E001F098000/README.md",
-      "sha": "644fa7c27cf648a262412a82c138d786c3fe9322"
+      "sha": "a867615dd98e4d7d81087d253e1a520567123bda"
     },
     {
       "path": "engine/dm/games/04008E001F098000/bf_want.tsv",
@@ -7232,7 +7352,7 @@
     },
     {
       "path": "engine/dm/games/04008E001F098000/shader_map.tsv",
-      "sha": "441e3b7489369ca37b8bbb0c8f006643ffa5cd4e"
+      "sha": "e813f2627ab5aaddab456654f6fccd2f8fd06f77"
     },
     {
       "path": "engine/dm/games/04008E001F098000/shader_map.tsv.conflicts.tsv",
@@ -7280,7 +7400,7 @@
     },
     {
       "path": "engine/dm/games/0400A3A01EE4C000/README.md",
-      "sha": "6ce540e513a9ff78509c0059289e328a80bc94a2"
+      "sha": "8be6822ba7934eaf44053dcbb2370f31fb0eeb38"
     },
     {
       "path": "engine/dm/games/0400A3A01EE4C000/game.tsv",
@@ -7308,7 +7428,7 @@
     },
     {
       "path": "engine/dm/games/0400C3F00006E000/README.md",
-      "sha": "ee656d1da43bde9f29c57579a34274510b3cf4fc"
+      "sha": "d0848b5f2ed4ae7951e1c983765c6e85a03519e9"
     },
     {
       "path": "engine/dm/games/0400C3F00006E000/bf_want.tsv",
@@ -7428,7 +7548,7 @@
     },
     {
       "path": "engine/dm/games/0400E88025B1A000/README.md",
-      "sha": "01971dcdea7127eac4503b0fff076d7c18daed32"
+      "sha": "b426e3103e6ee6b6617c9b9eec2ed3e451555685"
     },
     {
       "path": "engine/dm/games/0400E88025B1A000/bf_want.tsv",
@@ -7436,11 +7556,11 @@
     },
     {
       "path": "engine/dm/games/0400E88025B1A000/game.tsv",
-      "sha": "caaa39ae42b222b8d32835e9e1f13e1069e2c248"
+      "sha": "c82478ba6a639a9f9aa02538fc6983228c3bd295"
     },
     {
       "path": "engine/dm/games/0400E88025B1A000/pso_manifest.tsv",
-      "sha": "4620515f1088edd80157c5015babdc91f5e48217"
+      "sha": "b786c5daeb190b26eb6349f61c06c5f0cf064aea"
     },
     {
       "path": "engine/dm/games/0400E88025B1A000/pso_pairs.tsv",
@@ -7464,11 +7584,11 @@
     },
     {
       "path": "engine/dm/games/README.md",
-      "sha": "acfdd0c26e524d2edbeb8dcfc93bbabfd73df00b"
+      "sha": "862a191654fe4c49579290656124681d8e452698"
     },
     {
       "path": "engine/dm/games/game.py",
-      "sha": "ffecd5232664a6647efaff417372bb541ed77283"
+      "sha": "f7956dcf8e2b3e69b4f2c483f35eb992e14d1220"
     },
     {
       "path": "engine/dm/games/profile_guess.py",
@@ -7480,11 +7600,11 @@
     },
     {
       "path": "engine/dm/games/settings.tsv",
-      "sha": "f8b1c585975df1400182c34ff1e2d223141187d7"
+      "sha": "e27dff3769231760adbdb8149a17f86d757c86c5"
     },
     {
       "path": "engine/dm/gfx/README.md",
-      "sha": "298ce8cf6acfdadae2716a35274bf21c8e396cdd"
+      "sha": "b2a5217751489270ee573978be269be8cb6ff7c9"
     },
     {
       "path": "engine/dm/gfx/gl/gl_aliases.h",
@@ -7612,11 +7732,11 @@
     },
     {
       "path": "engine/dm/gfx/nvn/dmsh_chain.h",
-      "sha": "a0130cb0550e79b2ff25712e50b2264e6836b805"
+      "sha": "400a396aa03edbf0c5e3c3cbf83e474ea1976bfd"
     },
     {
       "path": "engine/dm/gfx/nvn/hle_nvn.c",
-      "sha": "d2a2cfb1f41d27185a94dcb47d0838e3c97e846d"
+      "sha": "0f05b9faec1e225b7e882dc51f932b356559dfd8"
     },
     {
       "path": "engine/dm/gfx/nvn/host_msl.h",
@@ -7656,7 +7776,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_capture.c",
-      "sha": "4089f92d82717a00f5af349c9a6879893edfafc1"
+      "sha": "3034c485ed794d4ba6eec18b1fd6540b06a53c21"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_capture.h",
@@ -7669,6 +7789,10 @@
     {
       "path": "engine/dm/gfx/nvn/nvn_count.h",
       "sha": "012e63855ed635a1a90e6598fcb264a83694a6d2"
+    },
+    {
+      "path": "engine/dm/gfx/nvn/nvn_dbnd.h",
+      "sha": "199abb6289c9e33ae1cb94e4f5343ecf55c795b4"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_depth_clear.h",
@@ -7692,7 +7816,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_feedback.inc",
-      "sha": "4b7e71bb37494875f2bf838a8d65d2a749fe1bef"
+      "sha": "11d496c2934682c13ce471305db83b759402d6d4"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_fstep.h",
@@ -7704,7 +7828,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_geometry.inc",
-      "sha": "d2194501a12e4498345b8d2a5ca1b86faec97678"
+      "sha": "020fd761336366cc084d7224b700622493f883cb"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_hmap.h",
@@ -7719,12 +7843,16 @@
       "sha": "013d74e4bb266a0ad917419aaf36d087576bc852"
     },
     {
+      "path": "engine/dm/gfx/nvn/nvn_live.inc",
+      "sha": "5f4268f366ee1a3c89c8172bf25b91cde3c771ee"
+    },
+    {
       "path": "engine/dm/gfx/nvn/nvn_mtl.h",
-      "sha": "b477aad12424577f927d3d51f38011746e6acdd0"
+      "sha": "d8b46ca84b40c2d927f87eb6e64db7c055532657"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_mtl.m",
-      "sha": "9a83b441f7155baa69a1ec6524a65d1353aef779"
+      "sha": "9968cb857ea51677ea35ad66c47b8007e0d67dc6"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_ndve.inc",
@@ -7732,7 +7860,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_obj.h",
-      "sha": "16fc3f150660afc657b5494b884c1cbd7b3b7fc1"
+      "sha": "afd51f22d73b3578bee080f397e80b1d1dcb3988"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_owner.h",
@@ -7740,7 +7868,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_owner.m",
-      "sha": "c11b65f4ba2bc1f386e66966ee5c1e4b5409309a"
+      "sha": "e5b85e84e7fc6061395e7186483f7687b3253b43"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_pace.h",
@@ -7784,7 +7912,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_rec.h",
-      "sha": "9ac811c86b27cbb550ab65181d6f79453fc01779"
+      "sha": "b33ffbd80326f2c41364dc759282965b3d957bcf"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_refl.h",
@@ -7800,7 +7928,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_tess.inc",
-      "sha": "334cdfc920020d22c64c8d68444047697e5f9fe2"
+      "sha": "b839ff0862f9ce15afedac07f150b40b600dc6cf"
     },
     {
       "path": "engine/dm/gfx/nvn/nvn_tex.c",
@@ -7824,7 +7952,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn_metal_mapping.md",
-      "sha": "6ce0399b1bffa6599ed7296a83c2c7220b4ee0a4"
+      "sha": "be287e0c1ef09841e7fce3d79805a5d2d3a485f2"
     },
     {
       "path": "engine/dm/gfx/tests/.gitignore",
@@ -7832,7 +7960,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/Makefile",
-      "sha": "bffc9d35ce71e68f32688d38c6924fc5fab1535e"
+      "sha": "01d15e1598353c8d3db84e937b5854099502d435"
     },
     {
       "path": "engine/dm/gfx/tests/ampere_orin/ampere_orin.sass",
@@ -7980,7 +8108,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_capture.c",
-      "sha": "5d2fb9c693af7b24f264265dbfc7c5f9d9d16891"
+      "sha": "0795d929294c0b5abff9000a608a5deb0c4e1284"
     },
     {
       "path": "engine/dm/gfx/tests/t_capture_live.m",
@@ -8041,6 +8169,10 @@
     {
       "path": "engine/dm/gfx/tests/t_depth16_clear.m",
       "sha": "b81e19a38f93f3d0091a1778370d8defa6cec82e"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_depth_bounds.m",
+      "sha": "a4d64e0bb36f9487ff0f8375a8576e3f3c06c935"
     },
     {
       "path": "engine/dm/gfx/tests/t_descriptor_pools.m",
@@ -8124,7 +8256,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_geometry_mesh.m",
-      "sha": "7698be6bcd6760c02c0e135684d88a51cc9da345"
+      "sha": "e1946b8fffd1a289b60aaf7f7abc46ae2e82b2a2"
     },
     {
       "path": "engine/dm/gfx/tests/t_geometry_primitive_id.m",
@@ -8228,7 +8360,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_linear_readback.m",
-      "sha": "7889e8bcd399130451d6e05b54c6128c50db0325"
+      "sha": "0e5e41d19adab4e77c446ec8d5896cc998070fc7"
     },
     {
       "path": "engine/dm/gfx/tests/t_link_drain.c",
@@ -8388,7 +8520,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_archive.m",
-      "sha": "385d4bb4eade9c1f1a36810e132d6abcb2e4102f"
+      "sha": "9baee17ad83608c29ebae88caff047eaa2706b3f"
     },
     {
       "path": "engine/dm/gfx/tests/t_pso_bg_look.m",
@@ -8440,7 +8572,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_pull.m",
-      "sha": "1af53ed70aee8fe72a8de9e23973aa204227b58a"
+      "sha": "d8c12e560273747100bc29e9092b64f2d0b23926"
     },
     {
       "path": "engine/dm/gfx/tests/t_pull_inv.m",
@@ -8448,7 +8580,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_queue_lifetime.m",
-      "sha": "1e0b22ca9bf6adce710b13ea99a50c91c9af91fd"
+      "sha": "9d2955cd875503b06a8ffda187e14090eff75cfd"
     },
     {
       "path": "engine/dm/gfx/tests/t_queue_origin.m",
@@ -8540,7 +8672,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_sparse_pool_cache.m",
-      "sha": "14fc2f43f8158a109f093625fdb5c857505492fc"
+      "sha": "a5a4f61ff7e3f3292dc1f8a2ae12bfdcb40676f5"
     },
     {
       "path": "engine/dm/gfx/tests/t_sparse_tiles.m",
@@ -8668,7 +8800,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_vbuf.m",
-      "sha": "08ef5b40f8d01aa7186afbddc6a2b41d5234bd28"
+      "sha": "6684dc47c95c003793761209c904a477f503352c"
     },
     {
       "path": "engine/dm/gfx/tests/t_vc_lifetime.m",
@@ -8677,6 +8809,10 @@
     {
       "path": "engine/dm/gfx/tests/t_vconv_keep.m",
       "sha": "47c1f92f60dbb1a027dbd41ce625793381898d5b"
+    },
+    {
+      "path": "engine/dm/gfx/tests/t_vertex_viewport_mask.m",
+      "sha": "8d66169dcb7a0a6beaabea66e11c5c1acb455705"
     },
     {
       "path": "engine/dm/gfx/tests/t_view_levels.m",
@@ -8724,7 +8860,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_vk_desc.m",
-      "sha": "2db4c8a1ed5711b9e3f5f4d6956eb8c9e16d829c"
+      "sha": "4febfafa00bf013719234b52b25882741b5b7239"
     },
     {
       "path": "engine/dm/gfx/tests/t_vk_dontcare.m",
@@ -8879,6 +9015,10 @@
       "sha": "87498221b4fb8f9f386cb720df3a1e421dd58542"
     },
     {
+      "path": "engine/dm/gfx/tests/test_dmsh_maxwell_prmt.py",
+      "sha": "cc51c65cc20b1b38c70acbbbe96af6f206214c24"
+    },
+    {
       "path": "engine/dm/gfx/tests/test_dmsh_membar_fence.py",
       "sha": "097ba0124d1d41b3b92bc3004b31e6956b399a27"
     },
@@ -9000,7 +9140,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_wrapv.py",
-      "sha": "c1c5ad726ebdf2a60d5622c0af689842f753b9ad"
+      "sha": "fa34f8c4d74d7cdf6f573f81010996f848d1fd0d"
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_zsnap.py",
@@ -9080,7 +9220,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/test_snowdrop.py",
-      "sha": "856c916f73e14cb169908e96c93a6236cbb00724"
+      "sha": "8879bba152ef36dafe7973faf7dd225f48951c8b"
     },
     {
       "path": "engine/dm/gfx/tests/test_spirv_ordered_ne.py",
@@ -9141,6 +9281,10 @@
     {
       "path": "engine/dm/gfx/tests/test_vbf.py",
       "sha": "b95ecc822b015c61936cfe4e1516b2912ade422b"
+    },
+    {
+      "path": "engine/dm/gfx/tests/test_vertex_viewport_mask.py",
+      "sha": "46b7d48a7e0b02618a1911dc86daf11c87c4e9b2"
     },
     {
       "path": "engine/dm/gfx/tex/README.md",
@@ -9252,15 +9396,15 @@
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_build.py",
-      "sha": "a552c8c998186806dd06ca2258cc4b053a3abe0f"
+      "sha": "d06c26f95873bb2f57b1f35063aeee245756f8d8"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_chain.lock",
-      "sha": "5ccf76e8bb5059a07c7e59ef540799571a011257"
+      "sha": "32ff5cf644c5f9fb3b4746c1a0f746d128045b8c"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_chain.py",
-      "sha": "d0377f5febe5b8ef7ceee72d81ff1caf8edac252"
+      "sha": "2702898abb161092928f5ed4a255c209b0fb6705"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_dryrun.py",
@@ -9268,7 +9412,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_entry.py",
-      "sha": "b3cc77ae95153d0a7fae4de211ad42c5cf83d4a8"
+      "sha": "723375dec58fa5351d185ca16b63af211836a356"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_facts.py",
@@ -9281,6 +9425,10 @@
     {
       "path": "engine/dm/gfx/tools/dmsh_geometry.py",
       "sha": "2abf50a9388651c9089257b3d33efec0ff30a696"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_live.py",
+      "sha": "a334147de63cdc2c939563f878525072ef7c7d6a"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_logic.py",
@@ -9345,6 +9493,10 @@
     {
       "path": "engine/dm/gfx/tools/dmsh_wide.py",
       "sha": "4b10deceb0654d0f31e111c55c3b68e9ab5b1195"
+    },
+    {
+      "path": "engine/dm/gfx/tools/dmsh_wrap.py",
+      "sha": "e3eeffd5b876dad8924e77c2f9dfa5d7a64f717e"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_xlate/Program.cs",
@@ -9432,7 +9584,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/shader_split.py",
-      "sha": "cbfbf1914da10c00cdb75ad00c80da3f16c31c34"
+      "sha": "0272b8d46727ed5d8139b5510df35ddd0633c321"
     },
     {
       "path": "engine/dm/gfx/tools/smash_arc.py",
@@ -9488,7 +9640,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/tool_lock.py",
-      "sha": "25643f7170228a33d1c37b68ed6a84952c67f0d2"
+      "sha": "86bb645a7017cbe0f569c32bf71e8dbdeb67b97a"
     },
     {
       "path": "engine/dm/gfx/tools/ttdat.py",
@@ -9496,7 +9648,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/uepak.py",
-      "sha": "5c9a65c4fef07e4d0b42fd4b1eff5131b0c06c2b"
+      "sha": "5aceeac8536473803f87d8326cc2bdbff502c6ed"
     },
     {
       "path": "engine/dm/gfx/tools/unityfs.py",
@@ -9512,7 +9664,7 @@
     },
     {
       "path": "engine/dm/gfx/vk/hle_vk.m",
-      "sha": "0c066d992b7cbf83eff02adbf0f2d681be87a20e"
+      "sha": "367f10778c8feb5a0e71104f8a9628192ed5274a"
     },
     {
       "path": "engine/dm/host/.gitignore",
@@ -9564,7 +9716,7 @@
     },
     {
       "path": "engine/dm/host/front_mac.m",
-      "sha": "1372a83152bd91b855405528a30a33aa07fa3676"
+      "sha": "3c4d7dfb51f64e7a3ed35dcfa394bdcb393f7a52"
     },
     {
       "path": "engine/dm/host/front_role.h",
@@ -9596,7 +9748,7 @@
     },
     {
       "path": "engine/dm/host/hle_audio.c",
-      "sha": "9d89e17b52935627e161b67955f252a53a4d5392"
+      "sha": "4919f5a23689483584ce60923cc1474dcb374471"
     },
     {
       "path": "engine/dm/host/hle_audren.c",
@@ -9644,7 +9796,7 @@
     },
     {
       "path": "engine/dm/host/hle_glslc.c",
-      "sha": "e11d8aa8227e639bd55749a1e11f5748771bb329"
+      "sha": "ac99a10447abd8c20f093dd544428b9c64e8b5dc"
     },
     {
       "path": "engine/dm/host/hle_guestthread.c",
@@ -9660,7 +9812,7 @@
     },
     {
       "path": "engine/dm/host/hle_hid.c",
-      "sha": "2a367725892cb23241ec0bb7fb6870b25426e227"
+      "sha": "a0b9edafb1c91157ea2f30be86aac23820dd7ee3"
     },
     {
       "path": "engine/dm/host/hle_irs.c",
@@ -9684,7 +9836,7 @@
     },
     {
       "path": "engine/dm/host/hle_movie.c",
-      "sha": "6776cc443c692dab2686f33cedb2b3819dcce84d"
+      "sha": "de45fad4ba32b38fb5886180f77e7075074528c0"
     },
     {
       "path": "engine/dm/host/hle_movie_av1.c",
@@ -9728,7 +9880,7 @@
     },
     {
       "path": "engine/dm/host/hle_offline.c",
-      "sha": "e019ce373914515badbc9bff4f7fe385f9fc64ec"
+      "sha": "ed4d07ce541b387503f161046158b76f3eacdc7a"
     },
     {
       "path": "engine/dm/host/hle_oodle.c",
@@ -9756,7 +9908,7 @@
     },
     {
       "path": "engine/dm/host/hle_svc.c",
-      "sha": "f594cf962ed178658e8f395cf9e85ba476d3ab5c"
+      "sha": "e73e3971b60714de6291affef9f5f9d800bd03f8"
     },
     {
       "path": "engine/dm/host/hle_swkbd.c",
@@ -9784,7 +9936,7 @@
     },
     {
       "path": "engine/dm/host/hle_uemalloc.c",
-      "sha": "1bd3494f4b6c3c119dc161ce47b63c9f9519321b"
+      "sha": "edfc446aef95bdd12d30ba087674290ed931b447"
     },
     {
       "path": "engine/dm/host/hle_web.c",
@@ -9832,11 +9984,11 @@
     },
     {
       "path": "engine/dm/host/pad_hid.h",
-      "sha": "43de8893abbdfb1559edfb069f7b248945202700"
+      "sha": "1318c4347f8c50f6f107910c66e988cd1118d8fc"
     },
     {
       "path": "engine/dm/host/pad_hid_mac.h",
-      "sha": "e7dbeee8163f309409a217bbb6385625bffd3448"
+      "sha": "f8eb412abaad82b8bec77aca6ae3547f55807843"
     },
     {
       "path": "engine/dm/host/pad_jc1.h",
@@ -9928,11 +10080,11 @@
     },
     {
       "path": "engine/dm/host/tests/t_audio.c",
-      "sha": "79c06cb06c3965b1387bd15ae360a257887f0157"
+      "sha": "f5190dba70c0e9314c552a8feb4e4036721f2577"
     },
     {
       "path": "engine/dm/host/tests/t_audio_device.c",
-      "sha": "0d3a520d3de7cb86775c7cbe86dac13c80c82c56"
+      "sha": "45c98f0a0b0de260c454605d6d1103a4c8b0f3cb"
     },
     {
       "path": "engine/dm/host/tests/t_audio_input.c",
@@ -10052,7 +10204,7 @@
     },
     {
       "path": "engine/dm/host/tests/t_hid.c",
-      "sha": "6bbc417197f6f499574b0606e965de844e418495"
+      "sha": "e27c3ae060fed103d0003488cf1ef6989ea7994a"
     },
     {
       "path": "engine/dm/host/tests/t_home_quit.c",
@@ -10096,7 +10248,7 @@
     },
     {
       "path": "engine/dm/host/tests/t_movie_avc.c",
-      "sha": "4aae79dd8150e249298233e217cde0b12430b30d"
+      "sha": "33cb97f02bde18cc982a210ada9ec8aaa9127ab6"
     },
     {
       "path": "engine/dm/host/tests/t_movie_vpx.c",
@@ -10144,11 +10296,11 @@
     },
     {
       "path": "engine/dm/host/tests/t_pad_hid.c",
-      "sha": "267bfe4fc23d0c195a470c4dd67066bb9579d018"
+      "sha": "9936c20ec8ebf129f44f93facdab3812d5360d9f"
     },
     {
       "path": "engine/dm/host/tests/t_pad_hid_mac.m",
-      "sha": "07511446a66cdbb9704cb518ef1e9043726ee969"
+      "sha": "c8af02d82004a0e723e52ebe05551b685387af5c"
     },
     {
       "path": "engine/dm/host/tests/t_pad_pro.c",
@@ -10188,7 +10340,7 @@
     },
     {
       "path": "engine/dm/host/tests/t_server_environment.c",
-      "sha": "c06b5a7a9a0c5c93ab7deddf9e727ef3aa5afe9c"
+      "sha": "2abc6f651d12fb20275ff20440d9724a6706e080"
     },
     {
       "path": "engine/dm/host/tests/t_sf.c",
@@ -10200,7 +10352,7 @@
     },
     {
       "path": "engine/dm/host/tests/t_svc_memory.c",
-      "sha": "584ed3181eca2a5ae9d387465e930b8367932f91"
+      "sha": "7b22fbb340c5490f22dc938bd8d553936ba4df70"
     },
     {
       "path": "engine/dm/host/tests/t_switch2.c",
@@ -10280,11 +10432,11 @@
     },
     {
       "path": "engine/dm/ios/Sources/CloudSaves.h",
-      "sha": "1c1d08d72a9198d8c216adc3b678b88b78088bb0"
+      "sha": "796846849d318cbf40b33973c0b7d754ca54c40f"
     },
     {
       "path": "engine/dm/ios/Sources/CloudSaves.m",
-      "sha": "ae4edc0ae05d56e8ee81f50f24391c06e644a233"
+      "sha": "a1cf09c0f19508ce2f534929f7d333bd3015e1dc"
     },
     {
       "path": "engine/dm/ios/Sources/DmGameMenu.h",
@@ -10312,7 +10464,7 @@
     },
     {
       "path": "engine/dm/ios/Sources/Launcher.swift",
-      "sha": "0f9d8b66396a729eaa7152d0db041304f1a3b005"
+      "sha": "5e4fe3b7e040499c8838120441a4298b872f336d"
     },
     {
       "path": "engine/dm/ios/Sources/LauncherRow.swift",
@@ -10428,7 +10580,7 @@
     },
     {
       "path": "engine/dm/ios/tests/test_xcode_workflow.py",
-      "sha": "69ce12e600d18a7b163ddc515cfdcae02d204b34"
+      "sha": "da1093913efc75f021efaee9dbe11814ba12712a"
     },
     {
       "path": "engine/dm/ios/tools/build_ipa.sh",
@@ -10452,7 +10604,7 @@
     },
     {
       "path": "engine/dm/ios/tools/gen_resources.py",
-      "sha": "d4aedd512b9418f736d00f18b763805953c2e8e8"
+      "sha": "e80ec2f533b4c62e1955fc577388eb5907092f02"
     },
     {
       "path": "engine/dm/ios/tools/ios_metal.py",
@@ -10464,7 +10616,7 @@
     },
     {
       "path": "engine/dm/ios/tools/stage_resources.sh",
-      "sha": "890872cd934cb14dbf9e8e60eed4691c94a9ab22"
+      "sha": "b773c9c490488c36dc17ed87550bdd95a5b21fa2"
     },
     {
       "path": "engine/dm/ios/tools/xcode_projects.py",
@@ -10476,7 +10628,7 @@
     },
     {
       "path": "engine/dm/mac/launcher.c",
-      "sha": "ae7edfbef7c3d38f6c5cd134fa0264169b7ca370"
+      "sha": "509b1f2e5064adb15f91e27327ceb2d69e98b507"
     },
     {
       "path": "engine/dm/mac/min_os.mk",
@@ -10484,7 +10636,7 @@
     },
     {
       "path": "engine/dm/mac/pack_app.py",
-      "sha": "134682b95af5d553319d82f8634cdd68be634e55"
+      "sha": "0a8f4e156c24a0df4e8c68399e0e287a7269c885"
     },
     {
       "path": "engine/dm/sanitizers/coverage.mk",
@@ -13000,7 +13152,7 @@
     },
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmit.cs",
-      "sha": "3477197b04a270c1dada8def4728942a279625a5"
+      "sha": "fd37f4c58474912c25cce94dfffe313e9e045426"
     },
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitAluHelper.cs",
@@ -13093,6 +13245,10 @@
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitNop.cs",
       "sha": "28ee927d8419e96c9fe5c0b026997d427d546bc9"
+    },
+    {
+      "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitPermute.cs",
+      "sha": "a7e58750d8ccec9023d684ea762686b04cceaa11"
     },
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Instructions/InstEmitPredicate.cs",
@@ -13772,7 +13928,7 @@
     },
     {
       "path": "engine/dm/tools/docs_patches.py",
-      "sha": "7cffd69bcc65de6717ce75198c87d05bf5e96a6c"
+      "sha": "4c1791b92b9740a6bac9efb2492abb326fe5c50d"
     },
     {
       "path": "engine/dm/tools/docs_symptoms.py",
@@ -13780,7 +13936,7 @@
     },
     {
       "path": "engine/dm/tools/engine_patches.py",
-      "sha": "7a91c52d77df25ca88f080efdecb23cc989bd2be"
+      "sha": "ecff53d1e9fa878ccefb1905f35c3ca981e09348"
     },
     {
       "path": "engine/dm/tools/env_switches.py",
@@ -13948,7 +14104,7 @@
     },
     {
       "path": "engine/dm/tools/fuzz/fuzz_shader_split.py",
-      "sha": "51ca2f68f9761b64d3f71e9b69f30f59d80154a1"
+      "sha": "3cb5a19e1cec74cec3a36ae949ca34382c3b21ab"
     },
     {
       "path": "engine/dm/tools/fuzz/fuzz_uepak.py",
@@ -14008,7 +14164,7 @@
     },
     {
       "path": "engine/dm/tools/lint_python_baseline.tsv",
-      "sha": "02d1ebb499d739e255b3b42031fef685690f11a3"
+      "sha": "92e0804923a98ed271b4bd09cd314acc4f6d2d4d"
     },
     {
       "path": "engine/dm/tools/loader_census.py",
@@ -14100,7 +14256,7 @@
     },
     {
       "path": "engine/dm/tools/romfs.py",
-      "sha": "42fbbfe609ce961bd2cb68fd51443c4c2985f5c9"
+      "sha": "c6f19acf5be297147719f62c156ebd42410ab9a0"
     },
     {
       "path": "engine/dm/tools/romfs_image.py",
@@ -14116,7 +14272,7 @@
     },
     {
       "path": "engine/dm/tools/sdk_patches.py",
-      "sha": "52d741d4abed5683d86f9c2976b6abdf6bde2bc9"
+      "sha": "4b190703d3384b86973a71117885087ae8dcdc63"
     },
     {
       "path": "engine/dm/tools/shader_cache.py",
@@ -14312,7 +14468,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_launcher_settings.py",
-      "sha": "db5bfb597ff22b2bb165c47efa34c95ed47ea301"
+      "sha": "6520569d3bd8efa34745041dc12961ade511c399"
     },
     {
       "path": "engine/dm/tools/tests/test_lint_c.py",
@@ -14324,7 +14480,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_mac_metal.py",
-      "sha": "56765acdb1ff73be2e0127d20f4463875f0408a2"
+      "sha": "9d43b3a6370b4408a57cb9fd96f603d1e5a755fd"
     },
     {
       "path": "engine/dm/tools/tests/test_make_shared_fonts.py",
@@ -14400,7 +14556,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_incremental.py",
-      "sha": "09335e05c34d6a6ae4afd4c9d2a75e04e48ba70b"
+      "sha": "419ca884ea59e03b9577b1b1e09683a3cb729268"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_mac.py",
@@ -14408,7 +14564,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_mac_app.py",
-      "sha": "542f320b6971b067fe2d782dd37109db182816e9"
+      "sha": "b5626e7236c276b37f38d7f56d9af98ad0136055"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_nsz.py",
@@ -14416,7 +14572,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_nup.py",
-      "sha": "3c0399b98326393f4620f783cb139548196ed393"
+      "sha": "cad6a4ec6bdbcd32601dd1bc2e45640fa7a1230f"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_progress.py",
@@ -14441,6 +14597,10 @@
     {
       "path": "engine/dm/tools/tests/test_nsp_work_dir.py",
       "sha": "e61849ac51d7abb1de203407afac4d16d369d205"
+    },
+    {
+      "path": "engine/dm/tools/tests/test_ocarina_screen_shape.py",
+      "sha": "5d38276c601f1e449e0766040a998ebaa85321f6"
     },
     {
       "path": "engine/dm/tools/tests/test_own_compilers.py",
@@ -14472,7 +14632,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_pso_offline.py",
-      "sha": "5ebd74a3a66349e33d593a3fa53a1e4929c5a5b1"
+      "sha": "2d44c63129bc66c776b6c20a290b388407b70d3a"
     },
     {
       "path": "engine/dm/tools/tests/test_regress.py",
@@ -14496,7 +14656,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_romfs_read.py",
-      "sha": "9d8fe66ed5a7065104ef2547d83af9b713c514bd"
+      "sha": "123eddf51b09f0c1a85a46584a50b403c1239918"
     },
     {
       "path": "engine/dm/tools/tests/test_rpf6.py",
@@ -14536,7 +14696,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_shader_toolchain_cache.py",
-      "sha": "b8a5f4d16b703af864108ab73b190852f2ef95b2"
+      "sha": "cbb9238e97628b7c38ffb52fe7f9a8d22e149d84"
     },
     {
       "path": "engine/dm/tools/tests/test_size_prefixed_frames.py",
@@ -14596,7 +14756,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_split_glslc_section.py",
-      "sha": "273c46b4ef9d19fdd3d80423681260c275fd133c"
+      "sha": "ea2f58b808c7dd05c502f41e5057f1f7338b915a"
     },
     {
       "path": "engine/dm/tools/tests/test_split_gust_gz.py",
@@ -14623,6 +14783,10 @@
       "sha": "55737f3a34ac0985518bdc189dac53b765c8f7df"
     },
     {
+      "path": "engine/dm/tools/tests/test_split_magics.py",
+      "sha": "8bf1f66f4a86878a18d0a89ce4173ed4df23a1ea"
+    },
+    {
       "path": "engine/dm/tools/tests/test_split_narc.py",
       "sha": "5e3411c3f47cadf6d142ed2c044d53a4c6b56439"
     },
@@ -14643,12 +14807,16 @@
       "sha": "7c400fc1f36749d893306b783e0d26fb1d815b93"
     },
     {
+      "path": "engine/dm/tools/tests/test_split_nxsd.py",
+      "sha": "30a21b435fddcb7899d9f76c02f1904fc785562e"
+    },
+    {
       "path": "engine/dm/tools/tests/test_split_redengine.py",
       "sha": "33026cfa612858f5d038c0048abeb499780eb119"
     },
     {
       "path": "engine/dm/tools/tests/test_split_representatives.py",
-      "sha": "d4e2b90bcf82ccc5b7ca37a6e7218a3723e97a6f"
+      "sha": "4198718a1d9fd6f7d2bde0cdedd3cb8b8f2b55e7"
     },
     {
       "path": "engine/dm/tools/tests/test_split_rt.py",
@@ -14700,7 +14868,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_ue_malloc.py",
-      "sha": "b47216e60b536f626d4d93ac492880f57e1299ec"
+      "sha": "9d706024a68a02dee211cb00d08da9f276acd5cf"
     },
     {
       "path": "engine/dm/tools/tests/test_ue_region.py",
@@ -14712,7 +14880,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_uepak_iostore.py",
-      "sha": "ef493a5d1df77c93bc872ff602ae404ef472a71d"
+      "sha": "be552219d78640c8a5f5ab86dfd4da331a7a8471"
     },
     {
       "path": "engine/dm/tools/tests/test_uepak_key.py",
@@ -14796,7 +14964,7 @@
     },
     {
       "path": "engine/dm/tools/ue_malloc.py",
-      "sha": "eb5dc89f2d12a60e0ca8d2abc0181c9ee1ec9773"
+      "sha": "241ac61bfa4eec955e9245452d0b0f6fa23903fd"
     },
     {
       "path": "engine/dm/tools/ue_region.py",
@@ -14852,23 +15020,23 @@
     },
     {
       "path": "engine/docs/agents/game-patches.md",
-      "sha": "2ac1518ec24b9e169b310aadd192f93857411f10"
+      "sha": "60ea99a841701eaf46b27ed93de562aaa57ee12b"
     },
     {
       "path": "engine/docs/agents/symptoms.md",
-      "sha": "36539257b81fa9a2073f2a6d7608b795eebaa180"
+      "sha": "b7d1e4c63124b9dcb717eca22dd239a97b3f9b70"
     },
     {
       "path": "engine/docs/development.md",
-      "sha": "d446bf5391ea908e1734c52cba41e519683789ef"
+      "sha": "8088b00278670a9fc0b908b3f6bdc39f316d536d"
     },
     {
       "path": "engine/docs/env_switches.tsv",
-      "sha": "1b8f780695ecc497997b159d4f8e21912c677d7d"
+      "sha": "0bc50b5403e96979281330e55334adf030352e69"
     },
     {
       "path": "engine/docs/frontends.md",
-      "sha": "50c188248eb1d6c221d34e4e8754824dedc2f065"
+      "sha": "cbf2cb4b01cf47304f7557557f462a8fd3514a97"
     },
     {
       "path": "engine/docs/geometry-metal-research.md",
@@ -15484,7 +15652,7 @@
     },
     {
       "path": "engine/docs/playing.md",
-      "sha": "9b99136807c1c8ba2fac4fdec143ec8c974d13f3"
+      "sha": "40dd0ac45d605d24d30f5369bed2ec9c6dfb81e2"
     },
     {
       "path": "engine/docs/reference/README.md",
@@ -15508,23 +15676,23 @@
     },
     {
       "path": "engine/docs/reference/memory.md",
-      "sha": "721ff2ddff91fa9965108d68cbc095cb90f0bc25"
+      "sha": "ed5cd95e4fefdbc72c7a174cd0465c4d8d9d178f"
     },
     {
       "path": "engine/docs/reference/movies.md",
-      "sha": "c12d3b7193f034bfe3a25703a49fb1b8a627ef47"
+      "sha": "bfb73bcb975515ccdecb9239ab4e0ea07ca8186a"
     },
     {
       "path": "engine/docs/reference/nvn-objects.md",
-      "sha": "73a4580e8c701e26320543119c60cbcb6334768e"
+      "sha": "313f4fc68c53343b95319b26df7563e97f1cab76"
     },
     {
       "path": "engine/docs/reference/packing.md",
-      "sha": "14b5bc3e3496b5f461590260d19f3b77d53909c1"
+      "sha": "517998dd15db6114ecead1835452baf22cfc489a"
     },
     {
       "path": "engine/docs/reference/rendering.md",
-      "sha": "c5113a46d2d6bb3095a5ec4518d3818756c929ab"
+      "sha": "d80bbf9a5511c10f1c3d25b068c82fabf733a129"
     },
     {
       "path": "engine/docs/reference/rewriter.md",
@@ -15532,19 +15700,19 @@
     },
     {
       "path": "engine/docs/reference/services.md",
-      "sha": "702c7124566837da9b88a389cbf4a9935d903edc"
+      "sha": "0676ca02f3532fe2d3bcb06c56754188031a6f87"
     },
     {
       "path": "engine/docs/reference/shaders.md",
-      "sha": "fa2d642a98bb4488b7ddfbba74b3ec36fd519603"
+      "sha": "1c1adb315370ed945d26ee4a2464517acc5aefe5"
     },
     {
       "path": "engine/docs/reference/threads.md",
-      "sha": "baae11933d242ccf3f69e784721620af90a975bd"
+      "sha": "74f3467dd05b4904cb56762408e36b6a5a7bc70b"
     },
     {
       "path": "engine/docs/settings.md",
-      "sha": "6bc995c668d5e20a00384536630b7337b8244e02"
+      "sha": "0ea6cc8f06d5c0ac0896e9da57552a2bd9e7105b"
     },
     {
       "path": "engine/pyproject.toml",
@@ -15560,7 +15728,7 @@
     },
     {
       "path": "engine/scripts/build_ipa_from_nsp.py",
-      "sha": "595e5e9de9160a1db5d847bc7b3cb41187dd1773"
+      "sha": "7e75e0f0632156ad48dd764641829b373e52899b"
     },
     {
       "path": "engine/scripts/cheat_anchor.py",
@@ -15728,18 +15896,18 @@
       "reason": "Windows-only customization with no upstream conflict"
     },
     "engine/dm/games/0400486024DEC000/README.md": {
-      "upstream_sha": "4a522287a5db436810dd200a7d0c34fd655a0a6d",
-      "integrated_sha": "308cc0a1dfecf21fa8b559abaca023ed20e4373a",
+      "upstream_sha": "8f736d7164e1fec244559daa677f8e3c7417bc19",
+      "integrated_sha": "d8d78609da515038300503022384de7d9a31e808",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/0400486024DEC000/game.tsv": {
-      "upstream_sha": "63905872e2c57d52b80c0b409aeb7b1b40f67181",
+      "upstream_sha": "5fe097d9b23dd92c9f1e2677e928ede071fb82c2",
       "integrated_sha": "940c2c7e4e4cad4732b44369aef596674bbe314c",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/0400486024DEC000/patches.py": {
-      "upstream_sha": "2e7727a06e20b7981fa213d7140b9d3c22a3394d",
-      "integrated_sha": "a6c3646bc4bf30130278176745084e8a0e1f0e5a",
+      "upstream_sha": "722644602f08137f4790faa617bbca8eb0630b0f",
+      "integrated_sha": "047c6693de8cb5ba2216e6e07749aecc10469abb",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/0400486024DEC000/pso_manifest.tsv": {
@@ -15748,13 +15916,13 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/README.md": {
-      "upstream_sha": "acfdd0c26e524d2edbeb8dcfc93bbabfd73df00b",
-      "integrated_sha": "f600e1d4de34eb94bec751c374be20bc4582bb21",
+      "upstream_sha": "862a191654fe4c49579290656124681d8e452698",
+      "integrated_sha": "2d47dbe312e883ae737d570234914116b5b303a7",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/game.py": {
-      "upstream_sha": "ffecd5232664a6647efaff417372bb541ed77283",
-      "integrated_sha": "5525fa928ae77cfc1e85d018d55431166f69ddb1",
+      "upstream_sha": "f7956dcf8e2b3e69b4f2c483f35eb992e14d1220",
+      "integrated_sha": "99e8f4d79343af2d7d64807fdd59e302e53e5e93",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/settings.py": {
@@ -15763,8 +15931,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/settings.tsv": {
-      "upstream_sha": "f8b1c585975df1400182c34ff1e2d223141187d7",
-      "integrated_sha": "9661d1f160907a0fd28d4a3cc50d39018034fadc",
+      "upstream_sha": "e27dff3769231760adbdb8149a17f86d757c86c5",
+      "integrated_sha": "5d0115a2ced38ef8e66339e8c0233ed9b59c90f5",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/msl/ndve_engine.metal": {
@@ -15773,13 +15941,13 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/dmsh_chain.h": {
-      "upstream_sha": "a0130cb0550e79b2ff25712e50b2264e6836b805",
-      "integrated_sha": "453342996b6cc9c9acc854c8183d66ea3da47be7",
+      "upstream_sha": "400a396aa03edbf0c5e3c3cbf83e474ea1976bfd",
+      "integrated_sha": "2480b17562ea2b5e8771f02a5b54e9716045fb8c",
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/dm/gfx/nvn/hle_nvn.c": {
-      "upstream_sha": "d2a2cfb1f41d27185a94dcb47d0838e3c97e846d",
-      "integrated_sha": "bf95ca5c427bb01d435f9393469345329098bb55",
+      "upstream_sha": "0f05b9faec1e225b7e882dc51f932b356559dfd8",
+      "integrated_sha": "687fa7e290c6d47af73cb7b2a35f3a960253bf82",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/msl_image.h": {
@@ -15793,13 +15961,13 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/nvn_geometry.inc": {
-      "upstream_sha": "d2194501a12e4498345b8d2a5ca1b86faec97678",
-      "integrated_sha": "0d1331cf095053de5cdb51da8dbc9b38d996ef93",
+      "upstream_sha": "020fd761336366cc084d7224b700622493f883cb",
+      "integrated_sha": "e183797ca3937feaaac1112a926a1d192bd8fabf",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/nvn_mtl.m": {
-      "upstream_sha": "9a83b441f7155baa69a1ec6524a65d1353aef779",
-      "integrated_sha": "a41b0f5d69ffd89a9602780e9dd77cb7cb82c739",
+      "upstream_sha": "9968cb857ea51677ea35ad66c47b8007e0d67dc6",
+      "integrated_sha": "829f504aea55d945a8475d33309aa7c8365369b0",
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/dm/gfx/nvn/nvn_ndve.inc": {
@@ -15813,18 +15981,18 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/nvn_owner.m": {
-      "upstream_sha": "c11b65f4ba2bc1f386e66966ee5c1e4b5409309a",
-      "integrated_sha": "e81c68e665ebdfa5ae4563de81aaaf07ac90fdf3",
+      "upstream_sha": "e5b85e84e7fc6061395e7186483f7687b3253b43",
+      "integrated_sha": "d3460358ca589fb95d8319d9a5812aff3b572ec0",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/nvn_rec.h": {
-      "upstream_sha": "9ac811c86b27cbb550ab65181d6f79453fc01779",
-      "integrated_sha": "31145a92f63c0e04c64df2f4df3cda76eaaf4ce4",
+      "upstream_sha": "b33ffbd80326f2c41364dc759282965b3d957bcf",
+      "integrated_sha": "c5874a6889cf785ff9827be49f2bb36c46c5a79f",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/tests/Makefile": {
-      "upstream_sha": "bffc9d35ce71e68f32688d38c6924fc5fab1535e",
-      "integrated_sha": "fe837df04e7fa74c80a57c933fc3615e1c74e62c",
+      "upstream_sha": "01d15e1598353c8d3db84e937b5854099502d435",
+      "integrated_sha": "1708aad02fda0ae5f34304d35d3528646ba9411a",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/tests/t_arena_trim.m": {
@@ -15873,12 +16041,12 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/tools/dmsh_build.py": {
-      "upstream_sha": "a552c8c998186806dd06ca2258cc4b053a3abe0f",
-      "integrated_sha": "1402ddc6e93cd2b5898966f4bde53d7b9d11e5ae",
+      "upstream_sha": "d06c26f95873bb2f57b1f35063aeee245756f8d8",
+      "integrated_sha": "3cfa5119f0eb42e1e1588e1015215b520baa4bb1",
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/dm/gfx/tools/dmsh_chain.lock": {
-      "upstream_sha": "5ccf76e8bb5059a07c7e59ef540799571a011257",
+      "upstream_sha": "32ff5cf644c5f9fb3b4746c1a0f746d128045b8c",
       "integrated_sha": "82fb8dcfd9942c72665d434ee5714e7fc9189d05",
       "reason": "explicit reviewed hunk resolution"
     },
@@ -15888,13 +16056,13 @@
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/dm/gfx/tools/shader_split.py": {
-      "upstream_sha": "cbfbf1914da10c00cdb75ad00c80da3f16c31c34",
-      "integrated_sha": "f1e7ff8bb6fb9d7820636a375a4bc3fa79f693ca",
+      "upstream_sha": "0272b8d46727ed5d8139b5510df35ddd0633c321",
+      "integrated_sha": "20e4de66030ff8578d14714ec77434242c1bbb68",
       "reason": "clean Windows delta"
     },
     "engine/dm/gfx/tools/tool_lock.py": {
-      "upstream_sha": "25643f7170228a33d1c37b68ed6a84952c67f0d2",
-      "integrated_sha": "149f3ac1b50577ea1c354ced1ef8d46e14a0c839",
+      "upstream_sha": "86bb645a7017cbe0f569c32bf71e8dbdeb67b97a",
+      "integrated_sha": "69841d4c33c7c30c1b14bf0a08a3efb37c0b6d52",
       "reason": "Windows-only customization with no upstream conflict"
     },
     "engine/dm/host/Makefile": {
@@ -15903,13 +16071,13 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/host/hle_audio.c": {
-      "upstream_sha": "9d89e17b52935627e161b67955f252a53a4d5392",
-      "integrated_sha": "7007b3387d6614b2560a24980d0c51347cf50076",
+      "upstream_sha": "4919f5a23689483584ce60923cc1474dcb374471",
+      "integrated_sha": "7b37e4c2b87828823a0763cb95866ca1b1236cb0",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/host/hle_svc.c": {
-      "upstream_sha": "f594cf962ed178658e8f395cf9e85ba476d3ab5c",
-      "integrated_sha": "818dfb64005546c1156930007092c791e93fc8a3",
+      "upstream_sha": "e73e3971b60714de6291affef9f5f9d800bd03f8",
+      "integrated_sha": "2f0f41ed5052979a955bd168f6091bf3cbe20ce8",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/host/hle_thread.c": {
@@ -15938,8 +16106,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/host/tests/t_svc_memory.c": {
-      "upstream_sha": "584ed3181eca2a5ae9d387465e930b8367932f91",
-      "integrated_sha": "a5592d82a8c9b8d5557163868be6627b65bca77b",
+      "upstream_sha": "7b22fbb340c5490f22dc938bd8d553936ba4df70",
+      "integrated_sha": "401f87e0140947f90246fce75885ba1ffc6d7c2f",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/ios/Sources/DmGameMenu.h": {
@@ -15958,8 +16126,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/ios/Sources/Launcher.swift": {
-      "upstream_sha": "0f9d8b66396a729eaa7152d0db041304f1a3b005",
-      "integrated_sha": "bc374c4e1b5dae488392f78f046171cb295c6733",
+      "upstream_sha": "5e4fe3b7e040499c8838120441a4298b872f336d",
+      "integrated_sha": "0abbc3be24042392abe62237ea8c9636b9342c8c",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/ios/Sources/LauncherRow.swift": {
@@ -16018,8 +16186,8 @@
       "reason": "Windows-only customization with no upstream conflict"
     },
     "engine/dm/tools/romfs.py": {
-      "upstream_sha": "42fbbfe609ce961bd2cb68fd51443c4c2985f5c9",
-      "integrated_sha": "920d8f27b267a3a6f0bf6bd8699847d05ebb5f5f",
+      "upstream_sha": "c6f19acf5be297147719f62c156ebd42410ab9a0",
+      "integrated_sha": "9f1c0723dca438a6e2bbb74450fd9fbef57b5488",
       "reason": "Windows-only customization with no upstream conflict"
     },
     "engine/dm/tools/shader_cache.py": {
@@ -16028,8 +16196,8 @@
       "reason": "clean Windows delta"
     },
     "engine/dm/tools/tests/test_launcher_settings.py": {
-      "upstream_sha": "db5bfb597ff22b2bb165c47efa34c95ed47ea301",
-      "integrated_sha": "e9a99a69b8c03d759aeb19cd2b33699b532e4d35",
+      "upstream_sha": "6520569d3bd8efa34745041dc12961ade511c399",
+      "integrated_sha": "22aa95776a8d66ec0c42b05d8beae96256d47b5d",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/tools/tests/test_player_env.py": {
@@ -16043,23 +16211,23 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/agents/game-patches.md": {
-      "upstream_sha": "2ac1518ec24b9e169b310aadd192f93857411f10",
-      "integrated_sha": "999cd7497271006cbcf4cbb5332ee884ac86bbbb",
+      "upstream_sha": "60ea99a841701eaf46b27ed93de562aaa57ee12b",
+      "integrated_sha": "476eb972c9e233497dd783be989ff762e6704882",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/agents/symptoms.md": {
-      "upstream_sha": "36539257b81fa9a2073f2a6d7608b795eebaa180",
-      "integrated_sha": "76ebd5a29a7794807a83c847cf03078659a2b907",
+      "upstream_sha": "b7d1e4c63124b9dcb717eca22dd239a97b3f9b70",
+      "integrated_sha": "c085115561659aa7cb7a32033ffcfc06023650bb",
       "reason": "clean Windows delta"
     },
     "engine/docs/development.md": {
-      "upstream_sha": "d446bf5391ea908e1734c52cba41e519683789ef",
-      "integrated_sha": "4129850c272b6b4c116b13acb3affa250725fc88",
+      "upstream_sha": "8088b00278670a9fc0b908b3f6bdc39f316d536d",
+      "integrated_sha": "1836560cba3435446eba3d1c5cefc3ddfd7567e1",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/env_switches.tsv": {
-      "upstream_sha": "1b8f780695ecc497997b159d4f8e21912c677d7d",
-      "integrated_sha": "f938f6f5c7f6c1c4e82b96869fe8c222707a105c",
+      "upstream_sha": "0bc50b5403e96979281330e55334adf030352e69",
+      "integrated_sha": "9eeed551ab50e0ce6295ed3de0fb58b6466b98bd",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/reference/frame-rate.md": {
@@ -16068,33 +16236,33 @@
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/docs/reference/memory.md": {
-      "upstream_sha": "721ff2ddff91fa9965108d68cbc095cb90f0bc25",
-      "integrated_sha": "b190baa3b0387a1dbe1480d2847b0792551a317b",
+      "upstream_sha": "ed5cd95e4fefdbc72c7a174cd0465c4d8d9d178f",
+      "integrated_sha": "10b8fde20c5b7ac4652c6e7e596604a1f64a24e9",
       "reason": "clean Windows delta"
     },
     "engine/docs/reference/movies.md": {
-      "upstream_sha": "c12d3b7193f034bfe3a25703a49fb1b8a627ef47",
-      "integrated_sha": "df408b1724e68baada9a66791413235a6b7196f4",
+      "upstream_sha": "bfb73bcb975515ccdecb9239ab4e0ea07ca8186a",
+      "integrated_sha": "2c461359a83eb9eff775781ea5979efa23de9b65",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/reference/nvn-objects.md": {
-      "upstream_sha": "73a4580e8c701e26320543119c60cbcb6334768e",
-      "integrated_sha": "d0fd68b66ebbdd4138d0840e2ac43bf61f2ff2f6",
+      "upstream_sha": "313f4fc68c53343b95319b26df7563e97f1cab76",
+      "integrated_sha": "a1e379bda8d8ed606aa80d9dcb724259adc0dc6c",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/reference/rendering.md": {
-      "upstream_sha": "c5113a46d2d6bb3095a5ec4518d3818756c929ab",
-      "integrated_sha": "b88ea3bbb7f04f2a1554f4371b071cf8436df2eb",
+      "upstream_sha": "d80bbf9a5511c10f1c3d25b068c82fabf733a129",
+      "integrated_sha": "bc8b8cbb4d163b02d352ef5879ea0878796bbe94",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/settings.md": {
-      "upstream_sha": "6bc995c668d5e20a00384536630b7337b8244e02",
-      "integrated_sha": "df23f21608b29af5f5b1a0c4572e58a04602cd44",
+      "upstream_sha": "0ea6cc8f06d5c0ac0896e9da57552a2bd9e7105b",
+      "integrated_sha": "814c97e988a99c33312a1c8492032f4e703c1b33",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/scripts/build_ipa_from_nsp.py": {
-      "upstream_sha": "595e5e9de9160a1db5d847bc7b3cb41187dd1773",
-      "integrated_sha": "39edc7b43478d172d70228ca5ce5dc9a5e7d34a2",
+      "upstream_sha": "7e75e0f0632156ad48dd764641829b373e52899b",
+      "integrated_sha": "0373e554271b477f6f72a585f3393dc3f0de6bde",
       "reason": "clean Windows delta"
     }
   },
@@ -16165,7 +16333,7 @@
     "engine/docs/reference/frame-rate.md"
   ],
   "notes": "Original-first complete upstream snapshot; preserve HookLink modified hunks, not older whole files. Windows patches applied only where necessary. iOS IPA and phone testing not yet complete.",
-  "incremental_upstream_from": "d2fd78b402f92d5a83b78987e49aba22e8626719",
-  "incremental_upstream_to": "3ec5b785f37f8c87d78433f152914d89c4ef93c9",
+  "incremental_upstream_from": "3ec5b785f37f8c87d78433f152914d89c4ef93c9",
+  "incremental_upstream_to": "3e1ada5b96acb61293ac790bd6dd093a947abed6",
   "incremental_merge_conflicts": []
 }

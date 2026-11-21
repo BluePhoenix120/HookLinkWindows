@@ -1,0 +1,56 @@
+name: V1.2.5 candidate - test complete 50-commit integration
+
+on:
+  push:
+    branches:
+      - candidate/nxnative-v125-recovery
+    paths:
+      - '.github/workflows/v125-upstream-recovery.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v125-upstream-recovery
+  cancel-in-progress: false
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout exact isolated V1.2.4-based candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Apply complete official 50-commit NXnative update by three-way source merge
+        run: python3 -B tools/integrate_v125_original.py --apply --report v125-merge-report.md
+      - name: Validate manifest, source contracts and Windows regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m py_compile tools/integrate_v125_original.py engine/dm/gfx/tools/shader_split.py engine/dm/gfx/tools/dmsh_build.py engine/scripts/build_ipa_from_nsp.py
+          python3 -B -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -B tools/release_audit.py .
+          python3 -B engine/dm/gfx/tools/dmsh_chain.py | grep -F "$(python3 -c 'import json; print(json.load(open("ENGINE_PIN.json"))["shader_chain"])')"
+          test "$(python3 -c 'import json;print(json.load(open("ENGINE_PIN.json"))["nxnative_commit"])')" = "3e1ada5b96acb61293ac790bd6dd093a947abed6"
+          test "$(python3 -c 'import json;print(json.load(open("ENGINE_PIN.json"))["release"])')" = "Alpha V1.2.5"
+      - name: Commit verified candidate without touching main or existing release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A -- engine ENGINE_PIN.json ENGINE_PIN_FILES.json docs/NXNATIVE_RECENT_UPSTREAM_V125.md tests win/bootstrap_translator.py win/hooklink_gui.pyw
+          git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check
+          if git diff --cached --quiet; then echo "Integration produced no source changes"; exit 1; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "V1.2.5 candidate: merge 50 official NXnative commits with HookLink and Windows preservation"
+          git push origin "HEAD:refs/heads/candidate/nxnative-v125-recovery"
+      - name: Upload complete upstream merge review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v125-upstream-merge-review
+          path: v125-merge-report.md
+          if-no-files-found: warn

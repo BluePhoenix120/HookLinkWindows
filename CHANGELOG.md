@@ -1,5 +1,13 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.5 (2026-11-21)
+
+- Integrates **all 50 official [seedds/nxnative](https://github.com/seedds/nxnative) commits** from `3ec5b785f37f` through `3e1ada5b96ac`, across 168 upstream source paths. Git three-way merging brings forward compatible shader splitter and translator improvements, NXSD/zstd support, Metal texture/encoder/archive changes, updated game profiles, and new Ocarina taller-screen functions.
+- Reconciles 11 overlapping paths individually rather than protecting whole old Windows files. Preserves HookLink's iPhone-specific 16 GiB Ocarina address alias, render-scale/wide-view and camera behavior for game build v131072, half-rate playback without the upstream movie CUTS that previously broke iPhone subtitle/picture timing, custom tabbed iOS launcher, and Windows ROMFS binary-mode and Metal PSO/shadow fixes. Uses newer screen-shape hooks on other matching game builds without installing competing hooks on v131072.
+- Adds source regression checks for the upstream/HookLink merge, Windows shader-chain/provenance validation, native Metal texture size and archive-gate compatibility, and GUI/bootstrapping exact source identities. Refreshes the GUI version, pinned original revision, full original-source manifest, and shader-chain source identifier. The Windows GUI must validate/rebuild the local compiler lock if the source chain changes, without deleting reusable old game data.
+- The previous V1.2.4 IPA and shader cache should be retained as a rollback baseline. **Windows CI packaging and full native Windows IPA compilation/iPhone gameplay, graphics and audio verification of V1.2.5 are required**; a successful source regression suite alone does not establish on-device compatibility.
+
+
 ## HookLinkWindows Alpha V1.2.4 (2026-11-20)
 
 - Fixes the **five native iOS Clang errors in V1.2.3** after all 42,847 iOS game shaders and 19 host Metal libraries were produced. The errors were in `dm/gfx/nvn/nvn_mtl.m` (undeclared `shot_ready`, two missing `present_now` producer event arguments, undeclared `elapsed`) and `nvn_ndve.inc` (stale `dp` reference). The corrected calls preserve the actual event value, screenshot synchronization, Metal 4 commit options, frame-generation handling, and HookLink NDVE lite path.
