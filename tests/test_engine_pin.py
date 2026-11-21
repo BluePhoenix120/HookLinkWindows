@@ -20,6 +20,7 @@ _ALLOWED_PINS = {
     '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf',
     '0b5fd6020093407af8bb5ad166e78e00bd2b7242',
     'd2fd78b402f92d5a83b78987e49aba22e8626719',
+    '3ec5b785f37f8c87d78433f152914d89c4ef93c9',
 }
 assert PIN in _ALLOWED_PINS
 assert FORK in ('https://github.com/dsi-hub/nxnative',
