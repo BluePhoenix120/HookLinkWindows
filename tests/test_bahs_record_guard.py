@@ -64,12 +64,18 @@ class OriginalBahsRecordGuard(unittest.TestCase):
     def test_hooklink_windows_overlay_is_explicit_and_hashed(self):
         record = json.loads(MANIFEST.read_text(encoding="utf-8"))
         path = "engine/dm/gfx/tools/shader_split.py"
-        self.assertIn(path, record["windows_overlays"])
-        entry = record["integration_overrides"][path]
-        self.assertEqual(entry["upstream_sha"], "cbfbf1914da10c00cdb75ad00c80da3f16c31c34")
         raw = SPLITTER.read_bytes()
         digest = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw).hexdigest()
-        self.assertEqual(digest, entry["integrated_sha"])
+        official = {item["path"]:item["sha"] for item in record["changed_paths"]}
+        self.assertEqual(official[path], "cbfbf1914da10c00cdb75ad00c80da3f16c31c34")
+        if digest == official[path]:
+            self.assertNotIn(path, record["integration_overrides"])
+            self.assertNotIn(path, record["windows_overlays"])
+        else:
+            self.assertIn(path, record["windows_overlays"])
+            entry = record["integration_overrides"][path]
+            self.assertEqual(entry["upstream_sha"], official[path])
+            self.assertEqual(digest, entry["integrated_sha"])
 
 
 if __name__ == "__main__":
