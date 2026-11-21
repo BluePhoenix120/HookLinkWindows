@@ -1,10 +1,10 @@
 {
   "nxnative_repo": "https://github.com/seedds/nxnative.git",
   "from_commit": "7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf",
-  "nxnative_commit": "d2fd78b402f92d5a83b78987e49aba22e8626719",
+  "nxnative_commit": "3ec5b785f37f8c87d78433f152914d89c4ef93c9",
   "hooklink_engine_commit": "698b46bc5b14510fffc0a4b8fd4bf78309004e4c",
   "engine_integration_commit": "c0c4aba1774690c82ba78b11d9a1551aeacedf09",
-  "engine_integration_policy": "original-upstream-first; real HookLink conflict hunks preserved; only necessary Windows delta reapplied by three-way merge",
+  "engine_integration_policy": "upstream-first complete original NXnative up to 3ec5b785f37f; retain actual HookLink and Windows changes by three-way merge; local Windows chain revalidated before IPA",
   "changed_paths": [
     {
       "path": "engine/.clang-tidy",
@@ -92,7 +92,7 @@
     },
     {
       "path": "engine/README.md",
-      "sha": "8c0353245e1223164eaaef3d296c83eec6d1800d"
+      "sha": "f08dea346432e3b654b554d1d0b17fe18ec90b7f"
     },
     {
       "path": "engine/dm/.gitignore",
@@ -2620,7 +2620,7 @@
     },
     {
       "path": "engine/dm/games/010062B01525C000/README.md",
-      "sha": "071af9c427ea17ae256b6f1170012848a0268c3c"
+      "sha": "e43bc2ec86a510f79a2c2c36db8ce3cd25edecfd"
     },
     {
       "path": "engine/dm/games/010062B01525C000/bf_want.tsv",
@@ -6996,7 +6996,7 @@
     },
     {
       "path": "engine/dm/games/0400486024DEC000/README.md",
-      "sha": "6c518b6aafb4828fbb939c29ec931b56275ebc20"
+      "sha": "4a522287a5db436810dd200a7d0c34fd655a0a6d"
     },
     {
       "path": "engine/dm/games/0400486024DEC000/bench.tsv",
@@ -7112,7 +7112,7 @@
     },
     {
       "path": "engine/dm/games/040074A01BF12000/README.md",
-      "sha": "a823e64eae5e1367f0cc2cd3b507b0c9ba7c7631"
+      "sha": "c742dd332efce3c7cd3dfe0d3f4c4bcaefd6de87"
     },
     {
       "path": "engine/dm/games/040074A01BF12000/game.tsv",
@@ -7492,7 +7492,7 @@
     },
     {
       "path": "engine/dm/gfx/gl/hle_gl.m",
-      "sha": "aa398f882c3167ca42158d4c5e7ea3d5aabfa4fc"
+      "sha": "0bd3ec75817d6336141bf58233e9237615da00f6"
     },
     {
       "path": "engine/dm/gfx/hle_nv.c",
@@ -7612,7 +7612,7 @@
     },
     {
       "path": "engine/dm/gfx/nvn/dmsh_chain.h",
-      "sha": "db0046e8fcb83ee8dccf30674ceddd608f3edcf5"
+      "sha": "a0130cb0550e79b2ff25712e50b2264e6836b805"
     },
     {
       "path": "engine/dm/gfx/nvn/hle_nvn.c",
@@ -8136,7 +8136,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/t_gl_imports.m",
-      "sha": "3b72101ade55d40e0b4c9eba84ea0378534feaee"
+      "sha": "df1ac323768c995d30d8e43935796cb1cb224cf8"
     },
     {
       "path": "engine/dm/gfx/tests/t_global_memory.m",
@@ -8788,7 +8788,7 @@
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_ampere_mem.py",
-      "sha": "44708af5e2d1751f473bbb907ca7575519301f5d"
+      "sha": "1922427efe19a8a0a5e0f9b9f1aaeb4669f7c3d2"
     },
     {
       "path": "engine/dm/gfx/tests/test_dmsh_ampere_orin.py",
@@ -9256,7 +9256,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_chain.lock",
-      "sha": "90dd48a67aef82e0e065f5fca8faa3016d7ac8b7"
+      "sha": "5ccf76e8bb5059a07c7e59ef540799571a011257"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_chain.py",
@@ -9348,7 +9348,7 @@
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_xlate/Program.cs",
-      "sha": "470e7289e767a4954f850d4cb90e87506f580b86"
+      "sha": "56cf9c30ba4adfcae1eafc64ab0c55135b48a336"
     },
     {
       "path": "engine/dm/gfx/tools/dmsh_xlate/dmsh_xlate.csproj",
@@ -9584,7 +9584,7 @@
     },
     {
       "path": "engine/dm/host/hle.h",
-      "sha": "892a334574aebda38cb2adbae136bd08eb286ecc"
+      "sha": "d401b5de1930c0e79458e8914d4251fd17f39e58"
     },
     {
       "path": "engine/dm/host/hle_account.c",
@@ -9596,7 +9596,7 @@
     },
     {
       "path": "engine/dm/host/hle_audio.c",
-      "sha": "45b0cd115e50c8610b0d286e3604e31dbebc5741"
+      "sha": "9d89e17b52935627e161b67955f252a53a4d5392"
     },
     {
       "path": "engine/dm/host/hle_audren.c",
@@ -9932,7 +9932,7 @@
     },
     {
       "path": "engine/dm/host/tests/t_audio_device.c",
-      "sha": "7083a1d1d95919578cb7de2021a5d07072e134fb"
+      "sha": "0d3a520d3de7cb86775c7cbe86dac13c80c82c56"
     },
     {
       "path": "engine/dm/host/tests/t_audio_input.c",
@@ -10332,7 +10332,7 @@
     },
     {
       "path": "engine/dm/ios/Sources/front_ios.m",
-      "sha": "188a249debd264b429f6e9223995ba7511fa74fb"
+      "sha": "4cdcb15e2b2a8cdd040aae04fc73835ae25c6b10"
     },
     {
       "path": "engine/dm/ios/Sources/main.m",
@@ -10364,7 +10364,7 @@
     },
     {
       "path": "engine/dm/ios/tests/duo/Sources/DuoRuntimeStubs.m",
-      "sha": "24058a75758dfb19b17cb9cfb840683369acc0f0"
+      "sha": "8b6ba3c2e915babab95fdcb8d04e78fd24cab5bc"
     },
     {
       "path": "engine/dm/ios/tests/duo/Sources/Fixtures/game_profile.h",
@@ -12984,7 +12984,7 @@
     },
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/IGpuAccessor.cs",
-      "sha": "8c74955d65d91d25a2bb4addb6bd1b7e9991e490"
+      "sha": "4bbf049e1343d861115e6d6e979e8aa4254e493b"
     },
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/ILogger.cs",
@@ -13568,7 +13568,7 @@
     },
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/Transforms/TexturePass.cs",
-      "sha": "2ec00ce2d81b51d437b79f913d532ce20c0cd5e1"
+      "sha": "cfa46b8408dd38aac3c8f1a5b746f4b30fd3ef37"
     },
     {
       "path": "engine/dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader/Translation/Transforms/TransformPasses.cs",
@@ -14416,7 +14416,7 @@
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_nup.py",
-      "sha": "43b2ffc53d36b6821ba2f59b613fe7317956069f"
+      "sha": "3c0399b98326393f4620f783cb139548196ed393"
     },
     {
       "path": "engine/dm/tools/tests/test_nsp_progress.py",
@@ -14852,15 +14852,15 @@
     },
     {
       "path": "engine/docs/agents/game-patches.md",
-      "sha": "e7f7dcac3fa530f7f647974dd274447897175063"
+      "sha": "2ac1518ec24b9e169b310aadd192f93857411f10"
     },
     {
       "path": "engine/docs/agents/symptoms.md",
-      "sha": "ee60ebfdf70f2363f679c667d73ff67da2858c90"
+      "sha": "36539257b81fa9a2073f2a6d7608b795eebaa180"
     },
     {
       "path": "engine/docs/development.md",
-      "sha": "9600f1ffd99bec3b9ed9ac77368aa74fc86ae943"
+      "sha": "d446bf5391ea908e1734c52cba41e519683789ef"
     },
     {
       "path": "engine/docs/env_switches.tsv",
@@ -14868,7 +14868,7 @@
     },
     {
       "path": "engine/docs/frontends.md",
-      "sha": "14a3875a8385f899e2f34c54c81d8a42ea083de2"
+      "sha": "50c188248eb1d6c221d34e4e8754824dedc2f065"
     },
     {
       "path": "engine/docs/geometry-metal-research.md",
@@ -15492,7 +15492,7 @@
     },
     {
       "path": "engine/docs/reference/audio.md",
-      "sha": "9e327edcd9301f586973963a25f32ccf475db0fd"
+      "sha": "dd5bec4e4efaa11f769ef91fd91a7e3b355ec8c6"
     },
     {
       "path": "engine/docs/reference/cheats.md",
@@ -15520,11 +15520,11 @@
     },
     {
       "path": "engine/docs/reference/packing.md",
-      "sha": "5864cc14dcce7642aaaf63dd866d29c8ce5f6621"
+      "sha": "14b5bc3e3496b5f461590260d19f3b77d53909c1"
     },
     {
       "path": "engine/docs/reference/rendering.md",
-      "sha": "183a5f28872a683d4dffc9b24ea489f6e583c687"
+      "sha": "c5113a46d2d6bb3095a5ec4518d3818756c929ab"
     },
     {
       "path": "engine/docs/reference/rewriter.md",
@@ -15536,7 +15536,7 @@
     },
     {
       "path": "engine/docs/reference/shaders.md",
-      "sha": "977d8d52ae400a3c72dc4c1c635ad5711c305427"
+      "sha": "fa2d642a98bb4488b7ddfbba74b3ec36fd519603"
     },
     {
       "path": "engine/docs/reference/threads.md",
@@ -15560,7 +15560,7 @@
     },
     {
       "path": "engine/scripts/build_ipa_from_nsp.py",
-      "sha": "80a1172aa149506ade7615d5685bb38ea3ee2b17"
+      "sha": "595e5e9de9160a1db5d847bc7b3cb41187dd1773"
     },
     {
       "path": "engine/scripts/cheat_anchor.py",
@@ -15576,7 +15576,7 @@
     },
     {
       "path": "engine/scripts/pack_nup.py",
-      "sha": "52ab7882905827bf79fb4a243c0ae41ae3a1b196"
+      "sha": "b8d74c51ebbd5fb2f5939d465cfeb94c5be37031"
     },
     {
       "path": "engine/scripts/push_romfs.sh",
@@ -15630,9 +15630,7 @@
     "engine/dm/gfx/tools/dmsh_build.py",
     "engine/dm/gfx/tools/dmsh_chain.lock",
     "engine/dm/gfx/tools/dmsh_rewrite.py",
-    "engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate",
     "engine/dm/gfx/tools/shader_split.py",
-    "engine/dm/gfx/tools/spirv_cross_bin/spirv-cross",
     "engine/dm/gfx/tools/tool_lock.py",
     "engine/dm/host/Makefile",
     "engine/dm/host/frame_mode.h",
@@ -15730,8 +15728,8 @@
       "reason": "Windows-only customization with no upstream conflict"
     },
     "engine/dm/games/0400486024DEC000/README.md": {
-      "upstream_sha": "6c518b6aafb4828fbb939c29ec931b56275ebc20",
-      "integrated_sha": "72a64dc403c2aa96accfb3114dc9bc14e983016d",
+      "upstream_sha": "4a522287a5db436810dd200a7d0c34fd655a0a6d",
+      "integrated_sha": "308cc0a1dfecf21fa8b559abaca023ed20e4373a",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/games/0400486024DEC000/game.tsv": {
@@ -15775,8 +15773,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/dmsh_chain.h": {
-      "upstream_sha": "db0046e8fcb83ee8dccf30674ceddd608f3edcf5",
-      "integrated_sha": "18597bdfc0e85ebfec33c006285d4090ac44721f",
+      "upstream_sha": "a0130cb0550e79b2ff25712e50b2264e6836b805",
+      "integrated_sha": "453342996b6cc9c9acc854c8183d66ea3da47be7",
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/dm/gfx/nvn/hle_nvn.c": {
@@ -15801,12 +15799,12 @@
     },
     "engine/dm/gfx/nvn/nvn_mtl.m": {
       "upstream_sha": "9a83b441f7155baa69a1ec6524a65d1353aef779",
-      "integrated_sha": "992bea8fe6708e4e372e83bea5b6d75ac404ddd1",
+      "integrated_sha": "a41b0f5d69ffd89a9602780e9dd77cb7cb82c739",
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/dm/gfx/nvn/nvn_ndve.inc": {
       "upstream_sha": "b4c9d6d12ba73de9a701a577fe0abd4f5148bd89",
-      "integrated_sha": "9264dc47520b73dcf10eb02686a7c4e1fd44eefe",
+      "integrated_sha": "bd4988277c587bb643472e3f4b44093f0635c501",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/gfx/nvn/nvn_owner.h": {
@@ -15880,7 +15878,7 @@
       "reason": "explicit reviewed hunk resolution"
     },
     "engine/dm/gfx/tools/dmsh_chain.lock": {
-      "upstream_sha": "90dd48a67aef82e0e065f5fca8faa3016d7ac8b7",
+      "upstream_sha": "5ccf76e8bb5059a07c7e59ef540799571a011257",
       "integrated_sha": "82fb8dcfd9942c72665d434ee5714e7fc9189d05",
       "reason": "explicit reviewed hunk resolution"
     },
@@ -15905,8 +15903,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/host/hle_audio.c": {
-      "upstream_sha": "45b0cd115e50c8610b0d286e3604e31dbebc5741",
-      "integrated_sha": "894ff2b56104e7398e542836f1168fc8fb9a354d",
+      "upstream_sha": "9d89e17b52935627e161b67955f252a53a4d5392",
+      "integrated_sha": "7007b3387d6614b2560a24980d0c51347cf50076",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/host/hle_svc.c": {
@@ -15975,8 +15973,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/dm/ios/Sources/front_ios.m": {
-      "upstream_sha": "188a249debd264b429f6e9223995ba7511fa74fb",
-      "integrated_sha": "d3d40271fa3e6cc0d5259e6aa3e7a89e08f04243",
+      "upstream_sha": "4cdcb15e2b2a8cdd040aae04fc73835ae25c6b10",
+      "integrated_sha": "23642d21076b82b167dda45f17d9120753b0d589",
       "reason": "clean Windows delta"
     },
     "engine/dm/ios/Sources/main.m": {
@@ -16045,18 +16043,18 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/agents/game-patches.md": {
-      "upstream_sha": "e7f7dcac3fa530f7f647974dd274447897175063",
-      "integrated_sha": "794ce6d89e8e1a0bd185333a7be34e52c26a02bc",
+      "upstream_sha": "2ac1518ec24b9e169b310aadd192f93857411f10",
+      "integrated_sha": "999cd7497271006cbcf4cbb5332ee884ac86bbbb",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/agents/symptoms.md": {
-      "upstream_sha": "ee60ebfdf70f2363f679c667d73ff67da2858c90",
-      "integrated_sha": "4b21f7ad53e7793d90061911b101aae898fbcd0d",
+      "upstream_sha": "36539257b81fa9a2073f2a6d7608b795eebaa180",
+      "integrated_sha": "76ebd5a29a7794807a83c847cf03078659a2b907",
       "reason": "clean Windows delta"
     },
     "engine/docs/development.md": {
-      "upstream_sha": "9600f1ffd99bec3b9ed9ac77368aa74fc86ae943",
-      "integrated_sha": "a3d86f93fdc343b421ab51abe2421b32cc8b0880",
+      "upstream_sha": "d446bf5391ea908e1734c52cba41e519683789ef",
+      "integrated_sha": "4129850c272b6b4c116b13acb3affa250725fc88",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/env_switches.tsv": {
@@ -16085,8 +16083,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/reference/rendering.md": {
-      "upstream_sha": "183a5f28872a683d4dffc9b24ea489f6e583c687",
-      "integrated_sha": "bf598480a337c865032cef47fae5f1de987ed81b",
+      "upstream_sha": "c5113a46d2d6bb3095a5ec4518d3818756c929ab",
+      "integrated_sha": "b88ea3bbb7f04f2a1554f4371b071cf8436df2eb",
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/docs/settings.md": {
@@ -16095,8 +16093,8 @@
       "reason": "Original NXnative + actual HookLink changed-hunk integration; see reviewed upstream-first conflict report"
     },
     "engine/scripts/build_ipa_from_nsp.py": {
-      "upstream_sha": "80a1172aa149506ade7615d5685bb38ea3ee2b17",
-      "integrated_sha": "a43b388296a86a0d6a56111f3a29ab32928616f2",
+      "upstream_sha": "595e5e9de9160a1db5d847bc7b3cb41187dd1773",
+      "integrated_sha": "39edc7b43478d172d70228ca5ce5dc9a5e7d34a2",
       "reason": "clean Windows delta"
     }
   },
@@ -16129,11 +16127,11 @@
   "platform_binary_exclusions": [
     {
       "path": "engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate",
-      "reason": "Prebuilt non-Windows binary; Windows rebuilds tool from original source"
+      "reason": "Non-Windows prebuilt binary; Windows rebuilds from original source"
     },
     {
       "path": "engine/dm/gfx/tools/spirv_cross_bin/spirv-cross",
-      "reason": "Prebuilt non-Windows binary; Windows rebuilds tool from original source"
+      "reason": "Non-Windows prebuilt binary; Windows rebuilds from original source"
     }
   ],
   "original_hooklink_conflicts": [
@@ -16166,5 +16164,8 @@
     "engine/dm/gfx/tools/dmsh_rewrite.py",
     "engine/docs/reference/frame-rate.md"
   ],
-  "notes": "Original-first complete upstream snapshot; preserve HookLink modified hunks, not older whole files. Windows patches applied only where necessary. iOS IPA and phone testing not yet complete."
+  "notes": "Original-first complete upstream snapshot; preserve HookLink modified hunks, not older whole files. Windows patches applied only where necessary. iOS IPA and phone testing not yet complete.",
+  "incremental_upstream_from": "d2fd78b402f92d5a83b78987e49aba22e8626719",
+  "incremental_upstream_to": "3ec5b785f37f8c87d78433f152914d89c4ef93c9",
+  "incremental_merge_conflicts": []
 }

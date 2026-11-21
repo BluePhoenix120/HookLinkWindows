@@ -44,6 +44,8 @@ _SUPPORTED_ENGINE_BASES = {
      'https://github.com/seedds/nxnative.git'),
     ('3.0.1', 'd2fd78b402f92d5a83b78987e49aba22e8626719',
      'https://github.com/seedds/nxnative.git'),
+    ('3.0.1', '3ec5b785f37f8c87d78433f152914d89c4ef93c9',
+     'https://github.com/seedds/nxnative.git'),
 }
 _HOOKLINK_X201_ENGINE = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
 

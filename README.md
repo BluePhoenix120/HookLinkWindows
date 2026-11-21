@@ -1,3 +1,9 @@
+## Alpha V1.2.4 — repair native Metal compilation and merge the latest original NXnative
+
+V1.2.3 compiled all 42,847 Ocarina iOS game shaders but stopped compiling the iOS host with five native errors. V1.2.4 restores screenshot synchronization (`shot_ready`), both present-callback producer event arguments, snapshot queue-commit timing (`elapsed`), and removes the obsolete NDVE `dp` reference while keeping HookLink's frame-generation and NDVE lite behavior.
+
+The engine is also updated from official NXnative `d2fd78b402f9` to **`3ec5b785f37f`**, integrating all four additional upstream commits (audio route-change stall recovery, shader gather offsets, NUP metadata validation and OpenGL changes). A complete Git three-way source audit found zero new source conflicts. The shader translation chain has changed: **the GUI will verify/synchronize the local Windows compiler lock before building and may need to rebuild the game shaders**, preserving old archives. See [recent upstream integration](docs/NXNATIVE_RECENT_UPSTREAM_V124.md). This source fix still requires a full IPA and iPhone gameplay/audio test to verify the native build.
+
 <p align="center"><img src="docs/icon.png" width="112" alt="HookLinkWindows icon"></p>
 
 <h1 align="center">HookLinkWindows</h1>

@@ -1,15 +1,17 @@
 {
     "hooklink_base": "3.0.1",
     "nxnative_repo": "https://github.com/seedds/nxnative.git",
-    "nxnative_commit": "d2fd78b402f92d5a83b78987e49aba22e8626719",
+    "nxnative_commit": "3ec5b785f37f8c87d78433f152914d89c4ef93c9",
     "engine_location": "engine/",
-    "shader_chain": "a58d7f1f4ef9",
-    "release": "Alpha V1.2.3",
+    "shader_chain": "49c95ef31ca4",
+    "release": "Alpha V1.2.4",
     "hooklink_engine_repo": "https://github.com/dsi-hub/nxnative.git",
     "hooklink_engine_commit": "698b46bc5b14510fffc0a4b8fd4bf78309004e4c",
     "engine_integration_commit": "c0c4aba1774690c82ba78b11d9a1551aeacedf09",
-    "engine_integration_policy": "original-upstream-first; real HookLink conflict hunks preserved; only necessary Windows delta reapplied by three-way merge",
+    "engine_integration_policy": "upstream-first complete original NXnative up to 3ec5b785f37f; retain actual HookLink and Windows changes by three-way merge; local Windows chain revalidated before IPA",
     "audio_producer_patch_commit": "2edad1828de247aaf46c53cb288357cb65e84be0",
     "full_upstream_sync_parent": "0b5fd6020093407af8bb5ad166e78e00bd2b7242",
-    "bahs_record_fix": "NXnative PR #2943: restore original BAHS binary-record filtering, preserving HookLinkWindows splitter overlay"
+    "bahs_record_fix": "NXnative PR #2943: restore original BAHS binary-record filtering, preserving HookLinkWindows splitter overlay",
+    "incremental_upstream_from": "d2fd78b402f92d5a83b78987e49aba22e8626719",
+    "incremental_upstream_to": "3ec5b785f37f8c87d78433f152914d89c4ef93c9"
 }

@@ -1,0 +1,56 @@
+name: Review recent original NXnative source update
+
+on:
+  push:
+    branches:
+      - fix/v1.2.4-native-merge
+    paths:
+      - 'tools/integrate_recent_original.py'
+      - '.github/workflows/integrate-recent-original.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/v1.2.4-native-merge
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply ALL reviewed official NXnative changes over actual HookLink and Windows hunks
+        run: python3 -B tools/integrate_recent_original.py --apply --report upstream-recent-review.md
+      - name: Validate full source provenance and native regression contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m py_compile engine/dm/gfx/tools/dmsh_build.py engine/dm/gfx/tools/shader_split.py engine/scripts/build_ipa_from_nsp.py engine/dm/gfx/tools/dmsh_chain.py
+          python3 -B -m unittest discover -s tests -p 'test_engine_sync_manifest.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_upstream_first_contracts.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_native_metal_merge_contracts.py' -v
+          python3 -B tools/release_audit.py .
+          python3 -B engine/dm/gfx/tools/dmsh_chain.py | grep -F "$(python3 -c 'import json; print(json.load(open("ENGINE_PIN.json"))["shader_chain"])')"
+          git add --all -- engine ENGINE_PIN.json ENGINE_PIN_FILES.json docs/NXNATIVE_RECENT_UPSTREAM_V124.md tests/test_engine_sync_manifest.py tests/test_upstream_first_contracts.py
+          git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check
+      - name: Commit only verified source and pin updates on the candidate PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then echo 'No upstream changes staged'; exit 1; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'V1.2.4: integrate all newest original NXnative updates and reconcile chain'
+          git push origin HEAD:refs/heads/fix/v1.2.4-native-merge
+      - name: Upload complete report (including all conflicting hunks)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v124-complete-upstream-review
+          path: upstream-recent-review.md
+          if-no-files-found: warn

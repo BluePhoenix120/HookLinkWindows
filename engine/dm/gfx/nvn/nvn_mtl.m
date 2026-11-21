@@ -19586,7 +19586,8 @@ static int present_now(const tex_t *t, double period, uint64_t frame, uint64_t t
         nshot = 0; const char *e = getenv("DM_NVN_SHOT"), *c = e ? strchr(e, ':') : NULL;
         if (c) { shot_path = c + 1; for (const char *q = e; q < c && nshot < 4096; q = strchr(q, ',') ? strchr(q, ',') + 1 : c) shots[nshot++] = atol(q); }
     }
-    for (int i = 0; i < nshot; i++) if ((long)g_present_n == shots[i]) { char path[1024]; snprintf(path, sizeof path, shot_path, (int)g_present_n); mtl_finish_gpu(); shot(src, path, 1, crop);
+    int shot_ready = -1;   // Share one producer-signal check with queued and frame-number screenshots.
+    for (int i = 0; i < nshot; i++) if ((long)g_present_n == shots[i]) { char path[1024]; snprintf(path, sizeof path, shot_path, (int)g_present_n); present_shot(src, path, crop, ev_val, &shot_ready);
         if (fg_on()) MLOG("frame generation: present %llu shot: %s", (unsigned long long)g_present_n, (t->serial >> 61) == 1 && (t->serial & (1ull << 40)) ? "a generated frame" : g_fg_owing ? "its present's own picture, after its generated frame" : "a present's own picture"); }
     pthread_mutex_lock(&g_shotq_mu);
     for (int i = 0; i < g_nshotq;) if (g_present_n >= g_shotq[i].frame) { present_shot(src, g_shotq[i].path, crop, ev_val, &shot_ready); g_shotq[i] = g_shotq[--g_nshotq]; } else i++;
@@ -19815,7 +19816,7 @@ static struct timespec link_deadline(uint64_t ns);
                                              (unsigned long long)g_fg_paused_late, (unsigned long long)g_fg_paused_behind, (unsigned long long)g_fg_sheds, (unsigned long long)g_fg_shed_frames);
             pthread_mutex_unlock(&g_pq_mu);
             g_fg_owing = 1; uint64_t p0 = now_ns(), a0 = g_present_alloc_wait_ns, r0 = g_present_res_ns;
-            @autoreleasepool { present_now(&ow.t, 0, ow.frame, tk, ow.crop, update.drawable, update.targetPresentationTimestamp); }
+            @autoreleasepool { present_now(&ow.t, 0, ow.frame, tk, ow.crop, ow.ev_val, update.drawable, update.targetPresentationTimestamp); }
             g_fg_owing = 0;
             link_slow_note("a picture after its generated frame", 0, now_ns() - p0, g_present_alloc_wait_ns - a0, g_present_res_ns - r0);
             return;
@@ -19866,7 +19867,7 @@ static struct timespec link_deadline(uint64_t ns);
     // Frame generation: the frame generated before this present first, for a present held 1.5 ticks or more (two at 30 fps on a 60 Hz link), its own picture after it
     tex_t gt; int gen = it.gen && g_fg_tick > 0 && it.period >= 1.5 * g_fg_tick;
     if (gen) { memset(&gt, 0, sizeof gt); gt.magic = MAGIC('T', 'E', 'X', 0); gt.serial = it.gen; }
-    @autoreleasepool { submitted = present_now(gen ? &gt : &it.t, it.period, it.frame, ticket, it.crop, update.drawable, update.targetPresentationTimestamp); mtl_tex_unpin(it.t.serial); }
+    @autoreleasepool { submitted = present_now(gen ? &gt : &it.t, it.period, it.frame, ticket, it.crop, it.ev_val, update.drawable, update.targetPresentationTimestamp); mtl_tex_unpin(it.t.serial); }
     g_link_hold_until = submitted && it.period > 0.025 ? update.targetPresentationTimestamp + it.period : 0;
     link_slow_note(gen ? "a generated frame" : "a present", p0 - s0, now_ns() - p0, g_present_alloc_wait_ns - a0, g_present_res_ns - r0);
     if (submitted && gen) { pthread_mutex_lock(&g_pq_mu); g_fg_owe = it; g_fg_owe_tk = ticket; g_fg_owe_at = update.targetPresentationTimestamp + it.period / 2; g_fg_owed = 1; pthread_mutex_unlock(&g_pq_mu); }
@@ -20576,7 +20577,10 @@ static uint64_t snap_take(const tex_t *t, double period, const int crop[4], int 
         r = rec_own_put(b, RO_NOTE, 0); r->a[0] = (uint64_t)(uintptr_t)&g_snap_cmt; r->a[1] = v;
         rec_own_push(b);
     } else {
-        pthread_mutex_lock(&g_res_commit_mu); if (o) [g_q4 commit:&cb count:1 options:o]; else [g_q4 commit:&cb count:1]; [g_q4 signalEvent:g_snap_ev value:v]; pthread_mutex_unlock(&g_res_commit_mu);
+        pthread_mutex_lock(&g_res_commit_mu);
+        uint64_t elapsed = q4_commit_elapsed(&cb, 1, o);   // Time exactly the queue commit; preserve the frame-generation feedback option.
+        [g_q4 signalEvent:g_snap_ev value:v];
+        pthread_mutex_unlock(&g_res_commit_mu);
         atomic_store(&g_snap_cmt, v);
         q4_commit_slow(elapsed, "snap_take (snapshot copy)");
     }
