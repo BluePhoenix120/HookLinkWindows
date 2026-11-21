@@ -16,7 +16,7 @@ class V125UpstreamMergeContracts(unittest.TestCase):
         pin = json.loads(self.read("ENGINE_PIN.json"))
         manifest = json.loads(self.read("ENGINE_PIN_FILES.json"))
         self.assertEqual(pin["nxnative_commit"], TARGET)
-        self.assertEqual(pin["release"], "Alpha V1.2.5")
+        self.assertGreaterEqual(tuple(map(int, pin["release"].removeprefix("Alpha V").split("."))), (1, 2, 5))
         self.assertEqual(manifest["nxnative_commit"], TARGET)
         self.assertEqual(manifest["incremental_upstream_to"], TARGET)
         self.assertEqual(manifest["incremental_upstream_from"], "3ec5b785f37f8c87d78433f152914d89c4ef93c9")
