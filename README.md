@@ -22,12 +22,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.2.2](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.2.3](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.2-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.2-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.3-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.3-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -38,11 +38,11 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.2.2 — experimental Windows port (November 2026).**
+**Alpha V1.2.3 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
-| Windows GUI, package creation and automated regression tests | **199 Windows tests passed** on the V1.2.2 full-NXnative integration candidate; end-to-end IPA and phone verification remain outstanding |
+| Windows GUI, package creation and automated regression tests | **199 Windows tests passed** on V1.2.2; V1.2.3 adds BAHS shader parsing regression tests (Windows CI verification required). Full IPA and phone testing remain outstanding |
 | Source integration | Complete original NXnative `d2fd78b402f9` integrated by three-way merge with HookLink custom changes and Windows overlays retained; see [Engine and upstream](#engine-and-upstream) |
 | Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Verified by developer for V1.2.0** on iPhone 18 Pro Max/iOS 27.2: gameplay and graphics work. V1.2.1 audio scheduling fix still needs device validation |
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
@@ -51,6 +51,10 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 The developer has confirmed that a Windows-generated V1.2.0 IPA reaches playable gameplay with correct graphics and controls on an iPhone 18 Pro Max (iOS 27.2). The same build exhibited audio static/popping caused by logged underruns. V1.2.1 ports an upstream scheduling fix for that audio issue; its iPhone runtime result remains unverified.
 
 For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+
+## Alpha V1.2.3 — repair mixed-generation shader splitter and profile
+
+The V1.2.2 Windows build stopped at shader stage 4/7 with a registered-vs-split map mismatch for Ocarina of Time (0400486024DEC000, v131072). NXnative's newer official profile already removes the false BAHS descriptor `ce0eba6c3584814d` (`AglShader.sharcb@0x1b41cc`), but our HookLink-preserved `shader_split.py` still scanned it and shifted 3,022 later vertex rows. V1.2.3 restores the original NXnative PR #2943 record-descriptor validation and pairing into the existing Windows-adjusted splitter, and adds a synthetic regression test that excludes descriptor-shaped false entries. The original engine pin remains `d2fd78b402f9` and other HookLink/Windows code remains unchanged. **This fixes the identified parser mismatch in source; successful on-device IPA generation still requires testing.** The build's three malformed `.zs` texture warnings are separate problems in the supplied NUP and are not fixed by this change. Reuse the same work directory and choose **Build IPA**; the shader split input fingerprint should detect this updated source and rerun stage 4 without deleting good shader caches.
 
 ## Alpha V1.2.2 — complete original NXnative update
 

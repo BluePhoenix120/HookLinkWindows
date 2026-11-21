@@ -3915,8 +3915,8 @@
     },
     "engine/dm/gfx/tools/shader_split.py": {
       "upstream_sha": "cbfbf1914da10c00cdb75ad00c80da3f16c31c34",
-      "integrated_sha": "ee6358626e8684f4dfcb5f325999a1713bb389eb",
-      "reason": "Three-way merge keeps conflicting HookLink/Windows changes while importing nonconflicting original NXnative changes."
+      "integrated_sha": "f46b69b650887a46f8187ff527bcb68e737072c8",
+      "reason": "Restores original NXnative BAHS binary-record validation, offset filtering and variations from the pinned official snapshot (PR #2943), while retaining other HookLink/Windows adjustments to shader_split.py. This is an explicit integrated-source override."
     },
     "engine/dm/gfx/tools/spirv_cross_bin/build.sh": {
       "upstream_sha": "2a3523aa64cdaaa1030d88d8bc306ae6073624cc",
