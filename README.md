@@ -1,3 +1,9 @@
+## Alpha V1.2.6 — repair Windows SDK patch registration after the upstream merge
+
+The V1.2.5 Windows IPA build could stop after NUP extraction with `AttributeError: module 'sdk_patches' has no attribute 'CUTS'`. The original NXnative engine now registers generic SDK patches using `MATCH_CUTS['sdk']`, not the old exact-build `CUTS` dictionary. V1.2.6 fixes the Windows driver to honor upstream's function-matched rules and only use its legacy raw SDK scanner when **neither** exact-build cuts nor upstream SDK-wide match rules exist. It adds regression tests and does not alter the original NXnative engine pin or the shader chain.
+
+**For an existing V1.2.5 work directory:** download the new complete Windows ZIP, extract it separately, open its `HookLinkWindows.exe`, select the same build directory, and retry **Build IPA**. Do not erase the extracted game or shader caches. The three damaged `.zs` input-file warnings are separate; they are not fixed by this update.
+
 ## Alpha V1.2.5 — integrate 50 original NXnative commits without regressing HookLinkWindows
 
 This release merges **all 50 original [NXnative](https://github.com/seedds/nxnative) commits** from `3ec5b785` through [`3e1ada5b`](https://github.com/seedds/nxnative/commit/3e1ada5b96acb61293ac790bd6dd093a947abed6), affecting 168 original paths. All compatible upstream source is integrated through a real Git three-way merge. The 11 overlapping paths receive individually documented, source-hunk-level reconciliation rather than preserving stale whole Windows files.
@@ -34,12 +40,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.2.5](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.2.6](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.5-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.5-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.6-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.6-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -50,7 +56,7 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.2.5 — experimental Windows port (November 2026).**
+**Alpha V1.2.6 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
