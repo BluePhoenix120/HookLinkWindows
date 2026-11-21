@@ -368,6 +368,18 @@ def main():
         content=content.replace('m["incremental_upstream_from"],"d2fd78b402f92d5a83b78987e49aba22e8626719"',
                                 'm["incremental_upstream_from"],"'+FROM+'"')
         latest_test.write_text(content,encoding="utf-8")
+        # Advance version-specific assertions to the newly merged official source.
+        # The official splitter blob changed in the 50-commit upstream range.
+        p=ROOT/"tests/test_audio_producer_rt_contracts.py"
+        d=p.read_text(encoding="utf-8")
+        if FROM not in d: raise RuntimeError("Missing previous official audio test pin")
+        p.write_text(d.replace(FROM,TO),encoding="utf-8")
+        p=ROOT/"tests/test_bahs_record_guard.py"
+        d=p.read_text(encoding="utf-8")
+        older="cbfbf1914da10c00cdb75ad00c80da3f16c31c34"
+        current="0272b8d46727ed5d8139b5510df35ddd0633c321"
+        if older not in d: raise RuntimeError("Missing previous official splitter blob SHA")
+        p.write_text(d.replace(older,current),encoding="utf-8")
         print("INTEGRATED_ALL_RECENT_NXNATIVE",len(changed),"paths; manifest",len(new_tree)-len(EXCLUDE),"original sources; differences",len(merged_overrides),"source-derived chain",chain,flush=True)
 
 
