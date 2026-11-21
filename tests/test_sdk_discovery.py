@@ -7,6 +7,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import plistlib
 from pathlib import Path
 import shutil
 import tempfile
@@ -126,6 +127,53 @@ class SDKDiscoveryTests(unittest.TestCase):
         local = fake_sdk(self.engine / 'win/sdk/out/iPhoneOS.sdk', '26.0')
         fake_sdk(self.work / 'other' / 'win/sdk/out/iPhoneOS27.sdk', '27.0')
         self.assertEqual(self.tc.ios_sdk(), local)
+
+    def test_truncated_sdksettings_plist_is_ignored_during_version_sort(self):
+        broken = fake_sdk(self.engine / 'win/sdk/out/iPhoneOS28.sdk', '28.0')
+        (broken / 'SDKSettings.json').unlink()
+        (broken / 'SDKSettings.plist').write_bytes(b'bplist00')
+        valid = fake_sdk(self.work / 'other' / 'win/sdk/out/iPhoneOS27.sdk', '27.2')
+        self.assertEqual(self.tc.sdk_settings(broken), ('', ''))
+        self.assertEqual(self.tc.ios_sdk(), valid)
+
+    def test_invalid_explicit_plist_falls_back_to_neighboring_valid_sdk(self):
+        broken = fake_sdk(self.work / 'manual/iPhoneOS.sdk')
+        (broken / 'SDKSettings.json').unlink()
+        (broken / 'SDKSettings.plist').write_bytes(b'not a plist')
+        valid = fake_sdk(self.engine / 'win/sdk/out/iPhoneOS.sdk')
+        with mock.patch.dict(os.environ, {'NXW_IOS_SDK': str(broken)}):
+            selected, _, warnings = self.tc.ios_sdk_details()
+        self.assertEqual(selected, valid)
+        self.assertTrue(any('NXW_IOS_SDK' in warning for warning in warnings))
+
+    def test_bad_systemversion_plist_does_not_invalidate_good_sdk(self):
+        sdk = fake_sdk(self.engine / 'win/sdk/out/iPhoneOS.sdk', '27.2')
+        system_version = sdk / 'System/Library/CoreServices/SystemVersion.plist'
+        system_version.parent.mkdir(parents=True, exist_ok=True)
+        system_version.write_bytes(b'\\x00garbage')
+        self.assertEqual(self.tc.sdk_settings(sdk), ('27.2', ''))
+        self.assertEqual(self.tc.ios_sdk(), sdk)
+
+    def test_valid_xml_plist_is_accepted_if_sdksettings_json_missing(self):
+        sdk = fake_sdk(self.engine / 'win/sdk/out/iPhoneOS.sdk')
+        (sdk / 'SDKSettings.json').unlink()
+        (sdk / 'SDKSettings.plist').write_bytes(plistlib.dumps({'Version': '27.2'}))
+        self.assertEqual(self.tc.sdk_settings(sdk), ('27.2', ''))
+        self.assertEqual(self.tc.ios_sdk(), sdk)
+
+    def test_json_with_invalid_shape_then_plist_fallback(self):
+        sdk = fake_sdk(self.engine / 'win/sdk/out/iPhoneOS.sdk')
+        (sdk / 'SDKSettings.json').write_text('[]', encoding='utf-8')
+        (sdk / 'SDKSettings.plist').write_bytes(plistlib.dumps({'Version': '26.2'}))
+        self.assertEqual(self.tc.sdk_settings(sdk), ('26.2', ''))
+        self.assertEqual(self.tc.ios_sdk(), sdk)
+
+    def test_only_invalid_sdk_metadata_never_reports_false_success(self):
+        sdk = fake_sdk(self.engine / 'win/sdk/out/iPhoneOS.sdk')
+        (sdk / 'SDKSettings.json').unlink()
+        (sdk / 'SDKSettings.plist').write_bytes(b'')
+        self.assertIsNone(self.tc.ios_sdk())
+        self.assertFalse(self.tc._ios_sdk_valid(sdk))
 
 
 class PortabilitySettingsTests(unittest.TestCase):
