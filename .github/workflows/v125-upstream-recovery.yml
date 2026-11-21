@@ -1,4 +1,4 @@
-name: V1.2.5 candidate - upstream first 50 NXnative commits
+name: V1.2.5 candidate - full-hunk conflict audit and upstream sync
 
 on:
   push:
