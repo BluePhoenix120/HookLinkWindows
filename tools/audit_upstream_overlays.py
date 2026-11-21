@@ -96,13 +96,23 @@ def scan(out):
         merge_base_result = git("merge-base", target, hook, cwd=clone, check=False)
         ancestor = merge_base_result.stdout.decode().strip() if merge_base_result.returncode == 0 else None
         refmerge = None
+        strict_conflicts = []
         refproblem = "No shared ancestor" if not ancestor else ""
         if ancestor:
             git("config", "user.name", "NXnative audit", cwd=clone)
             git("config", "user.email", "audit@users.noreply.github.com", cwd=clone)
             git("switch", "--detach", target, cwd=clone)
-            # Upstream-first reference. HookLink changed hunks win overlaps.
-            result = git("merge", "--no-ff", "--no-edit", "-X", "theirs", hook, cwd=clone, check=False)
+            # First identify every real overlapping source conflict without
+            # choosing any side. Keeping HookLink must be explicit.
+            strict = git("merge", "--no-ff", "--no-edit", hook, cwd=clone, check=False)
+            strict_conflicts = git("diff", "--name-only", "--diff-filter=U", cwd=clone).stdout.decode().splitlines()
+            if strict.returncode or strict_conflicts:
+                git("merge", "--abort", cwd=clone, check=False)
+                # Audit reference only, not the final verified integration:
+                # HookLink wins overlapping conflicts; list each one above.
+                result = git("merge", "--no-ff", "--no-edit", "-X", "theirs", hook, cwd=clone, check=False)
+            else:
+                result = strict
             unmerged = git("diff", "--name-only", "--diff-filter=U", cwd=clone).stdout.decode().splitlines()
             if result.returncode or unmerged:
                 refproblem = "Needs manual conflict resolution: " + ", ".join(unmerged[:25])
@@ -161,6 +171,7 @@ def scan(out):
             "- Git common ancestor: " + Q + str(ancestor) + Q,
             "- Upstream-first HookLink reference merge: " + Q + str(refmerge) + Q,
             "- Reference issue: " + (refproblem or "none"),
+            "- Strict upstream + HookLink conflicts requiring hunk review: **" + str(len(strict_conflicts)) + "**",
             "- Differing paths in manifest: **" + str(len(rows)) + "**",
             "- Exact official blobs: **" + str(sum(r[1] == "Exact official NXnative" for r in rows)) + "**",
             "- Legacy HookLink blobs: **" + str(sum(r[1] == "Legacy HookLink file retained" for r in rows)) + "**",
@@ -178,6 +189,10 @@ def scan(out):
         for path, kind, hookmatch, originalchanged, reference, diffcount in rows:
             output.append("| " + Q + path + Q + " | " + kind + " | " + str(hookmatch) + " | " +
                           str(originalchanged) + " | " + str(reference) + " | " + str(diffcount) + " |")
+        output.extend(["", "## Strict upstream/HookLink overlapping conflicts", ""])
+        output += ["- " + Q + p + Q for p in strict_conflicts]
+        if not strict_conflicts:
+            output.append("None.")
         output.extend(["", "## Missing upstream Python definitions", ""])
         for path, names in absent:
             output.append("- " + Q + path + Q + ": " + ", ".join(Q + n + Q for n in names))
@@ -200,6 +215,7 @@ def scan(out):
         out.write_text("\n".join(output) + "\n", encoding="utf-8")
         print(json.dumps({"latest_original":latest, "pin":target, "common_ancestor":ancestor,
             "upstream_first_reference":refmerge, "reference_issue":refproblem,
+            "strict_conflicts":strict_conflicts,
             "overlay_paths":len(rows),
             "legacy_hooklink_blobs":[r[0] for r in rows if r[1] == "Legacy HookLink file retained"],
             "missing_python_definitions":absent,
