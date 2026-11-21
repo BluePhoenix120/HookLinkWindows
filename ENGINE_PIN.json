@@ -4,7 +4,7 @@
     "nxnative_commit": "3e1ada5b96acb61293ac790bd6dd093a947abed6",
     "engine_location": "engine/",
     "shader_chain": "f062f816dfb7",
-    "release": "Alpha V1.2.6",
+    "release": "Alpha V1.2.7",
     "hooklink_engine_repo": "https://github.com/dsi-hub/nxnative.git",
     "hooklink_engine_commit": "698b46bc5b14510fffc0a4b8fd4bf78309004e4c",
     "engine_integration_commit": "c0c4aba1774690c82ba78b11d9a1551aeacedf09",

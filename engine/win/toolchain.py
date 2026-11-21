@@ -187,20 +187,38 @@ def ios_sdk():
     return ios_sdk_details()[0]
 
 
+def _sdk_metadata(path, *, plist=False):
+    """Read optional Apple SDK metadata; malformed files must not crash discovery.
+
+    An interrupted XIP extraction or a sibling checkout can contain truncated
+    SDKSettings.plist / SystemVersion.plist files. Skip that candidate rather
+    than failing the whole prerequisites scan; never infer a valid SDK version
+    from an unparseable file.
+    """
+    try:
+        if plist:
+            with open(path, 'rb') as f: data = plistlib.load(f)
+        else:
+            data = json.loads(Path(path).read_text(encoding='utf-8-sig'))
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def sdk_settings(sdk):
-    """(version, build version) of an SDK folder, from SDKSettings.json / SDKSettings.plist and System/Library/CoreServices/SystemVersion.plist"""
-    ver = build = ''
-    js = Path(sdk) / 'SDKSettings.json'
-    if js.exists():
-        try: ver = json.loads(js.read_text(encoding='utf-8')).get('Version', '')
-        except ValueError: pass
-    pl = Path(sdk) / 'SDKSettings.plist'
-    if not ver and pl.exists():
-        with open(pl, 'rb') as f: ver = plistlib.load(f).get('Version', '')
-    sv = Path(sdk) / 'System/Library/CoreServices/SystemVersion.plist'
-    if sv.exists():
-        with open(sv, 'rb') as f: build = plistlib.load(f).get('ProductBuildVersion', '')
-    return ver, build
+    """(version, build version) of an SDK folder. Invalid metadata is ignored."""
+    sdk = Path(sdk)
+    settings = _sdk_metadata(sdk / 'SDKSettings.json')
+    ver = settings.get('Version', '')
+    if not isinstance(ver, (str, int, float)) or not ver:
+        ver = _sdk_metadata(sdk / 'SDKSettings.plist', plist=True).get('Version', '')
+    if not isinstance(ver, (str, int, float)):
+        ver = ''
+    build = _sdk_metadata(sdk / 'System/Library/CoreServices/SystemVersion.plist',
+                          plist=True).get('ProductBuildVersion', '')
+    if not isinstance(build, (str, int, float)):
+        build = ''
+    return str(ver) if ver else '', str(build) if build else ''
 
 
 def dotnet():
