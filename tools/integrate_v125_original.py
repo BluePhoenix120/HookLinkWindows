@@ -70,6 +70,122 @@ def three_way(up,old,windows,dir):
     return p.stdout,None
 
 
+
+# Reviewed exact 3ec5b785..3e1ada5b three-way merge overlaps.
+# Never resolve unexpected paths or changed hunk counts automatically.
+EXPECTED_CONFLICT_HUNKS = {
+    "dm/games/0400486024DEC000/README.md": 1,
+    "dm/games/0400486024DEC000/game.tsv": 1,
+    "dm/games/0400486024DEC000/patches.py": 3,
+    "dm/games/settings.tsv": 1,
+    "dm/gfx/nvn/nvn_mtl.m": 3,
+    "dm/ios/Sources/Launcher.swift": 2,
+    "dm/tools/romfs.py": 1,
+    "docs/agents/game-patches.md": 3,
+    "docs/agents/symptoms.md": 1,
+    "docs/reference/memory.md": 1,
+    "docs/settings.md": 1,
+}
+RESOLUTION_NOTES = {
+    "dm/games/0400486024DEC000/README.md": "Preserved new original game documentation and HookLink's documented iPhone playtest",
+    "dm/games/0400486024DEC000/game.tsv": "Preserved tested HookLink 16 GiB iPhone alias and mapping behavior versus new upstream 8 GiB",
+    "dm/games/0400486024DEC000/patches.py": "Kept tested v131072 iPhone camera, render-scale, half-rate and no-cut movie behavior; ported new screen-shape functions for other matching builds",
+    "dm/games/settings.tsv": "Combined original microphone and SCREEN_ASPECT rows with HookLink iPhone display/performance settings",
+    "dm/gfx/nvn/nvn_mtl.m": "Combined Apple10 texture size guard, depth bounds reset, archive gate with HookLink shadow scaling and PSO capture",
+    "dm/ios/Sources/Launcher.swift": "Preserved HookLink's customized iPhone tabbed UI at two conflicting layout hunks, merged all other original changes",
+    "dm/tools/romfs.py": "Combined inherited descriptor caching with Windows O_BINARY",
+    "docs/agents/game-patches.md": "Preserved tested HookLink iPhone movie and frame-step rationale",
+    "docs/agents/symptoms.md": "Preserved both independent memory issues",
+    "docs/reference/memory.md": "Preserved both independent memory issues",
+    "docs/settings.md": "Documented both upstream SCREEN_ASPECT and HookLink WIDE_VIEW",
+}
+
+def reviewed_conflict_resolution(path, merged):
+    import re
+    if path not in EXPECTED_CONFLICT_HUNKS:
+        return None
+    pattern = re.compile(r"^<<<<<<<[^\n]*\n(.*?)^\|\|\|\|\|\|\|[^\n]*\n(.*?)^=======\n(.*?)^>>>>>>>[^\n]*(?:\n|$)", re.M|re.S)
+    matches = list(pattern.finditer(merged))
+    if len(matches) != EXPECTED_CONFLICT_HUNKS[path]:
+        raise RuntimeError("Unexpected conflict hunk count: "+path+" "+str(len(matches)))
+    choices=[]
+    for i,m in enumerate(matches):
+        upstream,base,windows = [part.rstrip("\n") for part in m.groups()]
+        choice=None
+        if path == "dm/games/0400486024DEC000/README.md":
+            if "Mac only so far" not in base or "On an iPhone Duo" not in windows: raise RuntimeError("Changed Ocarina README hunk")
+            choice=upstream+" On an iPhone Duo it plays the same route at 30 to 60 fps ([Open](#open))."
+        elif path == "dm/games/0400486024DEC000/game.tsv":
+            if "mem_alias\t0x400000000" not in windows or "mem_alias\t0x200000000" not in upstream: raise RuntimeError("Changed Ocarina alias hunk")
+            choice=windows
+        elif path == "dm/games/0400486024DEC000/patches.py":
+            if i==0:
+                if "ADDI" not in windows or "from nso_asm" not in upstream: raise RuntimeError("Changed Ocarina imports")
+                choice=windows
+            elif i==1:
+                if "screen_shape(ctx)" not in upstream or "wide_view(ctx)" not in windows or "half_rate(ctx)" not in windows: raise RuntimeError("Changed Ocarina frame-step hooks")
+                choice=("    if ctx.base == 0x6e6be0:\n"
+                        "        render_scale(ctx)  # working v131072 fixed-address iPhone patch\n"
+                        "        wide_view(ctx)     # avoid competing camera hook on this build\n"
+                        "    else:\n"
+                        "        screen_shape(ctx)  # new original hooks for other matching builds\n"
+                        "    half_rate(ctx)\n"
+                        "    heap_retry(ctx)")
+            elif i==2:
+                if "**screen_shape_functions" not in upstream or "half rate request" not in windows: raise RuntimeError("Changed Ocarina matching")
+                old="]}}},   # main+0x650d00"
+                new="]},   # main+0x650d00\n                **screen_shape_functions}},"
+                if windows.count(old)!=1: raise RuntimeError("Changed half-rate matcher")
+                choice=windows.replace(old,new,1)
+                # Upstream's v131072 movie CUTS contradict documented HookLink
+                # iPhone playback tests; keep the HookLink no-cut path.
+        elif path == "dm/games/settings.tsv":
+            off=upstream.splitlines()
+            if len(off)!=3 or not off[0].startswith("DM_MIC\t") or not off[2].startswith("DM_SCREEN_ASPECT\t"): raise RuntimeError("Changed original settings rows")
+            win=windows.splitlines()
+            if not any(x.startswith("DM_WIDE_VIEW\t") for x in win): raise RuntimeError("Missing HookLink wide view")
+            choice="\n".join(off[:2]+[off[2] if x.startswith("DM_SCREEN_ASPECT\t") else x for x in win])
+        elif path == "dm/gfx/nvn/nvn_mtl.m":
+            if i==0:
+                if "tex_2d_size_exceeds_limit" not in upstream or "shadow_scale_desc" not in windows: raise RuntimeError("Changed Metal textures overlap")
+                choice=upstream+"\n"+windows
+            elif i==1:
+                if "ED_DBND" not in upstream or windows.count("g_ed.ok = 0;")!=1: raise RuntimeError("Changed Metal depth bounds")
+                choice=windows.replace("g_ed.ok = 0;","g_ed.ok = ED_DBND; g_ed.dbnd[0] = 0; g_ed.dbnd[1] = 1;",1)
+            else:
+                if "gate_held" not in upstream or "arch_write_script(" not in windows: raise RuntimeError("Changed Metal archive gate")
+                choice=windows
+                for old,new in [
+                    ("static void arch_write_file(ArchEpoch *ep);","static void arch_write_file(ArchEpoch *ep, int gate_held);"),
+                    ("static void arch_write(ArchEpoch *ep) {","static void arch_write(ArchEpoch *ep, int gate_held) {"),
+                    ("    arch_write_file(ep);","    arch_write_file(ep, gate_held);"),
+                ]:
+                    if choice.count(old)!=1: raise RuntimeError("Changed Metal callsite "+old)
+                    choice=choice.replace(old,new,1)
+        elif path == "dm/ios/Sources/Launcher.swift":
+            if (i==0 and "RadialGradient" not in windows) or (i==1 and "private var settingsTab" not in windows): raise RuntimeError("Changed HookLink launcher UI")
+            choice=windows
+        elif path == "dm/tools/romfs.py":
+            if "_scan_descriptors.get()" not in upstream or "O_BINARY" not in windows: raise RuntimeError("Changed ROMFS overlap")
+            old="_os.open(image.path, _os.O_RDONLY)"
+            new='_os.open(image.path, _os.O_RDONLY | getattr(_os, "O_BINARY", 0))'
+            if upstream.count(old)!=1: raise RuntimeError("Changed ROMFS file open")
+            choice=upstream.replace(old,new,1)
+        elif path == "docs/agents/game-patches.md":
+            choice=windows
+        elif path in ("docs/agents/symptoms.md","docs/reference/memory.md"):
+            if "guest-file watcher" not in upstream.lower() or "residency commit" not in windows.lower(): raise RuntimeError("Changed memory docs")
+            choice=upstream+"\n"+windows
+        elif path == "docs/settings.md":
+            if "Wide view (iPhone)" not in windows or "SCREEN_ASPECT" not in upstream: raise RuntimeError("Changed settings docs")
+            choice=windows.splitlines()[0]+"\n"+upstream
+        if choice is None: raise RuntimeError("Missing reviewed resolution "+path+" "+str(i))
+        choices.append(choice.rstrip("\n")+"\n")
+    choices=iter(choices)
+    result=pattern.sub(lambda _:next(choices),merged)
+    if any(mark in result for mark in ("<<<<<<<",">>>>>>>","|||||||")): raise RuntimeError("Unresolved markers in "+path)
+    return result.encode("utf-8")
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--apply",action="store_true")
@@ -90,7 +206,7 @@ def main():
         changed=[p for p in sorted(set(old_tree)|set(new_tree)) if old_tree.get(p)!=new_tree.get(p)]
         changes={}
         conflicts={}
-        stats={"new_original":0,"unchanged":0,"three_way_clean":0,"windows_chain":0,"skipped_binary":0}
+        stats={"new_original":0,"unchanged":0,"three_way_clean":0,"reconciled":0,"windows_chain":0,"skipped_binary":0}
         for path in changed:
             if path in EXCLUDE:
                 stats["skipped_binary"]+=1
@@ -118,7 +234,12 @@ def main():
             else:
                 result,err=three_way(new,old,W,tmp)
                 if err is not None:
-                    conflicts[path]=err
+                    reviewed=reviewed_conflict_resolution(path,err)
+                    if reviewed is None:
+                        conflicts[path]=err
+                    else:
+                        changes[path]=reviewed
+                        stats["reconciled"]+=1
                 else:
                     changes[path]=result
                     stats["three_way_clean"]+=1
@@ -133,6 +254,11 @@ def main():
             "- Clean 3-way source merges: "+str(stats["three_way_clean"]),
             "", "## Conflicts", ""
         ]
+        lines += ["## Reviewed overlap resolutions", ""]
+        for path in sorted(EXPECTED_CONFLICT_HUNKS):
+            if path not in conflicts:
+                lines.append("- `"+path+"`: "+RESOLUTION_NOTES[path])
+        lines.append("")
         for path,c in conflicts.items():
             lines+=["### \`"+path+"\`","", "\`\`\`diff",c,"\`\`\`",""]
         if not conflicts:lines+=["None.",""]
