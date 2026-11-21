@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 import subprocess
 import tempfile
@@ -154,9 +155,18 @@ def main():
                 dest.write_bytes(content)
         pin["nxnative_commit"]=TO
         pin["release"]="Alpha V1.2.4"
-        pin["engine_integration_policy"]="complete original NXnative up to "+TO[:12]+"; retain actual HookLink and Windows changes by three-way merge; local Windows chain revalidated before IPA"
+        pin["engine_integration_policy"]="upstream-first complete original NXnative up to "+TO[:12]+"; retain actual HookLink and Windows changes by three-way merge; local Windows chain revalidated before IPA"
         pin["incremental_upstream_from"]=FROM
         pin["incremental_upstream_to"]=TO
+        # Every upstream translator/source change must produce a new library
+        # chain ID even when the Windows-specific Metal compiler lock remains
+        # unchanged until the user's real local toolchain preflight.
+        chain_script=ROOT/"engine/dm/gfx/tools/dmsh_chain.py"
+        chain=run(sys.executable,str(chain_script),cwd=ROOT).stdout.decode().strip()
+        if len(chain)!=12 or any(c not in "0123456789abcdef" for c in chain):
+            raise RuntimeError("Invalid computed shader chain: "+chain[:90])
+        run(sys.executable,str(chain_script),"--header",cwd=ROOT)
+        pin["shader_chain"]=chain
         PIN.write_text(json.dumps(pin,indent=4)+"\n",encoding="utf-8")
         manifest["nxnative_commit"]=TO
         manifest["engine_integration_policy"]=pin["engine_integration_policy"]
@@ -204,7 +214,7 @@ def main():
             "This update contains original audio output route recovery, shader gather "
             "offsets, packing metadata checks and GL fixed-function adjustments. "
             "Full iOS IPA and device runtime verification remain outstanding.\n",encoding="utf-8")
-        print("INTEGRATED_ALL_RECENT_NXNATIVE",len(changed),"paths; manifest",len(new_tree)-len(EXCLUDE),"original sources; differences",len(merged_overrides),flush=True)
+        print("INTEGRATED_ALL_RECENT_NXNATIVE",len(changed),"paths; manifest",len(new_tree)-len(EXCLUDE),"original sources; differences",len(merged_overrides),"source-derived chain",chain,flush=True)
 
 
 if __name__=="__main__":main()
