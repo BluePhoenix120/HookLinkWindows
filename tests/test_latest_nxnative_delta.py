@@ -16,9 +16,9 @@ class LatestNxNativeDeltaContracts(unittest.TestCase):
     def test_all_recent_original_commits_are_pinned(self):
         pin=json.loads((ROOT/"ENGINE_PIN.json").read_text(encoding="utf-8"))
         m=json.loads((ROOT/"ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))
-        self.assertEqual(pin["nxnative_commit"],"3ec5b785f37f8c87d78433f152914d89c4ef93c9")
+        self.assertEqual(pin["nxnative_commit"],"3e1ada5b96acb61293ac790bd6dd093a947abed6")
         self.assertEqual(m["incremental_upstream_to"],pin["nxnative_commit"])
-        self.assertEqual(m["incremental_upstream_from"],"d2fd78b402f92d5a83b78987e49aba22e8626719")
+        self.assertEqual(m["incremental_upstream_from"],"3ec5b785f37f8c87d78433f152914d89c4ef93c9")
         self.assertGreaterEqual(len(m["changed_paths"]),3895)
 
     def test_new_audio_route_stall_recovery_is_present(self):

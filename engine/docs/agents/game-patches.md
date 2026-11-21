@@ -45,6 +45,7 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
 | `build` → `engine` | Unity's constant-buffer table locked on the shared device | race | blocked: the stubs have no function-matched form yet, and no other Unity 2018.4 main on the drive shares these functions (Ori and the Blind Forest 1.0.2: no fingerprint match) | checked: probes of both threads inserting the same key and of the table API's callers by thread; Blind Forest main compared with nso_fnmap | 1 | [Ori and the Will of the Wisps](../../dm/games/01008DD013200000/README.md) | Unity 2018.4's threaded GfxDevice: the main thread registers layouts on the real device while the render thread uses the same table; any Unity 2018.4 build with this code has the race |
 | `build` → `game` | 60 fps frame step on 1.3.0 (the same stub at its known addresses) | frame rate | blocked: 1.3.0's main is on neither drive to fingerprint (v458752 is the update on them) | judgement | 1 | [Hyrule Warriors: Age of Calamity](../../dm/games/01002B00111A2000/README.md) | the stub above, placed at 1.3.0's addresses: the matched rule would serve it once its functions are fingerprinted |
 | `build` → `game` | screen shape: the sizes, the view, the layouts' projection and their edge widgets (DM_SCREEN_ASPECT) | rendering | blocked: the stubs have no function-matched form yet | judgement | 1 | [Animal Crossing: New Horizons](../../dm/games/01006F8002326000/README.md) | the output size is the host's, but where the game takes its sizes, its cameras and its layouts are this build's code |
+| `game` → `engine` | Snowdrop three-pool allocator: 12 GB of ranges → 4 GB | address space | blocked: only this game has been checked with the older initializer and this allocation split | checked: unique function and original bytes on 1.0 and 1.05; pool use measured on the Mac, 2026-10-31 | 1 | [South Park: The Fractured But Whole](../../dm/games/01008F2005154000/README.md) | the older initializer holds the pool bounds in separate immediates; its complete function moves between game builds. The 4 GB size works around the iPhone's address-space limit |
 | `build` → `game` | 60 fps intervals and dynamic-resolution constants | frame rate | kept: 1.0.3 (v131072) is the newest update of both releases and likely their last: a function match would serve no other build; the rewriter would also need matched rules that write fixups and declare capabilities, a new mechanism (2026-11-09) | checked: both releases' mains, where the host's rows for them were found; the global main's sites mapped into ASTRAL CHAIN and Bayonetta 1-3 (2026-11-09) | 2 | [NieR:Automata The End of YoRHa Edition (010056B015FE8000)](../../dm/games/010056B015FE8000/README.md); [NieR:Automata The End of YoRHa Edition (0100B8E016F76000)](../../dm/games/0100B8E016F76000/README.md) | the game's own constants; the Asian release's function is the global one's 0x13c0 further on, so one function-matched rule could serve both releases. No PlatinumGames sibling shares the code: none of its sites has an exact match in ASTRAL CHAIN or Bayonetta 1-3 (nso_fnmap, 2026-11-09) |
 | `build` → `game` | NieR's frame interval and dynamic-resolution floor at fixed addresses | frame rate | kept: 1.0.3 (v131072) is the newest update of both releases and likely their last: a function match would serve no other build; the rewriter would also need matched rules that write fixups and declare capabilities, a new mechanism (2026-11-09) | checked: both releases' mains, where these rows were found; the global main's sites mapped into ASTRAL CHAIN and Bayonetta 1-3 (2026-11-09) | 2 | [NieR:Automata The End of YoRHa Edition (010056B015FE8000)](../../dm/games/010056B015FE8000/README.md); [NieR:Automata The End of YoRHa Edition (0100B8E016F76000)](../../dm/games/0100B8E016F76000/README.md) | the game's own display object; the Asian release's function is the global one's 0x13c0 further on, so the rewriter's function match could give the host both releases' addresses. No PlatinumGames sibling shares the code: none of its sites has an exact match in ASTRAL CHAIN or Bayonetta 1-3 (nso_fnmap, 2026-11-09) |
 | `game` → `host` | one vertex shader's visibility counter (VertexCounterLowering) | shaders | kept: one shader in one game, already handled; a general lowering is a chain change (every game's shaders rebuilt) for no measured gain: revisit when a vertex shader with subgroup operations fails in another game | checked: the shader-build logs of the 51 game builds on the game drive: no shader failed to translate or compile, none mentions a subgroup operation (2026-11-09) | — | [Program.cs:310](../../dm/gfx/tools/dmsh_xlate/Program.cs#L310) | a general lowering of subgroup ballots in vertex shaders (subgroups of one invocation: ballots, votes, lane ids and counts, refusing shuffles that exchange data between lanes) would cover any shader that counts that way |
@@ -79,6 +80,8 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
 | [Paper Mario: The Thousand-Year Door](#paper-mario-the-thousand-year-door) | 1 | 0 | 1 | 0 | 0 | `build` → `game` |
 | [Persona 5 Strikers](#persona-5-strikers) | 0 | 0 | 0 | 1 | 0 | `game` |
 | [Pokémon Legends: Arceus](#pokémon-legends-arceus) | 0 | 0 | 0 | 1 | 0 | `game` |
+| [South Park: The Fractured But Whole](#south-park-the-fractured-but-whole) | 0 | 0 | 0 | 1 | 0 | `game` → `engine` |
+| [South Park: The Stick of Truth](#south-park-the-stick-of-truth) | 0 | 0 | 0 | 1 | 0 | `game` |
 | [Super Mario 3D All-Stars: Super Mario Sunshine](#super-mario-3d-all-stars-super-mario-sunshine) | 2 | 0 | 0 | 0 | 0 | `build` → `game` |
 | [Super Smash Bros. Ultimate](#super-smash-bros-ultimate) | 11 | 0 | 0 | 1 | 0 | `game` |
 | [Taiko Risshiden V DX](#taiko-risshiden-v-dx) | 1 | 0 | 0 | 2 | 0 | `game` |
@@ -97,7 +100,7 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
 
 - **`build` → `game`**, rendering, blocked: the stubs have no function-matched form yet, judgement: screen shape: the sizes, the view, the layouts' projection and their edge widgets (DM_SCREEN_ASPECT). The output size is the host's, but where the game takes its sizes, its cameras and its layouts are this build's code
 
-- **3.0.3 `main`** `ff1d1c05…` ([patches.py:228](../../dm/games/01006F8002326000/patches.py#L228))
+- **3.0.3 `main`** `ff1d1c05…` ([patches.py:229](../../dm/games/01006F8002326000/patches.py#L229))
   <details><summary>14 frame-step sites</summary>
 
   - frame step `+0x265140`: nn::ui2d::DrawInfo::SetProjectionMtx: the y row divided by the vertical stretch, layouts in their own shape (bit 6)
@@ -117,6 +120,7 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
 
   </details>
 
+  - launcher capabilities: SCREEN_ASPECT
 
 ### ASTRAL CHAIN
 
@@ -259,7 +263,7 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
   - cut `+0xc5ab8c`: queue pop: ldr x8, [x19] → dmb ishld (after the tail load; w8 = head)
   - cut `+0xc5ab94`: queue pop: ldr w9, [x19, #0x1c] (the head again) → and x9, x8, #0xffff
   - cut `+0xc5ab98`: queue pop: and x9, x9, #0xffff → ldr x8, [x19] (the ring; then ldr x8, [x8, x9, lsl #3]: the item)
-  - host [hle_uemalloc.c:41](../../dm/host/hle_uemalloc.c#L41): Unreal's allocator on a host malloc zone
+  - host [hle_uemalloc.c:45](../../dm/host/hle_uemalloc.c#L45): Unreal's allocator on a host malloc zone
 
 ### Catherine: Full Body
 
@@ -488,6 +492,22 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
 
 - **function-matched** (`main` of builds without CUTS): capture demo: the empty result when the weak reference at +0x88 is unset or dead: 1 function, 5 cuts
 
+### South Park: The Fractured But Whole
+
+[South Park: The Fractured But Whole](../../dm/games/01008F2005154000/README.md), `01008F2005154000`, [patches.py](../../dm/games/01008F2005154000/patches.py).
+
+- **`game` → `engine`**, address space, blocked: only this game has been checked with the older initializer and this allocation split, checked: unique function and original bytes on 1.0 and 1.05; pool use measured on the Mac, 2026-10-31: Snowdrop three-pool allocator: 12 GB of ranges → 4 GB. The older initializer holds the pool bounds in separate immediates; its complete function moves between game builds. The 4 GB size works around the iPhone's address-space limit
+
+- **function-matched** (`main` of builds without CUTS): Snowdrop three-pool allocator: 12 GB of ranges → 4 GB: 1 function, 7 cuts
+
+### South Park: The Stick of Truth
+
+[South Park: The Stick of Truth](../../dm/games/010095300B6A4000/README.md), `010095300B6A4000`, [patches.py](../../dm/games/010095300B6A4000/patches.py).
+
+- **`game`**, frame rate, at goal, checked: 1.0.0 and 1.01 match the complete caller and setter: South Park 60 fps target. The title passes 30 to its own Onyx frame-rate setter while requesting NVN present interval 1. The matched caller selects 60 through the same setter.
+
+- **function-matched** (`main` of builds without CUTS): South Park 60 fps target: 1 function, 1 cut
+
 ### Super Mario 3D All-Stars: Super Mario Sunshine
 
 [Super Mario 3D All-Stars: Super Mario Sunshine](../../dm/games/010049900F546002/README.md), `010049900F546002`, [patches.py](../../dm/games/010049900F546002/patches.py).
@@ -593,6 +613,7 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
   </details>
 
   - render scale stub (the launcher offers DM_RENDER_SCALE)
+  - launcher capabilities: SCREEN_ASPECT
 
 ### The Legend of Zelda: Link's Awakening
 
@@ -611,6 +632,7 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
 - **`game`**, frame rate, at goal, checked: v131072 main: one function with this fingerprint, the site, the request byte and the frame function that acts on it read by disassembly (2026-11-09): half rate request: the game's own flag or the host's ask. The game's own half-rate request, found by its function's fingerprint on any build that keeps the function; switchable (DM_FPS_HALF_RATE)
 - **`game`**, frame rate, at goal, checked: v131072 main: one function with this fingerprint, the site and its free registers read by disassembly (2026-11-08): frame ratio from the host's step. The game's own frame-ratio division, found by its function's fingerprint on any build that keeps the function
 - **`game`**, rendering, at goal, checked: v131072 main: one function with each fingerprint (the level function a leaf, x2..x11 / x16 / x17 / s0..s2 free), its callers, the update and the controller fields read by disassembly, the fields read in play (2026-11-08); the climb run natively against a model of the update and in play to full size (2026-11-09): dynamic resolution: full size, or a climb on the load measured at each level. The game's own dynamic-resolution level function and update, found by their functions' fingerprints on any build that keeps both; switchable (DM_DYNAMIC_RESOLUTION)
+- **`game`**, rendering, at goal, checked: v131072 main: one function per fingerprint, free registers read at each site; indexed pane names, classes and dimensions checked against the UIL records. PR #3037 measured Vert+ framing and the movie aspect on Mac; final iPad title retest pending: screen shape: taller render targets, cameras, Layout2 panes and a 16:9 movie viewport (DM_SCREEN_ASPECT). The game's own display setup, camera, pane and movie code; installed together after every function matches. Indexed pane edits verify the authored name, class and dimensions they use
 
 - **function-matched frame step** (`main` of builds without FRAME_STEP): frame ratio from the host's step: a function of 0x9b4 bytes, `+0xe4` in it; dynamic resolution, a function of 0x294 bytes, `+0x0` in it; dynamic resolution update, a function of 0xb24 bytes,  in it; half rate request, a function of 0x938 bytes, `+0x1a4` in it; launcher capabilities: DYNAMIC_RESOLUTION, HALF_RATE
 
@@ -658,17 +680,15 @@ Every patch bound tighter than it could be: the open gaps, then the blocked, kep
 Cuts of Nintendo SDK `sdk` builds ([sdk_patches.py](../../dm/tools/sdk_patches.py)), applied to every game that ships the build. They fit the SDK's address-space layout into an iPhone's guest block. The games listed are those whose profile registers the build.
 
 - **`sdk`**, address space, at goal, checked: 20 registered builds rewritten byte-identical with the rules alone, 2026-10-29 and 2026-10-30; the 2 MB alignment on every sdk build on the drive, 2026-10-30: node area 1 GB → 62 MB and regions of 4 MB and more aligned to 2 MB, as SDK 20: the SDK-wide rules. One rule per reviewed implementation; every sdk build without CUTS gets them
-- **`build` → `sdk`**, address space, blocked: one game ships it, judgement: VammManager node area and alignment, SDK 4.4.0 (9de92bad). An older implementation no rule covers (its large regions aligned to 32 MB, not the rules' 2 MB); a rule once a second game ships it
+- **`sdk`**, address space, at goal, checked: both function pairs reproduced all three exact cuts on the two original SDK builds, with six more equivalent implementations found in 48 distinct SDK builds: Older VammManager: 64 MB node area and 32 MB large-region alignment. The two older SDK implementations need smaller reservations and alignment to fit the iPhone alias region after the Snowdrop metadata reservation
 
-- **sdk** `9de92bad…` ([sdk_patches.py:9](../../dm/tools/sdk_patches.py#L9)): Mario + Rabbids Kingdom Battle 1.9.589692
-  - cut `+0x93dfc`: VammManager node area limit: 1 GB to 64 MB
-  - cut `+0x93e8c`: VammManager occupied node area: 1 GB to 64 MB
-  - cut `+0x93fe0`: AllocateAddressRegion: align regions of 1 GB and more to 32 MB
 
 ### SDK-wide function-matched rules
 
 Applied to the `sdk` of any build without CUTS, found by function fingerprint ([function-matched cuts](../reference/rewriter.md#function-matched-cuts-for-unregistered-builds)):
 
+- Older VammManager: 64 MB node area and 32 MB large-region alignment: SDK 3.5.1 (South Park 1.0 / 1.05). Reproduces all three original cut sites and replacement bytes.
+- Older VammManager: 64 MB node area and 32 MB large-region alignment: SDK 4.4.0 (Kingdom Battle 1.9.589692). Reproduces all three original cut sites and replacement bytes.
 - node area 1 GB → 62 MB: SDK 7.3.2 (DRAGON QUEST XI S), 8.2.1 (Super Smash Bros. Ultimate), 8.3.1 (Paper Mario: The Origami King)
 - node area 1 GB → 62 MB: SDK 10.4.1 (Advance Wars 1+2), 10.4.8 (Pikmin 4)
 - node area 1 GB → 62 MB: SDK 11.4.3 (Pokémon Brilliant Diamond), 12.3.2 (OCTOPATH TRAVELER II), 12.3.9 (Xenoblade Chronicles 3), 13.3.5 (Mario + Rabbids Sparks of Hope), 14.3.0 (Batman: Arkham Knight)
