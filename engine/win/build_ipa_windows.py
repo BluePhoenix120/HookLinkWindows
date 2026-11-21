@@ -16,6 +16,20 @@ REPO = WIN.parent
 SHIM = WIN / 'pyshim'
 
 
+def needs_legacy_sdk_cuts(patches, build_id):
+    """Use the old Windows SDK scanner only if upstream has no matching rules.
+
+    Official NXnative moved its SDK region patches from fixed-build CUTS
+    to SDK-wide MATCH_CUTS. Creating a new CUTS entry for such a build would
+    suppress patch_nso.py's function matcher (it only runs without CUTS).
+    This intentionally does not guess whether a rule matches a particular
+    module: upstream does that safely from the actual function fingerprint.
+    """
+    registered = getattr(patches, 'CUTS', {})
+    shared = getattr(patches, 'MATCH_CUTS', {})
+    return build_id not in registered and not bool(shared.get('sdk'))
+
+
 def main():
     if sys.platform == 'darwin': sys.exit('win/build_ipa_windows.py is the Windows and Linux driver: on a Mac run scripts/build_ipa_from_nsp.py')
     if os.name != 'nt': os.environ['NXW_LINUX'] = '1'   # Linux: the shim's mappings with native tools, and the Metal Developer Tools for Windows under Wine (win/toolchain.py cmd)
@@ -92,8 +106,10 @@ def main():
         return nx   # Windows starts nx_extract.exe for this path
     if tc.WINDOWS: up.build_nx_extract = build_nx_extract   # on Linux dotnet writes nx_extract, as upstream expects
 
-    # address-region cuts for an sdk build sdk_patches.py does not register (win/sdk_auto_cuts.py), for a game with virtual address memory: written beside the rewrite, read by the
-    # shim when patch_nso.py imports sdk_patches, and part of the rewrite's cache key (patch_files)
+    # Legacy fallback only for older SDK patch tables lacking official SDK-wide MATCH_CUTS.
+    # Fixed-build CUTS from win/sdk_auto_cuts.py suppress upstream function matching,
+    # so NEVER inject them when sdk_patches.py supplies MATCH_CUTS['sdk'].
+    # For older tables, the shim reads the generated JSON and the rewrite cache keys it.
     import sdk_auto_cuts, json
     orig_rewrite, orig_patch_files = up.rewrite, up.patch_files
     def rewrite(py, repo, exe_dir, out, env, logs, g, provisional=False):
@@ -102,9 +118,10 @@ def main():
         if jf.exists(): jf.unlink()
         if sdk.is_file() and int(g.get('sys_resource', '0') or '0', 0):
             sys.path.insert(0, str(REPO / 'dm/tools'))
-            import importlib; registered = importlib.import_module('sdk_patches').CUTS
+            import importlib
+            patches = importlib.import_module('sdk_patches')
             bid = up.build_id(sdk)
-            if bid not in registered:
+            if needs_legacy_sdk_cuts(patches, bid):
                 _, cuts = sdk_auto_cuts.for_nso(sdk, log=up.say)
                 if cuts:
                     jf.parent.mkdir(parents=True, exist_ok=True)
