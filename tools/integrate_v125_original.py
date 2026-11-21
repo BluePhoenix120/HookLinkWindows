@@ -214,20 +214,23 @@ def main():
             "This update contains original audio output route recovery, shader gather "
             "offsets, packing metadata checks and GL fixed-function adjustments. "
             "Full iOS IPA and device runtime verification remain outstanding.\n",encoding="utf-8")
-        # Update only explicitly pinned source identities; keep earlier supported snapshots.
-        for path in ["tests/test_engine_pin.py", "win/bootstrap_translator.py", "tests/test_alpha100_bootstrap.py"]:
+        # Expand known-good exact revision allowlists without broadening trust.
+        for path, old_text, new_text in [
+            ("tests/test_engine_pin.py",
+             "    '"+FROM+"',",
+             "    '"+FROM+"',\n    '"+TO+"',"),
+            ("win/bootstrap_translator.py",
+             "    ('3.0.1', '"+FROM+"',\n     'https://github.com/seedds/nxnative.git'),",
+             "    ('3.0.1', '"+FROM+"',\n     'https://github.com/seedds/nxnative.git'),\n"
+             "    ('3.0.1', '"+TO+"',\n     'https://github.com/seedds/nxnative.git'),"),
+            ("tests/test_alpha100_bootstrap.py",
+             "            ('3.0.1', '"+FROM+"'),",
+             "            ('3.0.1', '"+FROM+"'),\n            ('3.0.1', '"+TO+"'),"),
+        ]:
             f=ROOT/path
             data=f.read_text(encoding="utf-8")
-            if TO in data: continue
-            if FROM not in data: raise RuntimeError("Missing expected prior allowed pin in "+path)
-            needle=("'"+FROM+"',")
-            if needle in data:
-                data=data.replace(needle, needle+"\\n    '"+TO+"',", 1)
-            else:
-                needle="'"+FROM+"'"
-                if needle not in data: raise RuntimeError("Could not add new pin "+path)
-                data=data.replace(needle,needle+",\\n            '"+TO+"'",1)
-            f.write_text(data,encoding="utf-8")
+            if old_text not in data: raise RuntimeError("Expected allowlist marker missing: "+path)
+            f.write_text(data.replace(old_text,new_text,1),encoding="utf-8")
         gui=ROOT/"win/hooklink_gui.pyw"
         gui_text=gui.read_text(encoding="utf-8")
         if "GUI_VERSION = 'Alpha V1.2.4'" not in gui_text:
