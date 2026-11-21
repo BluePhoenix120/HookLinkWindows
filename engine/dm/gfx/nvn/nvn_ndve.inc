@@ -279,5 +279,5 @@ static int ndve_engine_dispatch(NvShader *cs, int i) {
     if (chk) g_nd.game_out = out;   // compared once the game's 5a7d69b0 has written it, at 4f41ccf2
     g_nd.pos = 13;   // the resampler next
     if (!g_nd.frames++) MLOG("NDVE engine: first movie frame by the engine (%llu dispatches skipped)%s", (unsigned long long)g_nd.skipped, !chk && ndve_lite() ? ", light path" : "");
-    (void)dp; return !chk;
+    return !chk;
 }
