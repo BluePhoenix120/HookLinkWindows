@@ -1,5 +1,47 @@
 # Changelog
 
+## X3 (4.0)
+
+HookLink X3 brings the latest nxnative, less GPU work per frame, a lower memory footprint, mods, and a redesigned launcher with your own background pictures.
+
+### Before you update
+
+- **The shaders recompile.** nxnative's shader translator changed, so the first build after updating takes about an hour instead of minutes. Keep the Mac plugged in.
+- **The first start on the phone prepares pipelines again**, behind the progress screen. Keep the phone plugged in and cool while it does.
+- HookLink now builds the exact engine version X3 was tested with, so every player gets the same engine.
+
+### Faster
+
+- **The game's whole upscaler runs through MetalFX** (from kid-with-sword-remake). Ocarina's own upscaling passes no longer run on top of it, which saves GPU time every frame.
+- **Less stutter on first visits.** Mesh pipelines are prepared in the background, and every compute pipeline is prepared at the first start (from kid-with-sword-remake).
+- **Smoother area loads.** Uploads are sent in smaller batches, loads are read ahead in the background, and memory is handed to the GPU a little at a time (from kid-with-sword-remake).
+
+### Memory
+
+- **Texture memory saver**, on by default on iPhone: large textures are made without their sharpest level, for about a quarter less texture memory. Textures look slightly softer up close; turn it off under Settings → Performance if your phone has room to spare.
+- **A low-memory mode:** when the phone runs short, unused memory is given back sooner (from kid-with-sword-remake).
+- **The launcher warns when an install lacks the increased memory limit.** Installs without it get about 2 GB less room and close in busy areas; reinstall with iLoader to get it.
+
+### Fixes
+
+- **Fewer GPU errors and closes after area changes.** Unused render targets are freed at nxnative's pace again, which lines up with the GPU errors some X2 players saw.
+- **GPU occlusion fixed**: it could hand the GPU a buffer that was already being reused. It stays off by default and experimental while it's tested; objects that weren't measured yet now count as visible, so nothing should flicker out.
+- **On-phone pipeline building survives leaving the app.** The pipelines the phone has prepared are saved before iOS suspends it (from kid-with-sword-remake).
+- **The "Build the pipelines on the phone" option now really leaves the 4.9 GB pipeline archive out** (thanks PrinceJunkie). That's the option for AltStore, SideStore and LiveContainer.
+- When the game freezes, the log now records what each thread was doing, so freezes can be tracked down.
+
+### New
+
+- **A redesigned launcher.** Play opens on a full-screen picture with a side panel for the quick settings, and Settings and Extras use the same glass look.
+- **Your own background pictures.** Tap the picture button at the top right to add photos, pick one, and set how dark it is and which part shows.
+- **Mods** (Extras → Mods, from kid-with-sword-remake): import RomFS mods as .zip files and turn them on or off. They're applied when the game starts; your game files aren't changed.
+- **An L key** in the mobile touch layout, above ZL.
+- **Wide view on squarer screens** such as the iPhone Duo: the HUD, menus and movies stay in a 16:9 band (thanks richservo).
+
+### Known issues
+
+- GPU occlusion is still experimental. If you turn it on and objects flicker or vanish, turn it back off.
+
 ## X2.0.1 (3.0.1)
 
 A hotfix for crashes after area changes in X2.
