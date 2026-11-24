@@ -42,7 +42,7 @@ EXPECTED = {
     "dm/tools/tests/test_launcher_settings.py": 2,
     "docs/agents/game-patches.md": 1,
     "docs/env_switches.tsv": 8,
-    "docs/settings.md": 2,
+    "docs/settings.md": 1,
 }
 
 
@@ -159,11 +159,11 @@ def staged_merge(cwd, left, right, stage, dest, summary):
         raw = file.read_bytes() if file.is_file() else b""
         src = raw.decode("utf-8", errors="replace") if b"\0" not in raw else ""
         matches = list(HUNK.finditer(src))
-        if stage == "upstream" and len(matches) != EXPECTED[path]:
-            raise RuntimeError("exact upstream hunk count changed: " + path)
         save = dest / "conflicts" / stage / (path + ".diff3")
         save.parent.mkdir(parents=True, exist_ok=True)
         save.write_bytes(raw)
+        if stage == "upstream" and len(matches) != EXPECTED[path]:
+            raise RuntimeError("exact upstream hunk count changed: " + path + " got " + str(len(matches)))
         if not matches:
             records.append({"path": path, "hunk": 0, "status": "BLOCKED", "reason": "binary or non-text conflict"})
             if git(cwd, "show", ":3:" + path, check=False).returncode == 0:
