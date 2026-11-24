@@ -402,6 +402,29 @@ static UIImage *app_icon(void) {
     [super viewDidLoad];
     self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
     self.view.backgroundColor = UIColor.systemGroupedBackgroundColor;
+    // X3's packed default picture, also supported by this native UIKit launcher.
+    NSString *backgroundPath = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"dm/launcher_background.jpg"];
+    UIImage *background = [UIImage imageWithContentsOfFile:backgroundPath];
+    if (background) {
+        UIImageView *backdrop = [[UIImageView alloc] initWithImage:background];
+        backdrop.contentMode = UIViewContentModeScaleAspectFill;
+        backdrop.clipsToBounds = YES;
+        backdrop.translatesAutoresizingMaskIntoConstraints = NO;
+        backdrop.isAccessibilityElement = NO;
+        [self.view addSubview:backdrop];
+        UIView *shade = [UIView new];
+        shade.backgroundColor = [UIColor colorWithWhite:0 alpha:0.58];
+        shade.translatesAutoresizingMaskIntoConstraints = NO;
+        shade.userInteractionEnabled = NO;
+        [self.view addSubview:shade];
+        for (UIView *layer in @[backdrop, shade]) {
+            [NSLayoutConstraint activateConstraints:@[
+                [layer.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+                [layer.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+                [layer.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+                [layer.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]]];
+        }
+    }
     UIStackView *card = [UIStackView new]; card.axis = UILayoutConstraintAxisVertical; card.alignment = UIStackViewAlignmentCenter; card.spacing = 16;
     UIImage *icon = app_icon();
     if (icon) {

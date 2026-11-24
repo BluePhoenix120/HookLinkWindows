@@ -16,6 +16,7 @@ sys.path.insert(0, str(WIN))
 import toolchain as tc
 from metal_host_diagnostics import run_host_msl
 from host_source_manifest import host_source_paths
+from launcher_resources import stage_launcher_resources
 
 REPO = tc.REPO
 DM = REPO / 'dm'
@@ -371,6 +372,7 @@ def main():
     elif gfx == 'nvn': t('no pipeline archive (' + (f'DM_PSO_GPUS={gpus}' if 'DM_PSO_GPUS' in env else 'the profile does not set pso_mtl4 on; DM_PSO_GPUS=g18p builds one')
                          + ('' if (gd / 'shader_pairs.tsv').exists() else ', no shader_pairs.tsv') + ')')
     t('launcher: ' + py(DM / 'games/settings.py', game, patched, vnacp, dmres / 'launcher.json', env=dict(env, GFXAPI=gfx)))
+    stage_launcher_resources(REPO, app, dmres, vnacp, romfs, image, env, log=t)
     if env.get('DM_ENV_FILE'): shutil.copy2(env['DM_ENV_FILE'], dmres / 'env.txt')
     (dmres / 'font').mkdir()
     font = tc.std_font() or die('no standard font: set STD_FONT to a TTF with broad Unicode coverage')

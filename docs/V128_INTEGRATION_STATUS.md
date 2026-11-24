@@ -22,3 +22,7 @@ Remaining full-engine integration gates:
 - Run source audit, unit tests, Windows GUI packaging and the fullest available native build checks before changing release metadata. A real game IPA/iPhone test remains dependent on the user's own SDK, compiler, device and game input.
 
 No separate branch is used. Alpha V1.2.8 is a preparation release on the existing engine pins; the complete X3 / official NXnative source integration is still outstanding.
+
+## Subsequent Windows-native ports for X3
+
+The Windows IPA packager now copies the game's control metadata, accepts the X3 packed launcher background, and invokes the X3 resource-size-table generator when present. The UIKit launcher displays the packaged background, and its native in-game menu supports the existing Custom controller layout editor. The full X3 launcher photo picker and mod manager are still outstanding. These changes do not advance the engine pins or release version.
