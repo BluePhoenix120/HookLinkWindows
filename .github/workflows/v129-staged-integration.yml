@@ -1,0 +1,31 @@
+name: V1.2.9 staged X3 and official engine integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/stage_v129_integration.py'
+      - '.github/workflows/v129-staged-integration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Materialize exact upstream and Windows source merges
+        run: python3 -B tools/stage_v129_integration.py --output "$RUNNER_TEMP/v129-stage"
+      - name: Preserve source patch and every unresolved three-way hunk
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v129-unapproved-source-integration
+          path: ${{ runner.temp }}/v129-stage
+          if-no-files-found: error
