@@ -209,7 +209,7 @@ def main():
         return type(g)(g.dir)
     up.heap_check = heap_estimate
 
-    def region_skip(repo, d, patched, work, env, logs, g):
+    def region_skip(repo, d, patched, work, env, logs, g, mac_only=False):
         """The address region check without the Mac host. Upstream boots the game to report where its address regions reach against the profile's alias region: a report,
         it changes no key. Skipped here, and the profile stamped as upstream's check stamps it, so later builds do not ask again"""
         up.PROG.stage('address regions (no Mac host)')
