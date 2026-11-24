@@ -1,0 +1,31 @@
+name: V1.2.8 read-only X3 and original NXnative integration audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/audit_v128_integration.py'
+      - '.github/workflows/v128-upstream-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Audit both exact upstream revisions and existing Windows deltas
+        run: python3 -B tools/audit_v128_integration.py --output "$RUNNER_TEMP/v128-review"
+      - name: Save complete merge-hunk report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v128-integration-review
+          path: ${{ runner.temp }}/v128-review
+          if-no-files-found: warn
