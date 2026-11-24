@@ -42,7 +42,7 @@ EXPECTED = {
     "dm/tools/tests/test_launcher_settings.py": 2,
     "docs/agents/game-patches.md": 1,
     "docs/env_switches.tsv": 8,
-    "docs/settings.md": 1,
+    "docs/settings.md": 3,
 }
 
 
