@@ -1,3 +1,9 @@
+## Alpha V1.2.8 — Windows build compatibility and X3 integration preparation
+
+**Integration preparation release — HookLink X3 (4.0) and the newer official NXnative engine are NOT included yet.** The bundled engine remains HookLink X2.0.1 / official NXnative `3e1ada5b96ac`, with shader chain `f062f816dfb7`.
+
+This release prepares the Windows host source-list parser and address-region wrapper for upcoming upstream changes, adds five regression tests, and includes the read-only integration audit. The full X3/official-engine merge remains in progress. See the [integration checklist](docs/V128_INTEGRATION_STATUS.md) and [changelog](CHANGELOG.md).
+
 ## Alpha V1.2.7 — robust iPhoneOS SDK discovery on Windows
 
 Fixes the `plistlib.InvalidFileException` thrown by V1.2.6 when Windows discovers a truncated or otherwise invalid `SDKSettings.plist` in a nearby SDK directory. SDK discovery now skips bad metadata and can find a valid SDK elsewhere; it still requires genuine iPhoneOS SDK 26+ metadata, headers and frameworks. Broken Apple SDK metadata is **not** repaired by this update. If prerequisites now report no valid SDK, select or reimport a valid iPhoneOS SDK via **Toolchain setup**.
@@ -46,12 +52,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.2.7](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.2.8](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.7-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.7-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.8-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.2.8-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -62,11 +68,11 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.2.7 — experimental Windows port (November 2026).**
+**Alpha V1.2.8 — experimental Windows port (November 2026).**
 
 | Area | Status |
 |---|---|
-| Windows GUI, package creation and automated regression tests | V1.2.5 source regression tests and Windows GUI packaging must pass GitHub Actions before release; an on-device V1.2.5 test is still required |
+| Windows GUI, package creation and automated regression tests | Windows GUI CI gates the release; end-to-end V1.2.8 IPA and device testing remain outstanding |
 | Source integration | Complete original NXnative `3e1ada5b` integrated through 50 upstream commits, with HookLink/Windows source differences reviewed at the hunk level; see [Engine and upstream](#engine-and-upstream) |
 | Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Verified by developer for V1.2.0** on iPhone 18 Pro Max/iOS 27.2: gameplay and graphics work. V1.2.1 audio scheduling fix still needs device validation |
 | Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |

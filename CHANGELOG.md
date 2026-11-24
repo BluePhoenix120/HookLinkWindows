@@ -1,5 +1,16 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.2.8 (2026-11-24)
+
+**Integration preparation release — HookLink X3 (4.0) and the newer official NXnative engine are NOT included yet.** The bundled engine remains HookLink X2.0.1 / official NXnative `3e1ada5b96ac`, with shader chain `f062f816dfb7`.
+
+- Windows native host source selection now derives the ordered `SRC` list from the engine's Makefile, retains Mac-only filtering, and rejects unknown syntax or missing files instead of silently dropping native sources.
+- Windows address-region check wrapper accepts the incoming upstream `mac_only` argument while retaining its no-Mac-host behavior.
+- Adds five regression tests for the source list and new wrapper interface.
+- Adds the completed read-only X3 / latest official NXnative merge audit and [integration checklist](https://github.com/BluePhoenix120/HookLinkWindows/blob/main/docs/V128_INTEGRATION_STATUS.md). The audit identified 224 official commits and 460 HookLink engine commits (overlapping history), 22 upstream conflicts and nine additional Windows-delta conflicts. These conflicts have not been resolved for this release.
+- Existing game data, shader chain, exact source pins, and V1.2.6–V1.2.7 fixes are retained. Native IPA and iPhone runtime testing of this release remain outstanding.
+
+
 ## HookLinkWindows Alpha V1.2.7 (2026-11-21)
 
 - Fixes the V1.2.6 Windows build's `plistlib.InvalidFileException: Invalid file` during **Check prerequisites / Build IPA**. The error arose in `engine/win/toolchain.py`, where the SDK auto-discovery sort loaded an invalid `SDKSettings.plist` without handling parse failures.
