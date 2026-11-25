@@ -286,6 +286,12 @@ final class HookLink: ObservableObject {
                         } else { self.say(line) }
                     }
                     watchdog.cancel()
+                    if st == 0, let pin = cfg.commit, !pin.isEmpty {   // the pinned commit: fetched by its hash (GitHub serves any reachable commit), then checked out
+                        say("$ git fetch --depth 50 origin \(pin) && git reset --hard \(pin)   (the engine commit this HookLink version was tested with)")
+                        let f = await Runner().run(["git", "-C", engine.path, "fetch", "--depth", "50", "origin", pin]) { self.say($0) }
+                        let c = f == 0 ? await Runner().run(["git", "-C", engine.path, "reset", "--hard", pin]) { self.say($0) } : f
+                        if c != 0 { say("The pinned engine commit \(pin) couldn't be fetched (status \(c)): staying on the branch's newest.") }
+                    }
                     if st == 0 { break }
                     say(stalled ? "The download stopped receiving data for a minute: trying again." : "The download failed (status \(st)): trying again.")
                     if attempt == 3 { say("The build engine couldn't be downloaded. Check your internet connection and click Install tools again.") }
@@ -313,7 +319,9 @@ final class HookLink: ObservableObject {
             args += ["--platform", "mac-app", "--allow-damaged", "--env-file", resources.appendingPathComponent("presets/mac.env").path]
         } else {
             args += ["--platform", "ios", "--romfs", "separate", "--allow-damaged", "--env-file", resources.appendingPathComponent("presets/iphone.env").path]
-            if !smallIPA { args += ["--gpu", gpu] }   // the archive for this GPU (over 4 GB for the A20 Pro); without it the first start prepares the pipelines on the phone
+            // the archive for this GPU (over 4 GB for the A20 Pro); without it the first start prepares the pipelines on the phone. Leaving --gpu out is not enough:
+            // the engine then takes the profile's pso_gpu (applegpu_g19p for Ocarina) and packs the archive anyway
+            args += ["--gpu", smallIPA ? "none" : gpu]
         }
         args += ["--work-dir", workDir.path, "-o", product.path, "--progress", "json"]
         let name = appName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -326,6 +334,9 @@ final class HookLink: ObservableObject {
         // Per-device launcher defaults: the A19 and A18 Pro GPUs are near the frame budget at 60 fps (an iPhone 17 Pro averaged 30 fps at 60, 1.8.5 logs), so their builds start in
         // 30 fps + frame generation at the Lighter size; the player's own choice in the launcher still wins
         var buildEnv = ["DM_ENTITLEMENTS": resources.appendingPathComponent("presets/entitlements.plist").path]
+        // The launcher's default background picture (HookLink X3), packed into the app as dm/launcher_background.jpg (build_ipa.sh); the player can pick their own photos there
+        let bg = resources.appendingPathComponent("presets/launcher_background.jpg")
+        if FileManager.default.fileExists(atPath: bg.path) { buildEnv["DM_LAUNCHER_BG"] = bg.path }
         if !isMac { buildEnv["DM_QOS_MAP_DEFAULT"] = "1"; buildEnv["DM_DYNRES_DEFAULT"] = "1"; buildEnv["DM_THERMAL_CAP_DEFAULT"] = "0" }   // the launcher's starting values, as the preset had them fixed before 1.9
         // Skip hidden objects (DM_NVN_RC_STALE) starts off: in Ocarina of Time it drew Link, horses and grass in view as pale-blue blocks (1.9 test39-40)
         if !isMac, ["g18p", "g17p"].contains(gpu) { buildEnv["DM_FRAME_MODE_DEFAULT"] = "2"; buildEnv["DM_FRAMEGEN_SCALE_DEFAULT"] = "0.75" }
@@ -632,12 +643,17 @@ final class HookLink: ObservableObject {
 }
 
 /// Where the build engine (nxnative with HookLink's changes) is downloaded from: Resources/engine.json.
+/// commit (optional, adr's request): the exact engine commit this HookLink version was tested with, so builds are reproducible and a regression can be bisected;
+/// without it the branch's newest commit is used, as before
 struct Engine: Decodable {
     var repo: String
     var branch: String
+    var commit: String? = nil
+    /// What the engine should be at: the pinned commit, else the branch's newest
+    var target: String { (commit?.isEmpty == false) ? commit! : "origin/\(branch)" }
     static func load(from resources: URL) -> Engine {
         let u = resources.appendingPathComponent("engine.json")
         if let d = try? Data(contentsOf: u), let e = try? JSONDecoder().decode(Engine.self, from: d) { return e }
-        return Engine(repo: "", branch: "main")
+        return Engine(repo: "", branch: "main", commit: nil)
     }
 }

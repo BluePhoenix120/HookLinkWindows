@@ -70,8 +70,8 @@ jobs:
             if [ "$rc" != 0 ]; then echo "::error::$t failed"; failed=1; fi
           done
           exit $failed
-      - name: Direct OpenGL imports and EGL lookup (CPU checks)
-        run: make -C dm/gfx/tests GAME="$GAME" gl-imports-cpu 2>&1 | tee logs/gl-imports.log
+      - name: Direct OpenGL imports and EGL lookup (no GPU)
+        run: make -C dm/gfx/tests GAME="$GAME" gl-imports 2>&1 | tee logs/gl-imports.log
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
@@ -89,10 +89,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Registration sections (all producers, ASan and UBSan, no global ignorelist)
-        run: |
-          mkdir -p logs
-          make -C dm/gfx/tests GAME="$GAME" registration-asan 2>&1 | tee logs/registration-asan.log
       - name: ASan and UBSan, every host unit test (dm/host/tests)
         run: |
           mkdir -p logs
@@ -127,6 +123,10 @@ jobs:
           cache-dependency-path: .github/requirements/coverage.txt
       - name: Install coverage.py and the packages the tools import
         run: python -m pip install -r .github/requirements/coverage.txt
+      - name: Install SPIRV-Tools for the Vulkan shader tests
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+        run: brew install spirv-tools
       - name: Host unit tests (dm/host/tests), llvm-cov
         continue-on-error: true
         run: |

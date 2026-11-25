@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <stdatomic.h>   // atomic screen-rate handoff across the render and UI threads
 #include <dlfcn.h>
+#include <stdatomic.h>   // g_screen_hz: read on the main thread, used from the render thread (front_screen_max_fps)
 #include "front.h"
 #include "hle.h"
 #include "dm.h"
@@ -22,6 +23,7 @@
 void dm_gamepad_active(void);
 #import "DmLayout.h"
 #import "DmGameMenu.h"
+#import "DmRotation.h"
 
 void front_ios_boot(void);
 int front_ios_boot_ok(void);
@@ -38,6 +40,7 @@ static void screen_refresh(void);
 static void front_ios_audio_watch(void);
 static UILabel *front_ios_fps_label(void);
 static void front_ios_fps_heat_battery(bool on);
+static void front_ios_hold_banner(UIView *root);
 
 @interface DmGameView : UIView
 @property (nonatomic) CGFloat maxPixelWidth;   // 0: the screen's own pixels; a TV caps the drawable at 1920 across (tv_attach)
@@ -65,7 +68,8 @@ static void front_ios_fps_heat_battery(bool on);
     if (self.maxPixelWidth > 0) scale = MIN(scale, self.maxPixelWidth / MAX(self.bounds.size.width, 1));
     l.contentsScale = scale;
     screen_refresh();   // an iPad window moved to another display lays out again (the display scale trait above)
-    l.drawableSize = CGSizeMake(self.bounds.size.width * l.contentsScale, self.bounds.size.height * l.contentsScale);
+    CGSize px = CGSizeMake(self.bounds.size.width * l.contentsScale, self.bounds.size.height * l.contentsScale);
+    if (!CGSizeEqualToSize(l.drawableSize, px)) { l.drawableSize = px; dm_fstep_settle(); }
 }
 @end
 static void tv_attach(void);
@@ -199,6 +203,7 @@ static void launcher_done(void) { [g_root startGame]; }
     UIApplication.sharedApplication.idleTimerDisabled = YES;
     tv_attach();   // a TV connected while the launcher showed
     front_ios_boot();
+    front_ios_hold_banner(self.view);
 }
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
@@ -252,9 +257,42 @@ static void launcher_done(void) { [g_root startGame]; }
 - (BOOL)prefersHomeIndicatorAutoHidden { return YES; }
 - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures { return UIRectEdgeAll; }   // Edge gestures need two swipes, to avoid accidental exits
 - (BOOL)prefersStatusBarHidden { return YES; }
-- (UIInterfaceOrientationMask)supportedInterfaceOrientations { return UIInterfaceOrientationMaskAll; }
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations { return dm_rotation_vc_mask(); }
 @end
 UIViewController *front_ios_root(void) { return [DmRootVC new]; }
+
+// Rotation (DM_ROTATION; DmRotation.h, DmLayout.h dm_rotation_mask). The phone's Info.plist lists only the two landscapes (the Duo's inner display follows its bounds) and the iPad's
+// all four; the app delegate (main.m) answers with this, which replaces that list, so portrait can be chosen on a phone too while auto keeps each device's list
+UIInterfaceOrientationMask dm_rotation_vc_mask(void) { return dm_rotation_mask(getenv("DM_ROTATION"), UIInterfaceOrientationMaskAll); }
+static UIInterfaceOrientationMask plist_orientations(void) {
+    NSArray *list = nil;
+    if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) list = [NSBundle.mainBundle objectForInfoDictionaryKey:@"UISupportedInterfaceOrientations~ipad"];
+    if (![list isKindOfClass:NSArray.class]) list = [NSBundle.mainBundle objectForInfoDictionaryKey:@"UISupportedInterfaceOrientations"];
+    UIInterfaceOrientationMask m = 0;
+    if ([list isKindOfClass:NSArray.class]) for (id o in list) {
+        if ([o isEqual:@"UIInterfaceOrientationPortrait"]) m |= UIInterfaceOrientationMaskPortrait;
+        else if ([o isEqual:@"UIInterfaceOrientationPortraitUpsideDown"]) m |= UIInterfaceOrientationMaskPortraitUpsideDown;
+        else if ([o isEqual:@"UIInterfaceOrientationLandscapeLeft"]) m |= UIInterfaceOrientationMaskLandscapeLeft;
+        else if ([o isEqual:@"UIInterfaceOrientationLandscapeRight"]) m |= UIInterfaceOrientationMaskLandscapeRight;
+    }
+    return m ? m : UIInterfaceOrientationMaskAll;
+}
+UIInterfaceOrientationMask front_ios_app_orientations(void) { return dm_rotation_mask(getenv("DM_ROTATION"), plist_orientations()); }
+void dm_rotation_set(const char *value) {
+    if (value) setenv("DM_ROTATION", value, 1);
+    const char *now = getenv("DM_ROTATION"); if (!now || !*now) now = "auto";
+    static char was[16]; if (strcmp(was, now)) { snprintf(was, sizeof was, "%s", now); LOG("front end: rotation %s (DM_ROTATION)", now); }
+    UIInterfaceOrientationMask m = front_ios_app_orientations() & dm_rotation_vc_mask();
+    for (UIScene *sc in UIApplication.sharedApplication.connectedScenes) {
+        if (![sc isKindOfClass:UIWindowScene.class] || ![sc.session.role isEqualToString:UIWindowSceneSessionRoleApplication]) continue;   // not a TV's
+        UIWindowScene *ws = (UIWindowScene *)sc;
+        for (UIWindow *w in ws.windows) for (UIViewController *vc = w.rootViewController; vc; vc = vc.presentedViewController) [vc setNeedsUpdateOfSupportedInterfaceOrientations];
+        // UIKit turns a window whose orientation the new mask leaves out only when asked: a lock chosen while upright turns the screen at once
+        if (m && !(m & (1u << ws.effectiveGeometry.interfaceOrientation)))
+            [ws requestGeometryUpdateWithPreferences:[[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:m] errorHandler:^(NSError *e) {
+                LOG("front end: rotation %s: the window did not turn (%s)", now, e.localizedDescription.UTF8String); }];
+    }
+}
 
 // A TV (cable or AirPlay): iOS gives the app the TV as a scene of its own instead of mirroring the phone. The game's view moves there, 16:9 fills the TV, and the game is
 // docked as a Switch on its dock (1080p, the operation mode change notification); the phone keeps the pad. Unplugging puts the view back and the mode the game had before
@@ -308,6 +346,7 @@ bool dm_setting_live(const char *env, const char *value) {
         dm_set_opmode(m); dm_gamepad_opmode_changed(); LOG("front end: console mode %s (in-game menu)", m ? "docked" : "handheld");
         return true;
     }
+    if (!strcmp(env, "DM_ROTATION")) { if (value) dm_rotation_set(value); return true; }
     if (!strcmp(env, "DM_SHOW_FPS")) { if (value) [g_root showFPS:atoi(value) != 0]; return true; }
     if (!strcmp(env, "DM_SHOW_HEAT_BATTERY")) { if (value) front_ios_fps_heat_battery(atoi(value) != 0); return true; }
     if (!strcmp(env, "DM_TOUCH_HAPTICS")) { if (value) dm_gamepad_touch_feedback(atoi(value) != 0); return true; }
@@ -333,13 +372,9 @@ static _Atomic double g_brightness = -1;
 int dm_thermal_now(void) { return (int)NSProcessInfo.processInfo.thermalState; }
 int dm_low_power_now(void) { return NSProcessInfo.processInfo.lowPowerModeEnabled; }   // the frame step does not probe in it (hle_nvn.c fstep_cpu_slowed)
 double dm_brightness_now(void) { return g_brightness; }
-// The screen's top rate (120 on a ProMotion iPhone, which needs CADisableMinimumFrameDurationOnPhone, set in project.yml), read on the main thread at start.
-// nvn_mtl.m's weak default returned 0 on iOS, so 60 fps + frame generation stayed on the 60 Hz display link: the generated frame had no tick of its own and took
-// the real frame's, frames dropped and the interpolation kept stopping (HookLink test33 log, frame rate mode 3). Low Power Mode caps the screen at 60 Hz, so it reads 60 there
-// The screen's refresh rate is tracked by g_screen_hz and screen_refresh() below.
+// The screen's top rate: front_screen_max_fps below (nxnative main's screen_refresh, which reads Low Power Mode as 60 too; HookLink's own reader went with the X3 merge)
 static void front_ios_power_watch(void) {
     g_brightness = UIScreen.mainScreen.brightness;
-    // screen_refresh() below refreshes the phone/TV rate and the power-saving cap.
     [NSNotificationCenter.defaultCenter addObserverForName:UIScreenBrightnessDidChangeNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *n) { (void)n; g_brightness = UIScreen.mainScreen.brightness; }];
     [NSNotificationCenter.defaultCenter addObserverForName:NSProcessInfoThermalStateDidChangeNotification object:nil queue:nil usingBlock:^(NSNotification *n) {
         (void)n; LOG("front end: thermal state → %d (%.0f s after launch)", dm_thermal_now(), (now_ns() - g_t0_ns) / 1e9); }];
@@ -432,6 +467,27 @@ static UILabel *front_ios_fps_label(void) {
     return l;
 }
 
+// kid-with-sword-remake L8: the hold after start with mods on (hle_hid.c dm_input_startup_hold_left, the profile's mod_input_hold): the game reads no input for its first
+// frames, so a banner over the title says so and counts down (at the game's 30 fps; the frames are what count). Removed once the hold ends, or at once without mods
+long dm_input_startup_hold_left(void);
+static void front_ios_hold_banner(UIView *root) {
+    if (!root || dm_input_startup_hold_left() <= 0) return;
+    UILabel *l = [UILabel new];
+    l.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold]; l.textColor = UIColor.whiteColor; l.textAlignment = NSTextAlignmentCenter;
+    l.backgroundColor = [UIColor colorWithWhite:0 alpha:0.55]; l.layer.cornerRadius = 10; l.layer.masksToBounds = YES; l.userInteractionEnabled = NO;
+    CGFloat w = 300, top = root.safeAreaInsets.top + 12;
+    l.frame = CGRectMake(floor((root.bounds.size.width - w) / 2), top, w, 34);
+    l.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
+    l.text = @"Getting your mods ready…";
+    [root addSubview:l];
+    LOG("front end: input held after start with mods on, banner shown");
+    [NSTimer scheduledTimerWithTimeInterval:0.25 repeats:YES block:^(NSTimer *t) {
+        long left = dm_input_startup_hold_left();
+        if (left <= 0) { [t invalidate]; [UIView animateWithDuration:0.3 animations:^{ l.alpha = 0; } completion:^(BOOL done) { (void)done; [l removeFromSuperview]; }]; return; }
+        [l.superview bringSubviewToFront:l];
+        l.text = [NSString stringWithFormat:@"Getting your mods ready… %ld s", (left + 29) / 30];
+    }];
+}
 // Progress screen of the prepare step (front.h front_progress): a dark view over the game's view and the pad, the title, a bar and a count, centered; UIKit views, so it draws while the game's thread waits
 static UIView *g_prog; static UILabel *g_prog_count; static UIProgressView *g_prog_bar; static UILabel *g_prog_title;
 void (*front_progress_hook)(const char *title, long done, long total);
@@ -728,6 +784,21 @@ static void save_sync_background(void) {
     });
 }
 
+// The pipeline archive's writes (nvn_mtl.m mtl_arch_save hands them over as the app leaves the screen): a background task of their own, so iOS lets a write under way end before
+// it suspends the app. A compaction's write took 4-40 s on an iPhone 18 Pro, and one cut short left the old files and started the compaction again (kid-with-sword-remake L6). It
+// matters most with the pipelines built on the phone (no archive in the IPA), whose archive the phone writes itself
+static void arch_background(void) {
+    int mtl_arch_wait_written(int ms);
+    UIApplication *app = UIApplication.sharedApplication;
+    __block UIBackgroundTaskIdentifier task = UIBackgroundTaskInvalid;
+    void (^end)(void) = ^{ if (task != UIBackgroundTaskInvalid) { [app endBackgroundTask:task]; task = UIBackgroundTaskInvalid; } };
+    task = [app beginBackgroundTaskWithName:@"pipeline archive" expirationHandler:end];
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        if (!mtl_arch_wait_written(25000)) LOG("front end: the pipeline archive's writes did not end before the app was suspended; they go on when it returns");
+        dispatch_async(dispatch_get_main_queue(), end);
+    });
+}
+
 void front_ios_focus_event(int ev) {
     if (!g_layer) return;
     switch (ev) {
@@ -735,11 +806,15 @@ void front_ios_focus_event(int ev) {
         case 1:
             UIApplication.sharedApplication.idleTimerDisabled = NO;
             dm_focus_set(3);
+            // The game's threads as they stand, the first 3 times the app leaves the screen: a player leaves a game that has stopped going on (the owner's log after the
+            // Master Sword: the same white frame for 5 minutes, no error), and this is what each thread waits for (hle_thread.c svc_thread_dump_live: suspends no thread)
+            { void svc_thread_dump_live(void); static int n; if (n++ < 3) { LOG("app to the background: the game's threads as they stand (what a game that stopped going on waits for)"); svc_thread_dump_live(); } }
             g_audio_bg = 1;
             front_ios_audio_apply();
             guest_clock_freeze_for(1, 1);
             save_sync_background();
             dm_gfx_suspend(1);
+            arch_background();
             break;
         case 2: dm_gfx_suspend(0); guest_clock_freeze_for(1, 0); front_ios_audio_session(); g_audio_bg = 0; front_ios_audio_apply(); dm_focus_set(2); break;
         case 3:   // Becoming active again also ends an interruption whose "ended" never came (not every one sends it), and retries a session that would not activate on the way back

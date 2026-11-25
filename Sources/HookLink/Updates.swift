@@ -45,13 +45,16 @@ extension HookLink {
         let f = await Runner.capture(["git", "-C", dir, "fetch", "--quiet", "--depth", "50", "origin",
                                       "+refs/heads/\(cfg.branch):refs/remotes/origin/\(cfg.branch)"])
         guard f.status == 0 else { return false }
+        if let pin = cfg.commit, !pin.isEmpty, (await Runner.capture(["git", "-C", dir, "cat-file", "-e", pin + "^{commit}"])).status != 0 {   // a pin the branch's last 50 do not hold
+            guard (await Runner.capture(["git", "-C", dir, "fetch", "--quiet", "--depth", "50", "origin", pin])).status == 0 else { return false }
+        }
         let here = (await Runner.capture(["git", "-C", dir, "rev-parse", "HEAD"])).out.trimmingCharacters(in: .whitespacesAndNewlines)
-        let there = (await Runner.capture(["git", "-C", dir, "rev-parse", "origin/\(cfg.branch)"])).out.trimmingCharacters(in: .whitespacesAndNewlines)
+        let there = (await Runner.capture(["git", "-C", dir, "rev-parse", cfg.target + "^{commit}"])).out.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !there.isEmpty, here != there else { return true }
         // What's new: the commits the update brings (subjects only, newest first); a rebased branch shows its newest commits
-        var log = (await Runner.capture(["git", "-C", dir, "log", "--format=%s", "-n", "15", "HEAD..origin/\(cfg.branch)"])).out
+        var log = (await Runner.capture(["git", "-C", dir, "log", "--format=%s", "-n", "15", "HEAD.." + cfg.target])).out
         if log.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            log = (await Runner.capture(["git", "-C", dir, "log", "--format=%s", "-n", "8", "origin/\(cfg.branch)"])).out
+            log = (await Runner.capture(["git", "-C", dir, "log", "--format=%s", "-n", "8", cfg.target])).out
         }
         let items = log.split(separator: "\n").map { s -> String in
             let t = String(s); return t.count > 140 ? String(t.prefix(140)) + "…" : t
@@ -84,8 +87,8 @@ extension HookLink {
         busy = true; defer { busy = false; endWork() }
         beginWork("Updating the game engine"); workStep(0, "Moving to the new version")
         let cfg = Engine.load(from: resources)
-        say("$ git reset --hard origin/\(cfg.branch)   (updating the build engine)")
-        let st = await Runner().run(["git", "-C", engine.path, "reset", "--hard", "origin/\(cfg.branch)"]) { self.say($0) }
+        say("$ git reset --hard \(cfg.target)   (updating the build engine)")
+        let st = await Runner().run(["git", "-C", engine.path, "reset", "--hard", cfg.target]) { self.say($0) }
         if st == 0 {
             engineUpdate = nil
             await readEngineVersion()

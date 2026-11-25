@@ -10,8 +10,8 @@ enum { DM_AUDIO_INPUT_PCM16 = 2, DM_AUDIO_INPUT_CHANNELS = 1, DM_AUDIO_INPUT_RAT
 
 #define DM_AUDIO_INPUT_DEVICE "AudioVirtualInput"
 
-// Platform hooks. The iOS host intentionally keeps the existing no-input behavior.
-#if TARGET_OS_OSX
+// Platform hooks: audio_input_mac.m on the Mac, mic_apple.m on iOS (HookLink: the iPhone's microphone for Ocarina of Time's ocarina); none elsewhere
+#if TARGET_OS_OSX || TARGET_OS_IPHONE
 int dm_audio_input_platform_device_available(void); // Checks hardware and granted permission without prompting.
 int dm_audio_input_platform_prepare(void);     // Prepares capture only when launcher permission is granted; never prompts.
 int dm_audio_input_platform_start(void);

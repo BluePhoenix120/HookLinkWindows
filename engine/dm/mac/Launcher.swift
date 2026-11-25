@@ -58,6 +58,24 @@ enum SaveCheck {
             case .alertSecondButtonReturn: return .play(r.cloudChoice)
             default: return .cancel
             }
+        case .missing:
+            guard let r else { return .play(nil) }
+            let a = NSAlert()
+            a.messageText = SaveSyncReport.missingTitle
+            a.informativeText = r.missingMessage(here: "Mac")
+            a.alertStyle = .warning
+            a.addButton(withTitle: "Try Again")
+            a.addButton(withTitle: "Play Without Sending")
+            a.addButton(withTitle: r.sendLabel(here: "Mac"))
+            a.addButton(withTitle: cancel)
+            a.buttons[2].hasDestructiveAction = true
+            a.buttons[3].keyEquivalent = "\u{1b}"
+            switch a.runModal() {
+            case .alertFirstButtonReturn: return .retry
+            case .alertSecondButtonReturn: return .play("offline")   // this Mac's save, not sent: the next start compares again
+            case .alertThirdButtonReturn: return .play(r.localChoice)   // local:none
+            default: return .cancel
+            }
         case .unreadable:
             let a = NSAlert()
             a.messageText = SaveSyncReport.unreadableTitle
@@ -144,7 +162,17 @@ struct LauncherView: View {
                 if m.values["DM_MIC"] == "1" { MicrophoneDevicePicker() }
                 CloudSavesSection()
                 Section {
-                    DisclosureGroup("Advanced settings", isExpanded: $advanced) {}
+                    // a Button, not an empty DisclosureGroup: the sections below live outside it, and in a grouped Form a DisclosureGroup does not toggle on row/label clicks (and failed to open on macOS 27)
+                    Button { advanced.toggle() } label: {
+                        HStack {
+                            Image(systemName: "chevron.right").rotationEffect(.degrees(advanced ? 90 : 0)).foregroundStyle(.secondary).accessibilityHidden(true)
+                            Text("Advanced settings")
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityValue(advanced ? "Expanded" : "Collapsed")
                 }
                 if advanced {
                     settingSections(basic: false)
@@ -533,4 +561,84 @@ public func dmMacLauncher() -> Int32 {
     guard launcher.play else { fputs("launcher: quit without starting the game\n", stderr); return 0 }
     model.apply()
     return 1
+}
+
+// nxnative main's Mac microphone picker (the Microphone rows), shown in HookLink's settings panel as in the stock launcher
+private struct MicrophoneDevicePicker: View {
+    @AppStorage("launcher.DM_MIC_DEVICE") private var savedDevice = "default"
+    @State private var devices = MicrophoneInputDevices.list()
+
+    var body: some View {
+        Section {
+            if let uid = getenv("DM_MIC_DEVICE") {
+                let value = String(cString: uid)
+                LabeledContent("Microphone input", value: devices.first { $0.uid == value }?.name ?? "System Default")
+            } else {
+                Picker("Microphone input", selection: $savedDevice) {
+                    Text("System Default").tag("default")
+                    if savedDevice != "default", !devices.contains(where: { $0.uid == savedDevice }) {
+                        Text("Selected device unavailable").tag(savedDevice)
+                    }
+                    ForEach(devices) { Text($0.name).tag($0.uid) }
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            devices = MicrophoneInputDevices.list()
+        }
+    }
+}
+
+private struct MicrophoneInputDevice: Identifiable, Hashable {
+    let uid: String
+    let name: String
+    var id: String { uid }
+}
+
+private enum MicrophoneInputDevices {
+    static func list() -> [MicrophoneInputDevice] {
+        var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDevices,
+                                                 mScope: kAudioObjectPropertyScopeGlobal,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var size: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size) == noErr,
+              size >= UInt32(MemoryLayout<AudioDeviceID>.size) else { return [] }
+        var ids = [AudioDeviceID](repeating: kAudioObjectUnknown, count: Int(size) / MemoryLayout<AudioDeviceID>.stride)
+        let status = ids.withUnsafeMutableBytes { bytes in
+            AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, bytes.baseAddress!)
+        }
+        guard status == noErr else { return [] }
+        return ids.compactMap { device in
+            guard hasInput(device), let uid = string(device, selector: kAudioDevicePropertyDeviceUID),
+                  let name = string(device, selector: kAudioObjectPropertyName), !uid.isEmpty else { return nil }
+            return MicrophoneInputDevice(uid: uid, name: name)
+        }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private static func hasInput(_ device: AudioDeviceID) -> Bool {
+        var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreamConfiguration,
+                                                 mScope: kAudioDevicePropertyScopeInput,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var size: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(device, &address, 0, nil, &size) == noErr,
+              size >= UInt32(MemoryLayout<AudioBufferList>.size) else { return false }
+        let data = UnsafeMutableRawPointer.allocate(byteCount: Int(size), alignment: MemoryLayout<AudioBufferList>.alignment)
+        defer { data.deallocate() }
+        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, data) == noErr else { return false }
+        let buffers = UnsafeMutableAudioBufferListPointer(data.assumingMemoryBound(to: AudioBufferList.self))
+        return buffers.contains { $0.mNumberChannels > 0 }
+    }
+
+    private static func string(_ device: AudioDeviceID, selector: AudioObjectPropertySelector) -> String? {
+        var address = AudioObjectPropertyAddress(mSelector: selector,
+                                                 mScope: kAudioObjectPropertyScopeGlobal,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var value: CFString?
+        var size = UInt32(MemoryLayout<CFString?>.size)
+        let status = withUnsafeMutablePointer(to: &value) { pointer in
+            AudioObjectGetPropertyData(device, &address, 0, nil, &size, UnsafeMutableRawPointer(pointer))
+        }
+        guard status == noErr, let value else { return nil }
+        return value as String
+    }
 }

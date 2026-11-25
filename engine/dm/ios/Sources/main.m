@@ -22,6 +22,7 @@ extern char **environ;
 
 int dm_main(int argc, char **argv);   // dm/host/main.c compiled in with -Dmain=dm_main
 UIViewController *front_ios_root(void);
+UIInterfaceOrientationMask front_ios_app_orientations(void);   // front_ios.m: the orientations Rotation allows (DM_ROTATION)
 void front_ios_focus_event(int ev);
 
 static char *g_argv[4]; static int g_argc;
@@ -196,6 +197,7 @@ static int boot_env(void) {
     // HookLink: the cheats folder (hle_cheats.c DM_CHEATS), in Documents so the player can put an Atmosphère cheat file there with Files; the launcher's Extras lists its entries
     { NSString *ch = [doc stringByAppendingPathComponent:@"cheats"]; [NSFileManager.defaultManager createDirectoryAtPath:ch withIntermediateDirectories:YES attributes:nil error:nil]; setenv("DM_CHEATS", ch.fileSystemRepresentation, 0); }
     setenv("DM_TEMP", [doc stringByAppendingPathComponent:@"temp"].fileSystemRepresentation, 0);
+    setenv("DM_ALBUM_DIR", [doc stringByAppendingPathComponent:@"album"].fileSystemRepresentation, 0);   // local album screenshots (hle_album.c), visible in Files; created lazily on first save
     setenv("DM_SYSTEM_DIR", [doc stringByAppendingPathComponent:@"system"].fileSystemRepresentation, 0);
     setenv("DM_GUEST_FILE_DIR", NSTemporaryDirectory().fileSystemRepresentation, 0);   // DM_GUEST_FILE (hle_svc.c) keeps the guest's memory in files there
     setenv("DM_FONT_DIR", [[res stringByAppendingPathComponent:@"dm"] stringByAppendingPathComponent:@"font"].fileSystemRepresentation, 0);   // Shared-font stand-ins (standard.ttf / nintendo_ext.ttf): iOS lacks the macOS font path
@@ -241,6 +243,15 @@ static NSString *program_env(void) {
     // A folder of edited game files beside the image (Documents/res_overlay): the app's container path changes at each install, so an absolute DM_ROMFS_OVERLAY in env.txt goes stale
     { NSString *ov = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject stringByAppendingPathComponent:@"res_overlay"]; BOOL isdir = NO;
       if ([NSFileManager.defaultManager fileExistsAtPath:ov isDirectory:&isdir] && isdir) { setenv("DM_ROMFS_OVERLAY", ov.fileSystemRepresentation, 1); fprintf(stderr, "boot: game file overlay %s\n", ov.fileSystemRepresentation); } }
+    // Mods (Documents/mods, Mods.swift; from kid-with-sword-remake): the launcher sets DM_MODS at Play; the host merges their size table entries into a copy of the table the build
+    // stored uncompressed in the app (build_ipa.sh, scripts/oot_mods_rstb.py), written into Documents/mods/.merged (hle_fs.c rom_overlay_env, mods.h)
+    {   NSString *rstb = [res stringByAppendingPathComponent:prog ? [prog stringByAppendingPathComponent:@"mods_rstb.bin"] : @"mods_rstb.bin"];
+        if ([fm fileExistsAtPath:rstb]) setenv("DM_MODS_RSTB", rstb.fileSystemRepresentation, 0);
+        setenv("DM_MODS_WORK", [doc stringByAppendingPathComponent:@"mods/.merged"].fileSystemRepresentation, 0); }
+    // The RomFS of the application's other programs (scripts/pack_nup.py, a Switch 2 Edition's Switch 1 program), which the game mounts by program index (hle_fs.c): in the app beside its
+    // RomFS, also when that RomFS is Documents/romfs.img
+    NSString *sib = [(prog ? [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:prog] : NSBundle.mainBundle.resourcePath) stringByAppendingPathComponent:@"romfs_programs"];
+    if ([fm fileExistsAtPath:sib]) setenv("DM_ROMFS_PROGRAMS", sib.fileSystemRepresentation, 0);
     setenv("DM_NVN_SHMAP", [dmdir stringByAppendingPathComponent:@"shader_map.tsv"].fileSystemRepresentation, 0);
     setenv("DM_MSL_DIR", msl.fileSystemRepresentation, 0);
     NSString *control = [dmdir stringByAppendingPathComponent:@"control.nacp"];   // the game's control data (build_ipa.sh program_tables; hle_fs.c control_read)
@@ -270,6 +281,8 @@ int front_ios_boot_ok(void) { return g_boot_ok; }
 - (UISceneConfiguration *)application:(UIApplication *)a configurationForConnectingSceneSession:(UISceneSession *)s options:(UISceneConnectionOptions *)o {
     return [[UISceneConfiguration alloc] initWithName:[s.role isEqualToString:UIWindowSceneSessionRoleExternalDisplayNonInteractive] ? @"TV" : @"Default" sessionRole:s.role];   // a TV (front_ios.m DmTVSceneDelegate)
 }
+// Replaces the Info.plist orientation list: Rotation (DM_ROTATION) can turn a phone upright, auto keeps the list (front_ios.m front_ios_app_orientations)
+- (UIInterfaceOrientationMask)application:(UIApplication *)a supportedInterfaceOrientationsForWindow:(UIWindow *)w { return front_ios_app_orientations(); }
 @end
 
 // Scene lifecycle: create the window + hand focus events to front_ios.m

@@ -34,6 +34,7 @@ zip_store	.zs:.bwav:.webm:.metallib
 # HookLink VX1rc_6: 16 GB. After long sessions of area changes (teleporting) the game had mapped up to +7.75 GB of the 8 GB on an iPhone 18 Pro Max (VX1rc_4, rc_5: 6.5-7.25 GB
 # held), and the Master Sword's cutscene waited on its white screen again with nothing refused: the address space, not the memory, ran out. Addresses cost nothing until mapped (the
 # guest files are sparse); mem_reserve grows by the same 8 GB, so the heap region stays 8 GB
+# nxnative main (2026-11-22) uses 8 GiB and the map limit on: at 4 GiB the Chamber of Sages transition ran out of room for a 50 MiB region (#3103). HookLink keeps 16 GB and the limit off (the Master Sword, VX1rc_6)
 mem_reserve	0x620000000
 mem_alias	0x400000000
 mem_map_limit	off
@@ -72,13 +73,11 @@ fps_payback	on
 # The iPhone's touch gamepad starts in the full (3D) layout: the D-pad, L3 / R3 and the right stick, which turns the camera (a drag in the right third of the screen); the simple
 # layout has no right stick. A layout the player switches to in the game menu is kept
 pad_layout	native
-# The touch controls' Forest colours: blue A, green B, yellow X / Y, red +, deep green shoulders, bronze D-pad, gold rims, all translucent (DmGamepad.m theme_init)
-pad_theme	forest
 # Dynamic resolution reads the GPU time between the frame's timestamp reports, as on Donkey Kong Bananza and Breath of the Wild (the same EPD engine family): with one time a submission it
 # read about 0 and kept the full 1440x810 at 20-24 ms of GPU a frame on a MacBook Air M5. Each report takes its segment's GPU start / end (nvn_mtl.m rep_ticks)
 gpu_timestamps	segment
 # The game upscales through a chain: agl_ndsr_vr feature pass, network and blend at the render size, agl_ndsr_vr_light scale to 1920x1080. DM_UPSCALER=metalfx skips the chain for MetalFX (nvn_mtl.m up_chain)
-upscaler_chain	f8965bffbdf51d78,d17eefaff4f0bc23,a335c1db6270c355>aad7ea7e5c02f41d|b106afba1a18faa9|fa3033d05c0a41d6|04135bb812a0d66e|8df148d58b7cbe8e
+upscaler_chain	f8965bffbdf51d78,d17eefaff4f0bc23,a335c1db6270c355>aad7ea7e5c02f41d|b106afba1a18faa9|fa3033d05c0a41d6|04135bb812a0d66e|8df148d58b7cbe8e|d99fbeeb53d38847
 # Colour render targets drawn only as attachments (RGBA8 / BGRA8 / RGBA16F) kept with Metal lossy compression (rt_lossy, nvn_mtl.m rt_lossy): about 100 MB less in Link's house at 720p;
 # the scene colour (RG11B10F) and depth have no lossy form
 # HookLink 1.8.5: off again, as 1.5.1 and 1.7 ran (1.8 took it on with the steady 30 fps merge); 60 fps restarted an iPhone 18 Pro Max once on 1.8
@@ -101,3 +100,7 @@ pool_skip_retired	on
 # savers (the GPU memory guard, the texture recycle bin, lazy textures, big pools in the guest files) were written on an engine whose memory code nxnative has since rewritten: main's
 # own render-target release, pool chunks, stand-ins and HookLink's idle retirement and pool_skip_retired stand for them here
 potato	DM_RENDER_SCALE=0.25,DM_FRAMEGEN_SCALE=0.5,DM_PSO_WARM_ONLY=1,DM_NVN_ALIAS_HI=60,DM_NVN_ALIAS_LO=50,DM_SHADOW_SCALE=0.25
+# kid-with-sword-remake L8: with a mod on, the game reads no input for the first 660 presented frames (about 20-25 s from start; a "Getting ready" banner on iPhone). A mod's
+# piece of Link set up before about frame 600 is never drawn that session (the Goku mod, 23 launches: every setup at frame 589 or earlier invisible, at 680 or later drawn; the
+# game's reason not found), and a save cannot be loaded before the hold ends, so the setup lands after it. Without mods there is no hold. DM_MOD_INPUT_HOLD=<frames> overrides
+mod_input_hold	660

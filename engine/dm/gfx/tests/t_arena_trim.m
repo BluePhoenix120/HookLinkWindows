@@ -120,8 +120,8 @@ int main(void) { @autoreleasepool {
     NvShader *cached = [NvShader new]; __weak id retired;
     uint64_t retired_bytes = 0;
     @autoreleasepool {
-        mtl_sub_begin(); __strong id<MTLBuffer> b; size_t off = arena_alloc(ARENA_KEEP + MB, &b);   // HookLink: this tree's arena_alloc (main's arena_take came with 1073e98b2)
-        cached->ab_buf = b; cached->ab_gpu = b.gpuAddress + off; cached->ab_off = off; retired = b; retired_bytes = b.length;
+        mtl_sub_begin(); __strong id<MTLBuffer> b; arena_at at = arena_take(ARENA_KEEP + MB, &b);
+        cached->ab_buf = b; cached->ab_gpu = at.gpu; cached->ab_off = at.off; retired = b; retired_bytes = b.length;
         arena_trim(0);
         CHECK(resident(b), "a submission's current block stays resident during an eligible trim");
         CHECK(mtl_wait(mtl_sub_commit(), 5000000000ull), "the large block's submission completes");

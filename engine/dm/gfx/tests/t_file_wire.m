@@ -1,7 +1,7 @@
-// A shared buffer over file-backed pages joins the residency set with its pages already resident, wired through the CPU's fault path (mlock) before the commit, and that wiring
-// is given back once the commit has made the pages resident for the GPU. With the guest's memory in files (DM_GUEST_FILE) the commit itself paged the file in from the GPU
-// driver's wiring path, and on the M1 iPad that page-in waited for good on an APFS lock held by a launchd thread, itself waiting: the game froze with sound and no picture
-// (docs/reference/memory.md, "The residency commit froze over the guest's files"). Anonymous memory is not touched
+// File pages under a shared buffer joining the residency set are wired by mlock before the commit (res_add) and unwired right after it (res_commit), when the commit holds
+// them for the GPU. With the guest's memory in files (DM_GUEST_FILE) the commit itself paged the file in from the GPU driver's wiring path, and on the M1 iPad that page-in
+// waited for good on an APFS lock held by a launchd thread, itself waiting: the game froze with sound and no picture (docs/reference/memory.md, "The residency commit froze over
+// the guest's files"). Anonymous memory is not touched; mlock runs outside g_res_mu, so concurrent res_add callers racing on the same buffer balance their locks cleanly.
 #include "../nvn/nvn_mtl.m"
 #include <mach/mach_vm.h>
 void *front_metal_layer(void) { return NULL; }
@@ -16,18 +16,20 @@ static void wired(const void *p, size_t n, unsigned *lo, unsigned *hi) {
     mach_vm_address_t a = (mach_vm_address_t)p, e = a + n; *lo = ~0u; *hi = 0;
     while (a < e) {
         mach_vm_size_t sz = 0; natural_t depth = 0; vm_region_submap_info_data_64_t info; mach_msg_type_number_t c = VM_REGION_SUBMAP_INFO_COUNT_64;
-        if (mach_vm_region_recurse(mach_task_self(), &a, &sz, &depth, (vm_region_recurse_info_t)&info, &c) || a >= e) break;
+        if (mach_vm_region_recurse(mach_task_self(), &a, &sz, &depth, (vm_region_recurse_info_t)&info, &c) || !sz || a >= e) break;
         if (info.user_wired_count < *lo) *lo = info.user_wired_count;
         if (info.user_wired_count > *hi) *hi = info.user_wired_count;
+        if (sz >= e - a) break;
         a += sz;
     }
 }
 static int all_resident(const void *p, size_t n) {
-    size_t pg = getpagesize(), np = n / pg; char *v = malloc(np); int ok = !mincore(p, n, v);
-    for (size_t i = 0; ok && i < np; i++) ok = v[i] & MINCORE_INCORE;
+    size_t pg = getpagesize(), np = n / pg; char *v = malloc(np); int ok = v && !mincore(p, n, v);
+    for (size_t i = 0; ok && i < np; i++) ok = (v[i] & MINCORE_INCORE) != 0;
     free(v); return ok;
 }
 static int in_set(id<MTLAllocation> b) { pthread_mutex_lock(&g_res_mu); int r = [g_res_objects containsObject:b]; pthread_mutex_unlock(&g_res_mu); return r; }
+static void *race_add(void *arg) { res_add((__bridge id<MTLAllocation>)arg); return NULL; }
 int main(void) { @autoreleasepool {
     mtl_init();
     size_t pg = getpagesize(), n = 256 * pg;
@@ -42,11 +44,10 @@ int main(void) { @autoreleasepool {
     id<MTLBuffer> b = [g_dev newBufferWithBytesNoCopy:m length:n options:MTLResourceStorageModeShared deallocator:nil];
     res_add(b);
     wired(m, n, &lo, &hi);
-    CHECK("res_add only queues the change: nothing is wired before the commit takes it", lo == 0 && hi == 0);
+    CHECK("the file pages are user-wired once res_add returns, before the commit", lo == 1 && hi == 1);
+    CHECK("and resident: the commit has nothing to page in", all_resident(m, n));
     CHECK("the buffer is in the set", in_set(b));
-    uint64_t w0 = g_fwire_n; res_commit();
-    CHECK("the commit wired the buffer's file pages once, before its own commit (file_wire in res_commit)", g_fwire_n == w0 + 1);
-    CHECK("and they are resident", all_resident(m, n));
+    res_commit();
     wired(m, n, &lo, &hi);
     CHECK("the commit gives the user wiring back", lo == 0 && hi == 0);
     CHECK("the bytes are the file's", m[0] == 0x5a && m[n - 1] == 0);
@@ -62,10 +63,22 @@ int main(void) { @autoreleasepool {
     // Added twice before one commit: wired once, given back once
     id<MTLBuffer> b3 = [g_dev newBufferWithBytesNoCopy:m + 128 * pg length:64 * pg options:MTLResourceStorageModeShared deallocator:nil];
     res_add(b3); res_add(b3);
-    uint64_t w1 = g_fwire_n; res_commit();
-    CHECK("a second res_add of a buffer in the set wires nothing more", g_fwire_n == w1 + 1);
+    wired(m + 128 * pg, 64 * pg, &lo, &hi);
+    CHECK("a second res_add of a buffer in the set wires nothing more", lo == 1 && hi == 1);
+    res_commit();
     wired(m + 128 * pg, 64 * pg, &lo, &hi);
     CHECK("and the commit leaves nothing wired", lo == 0 && hi == 0);
+
+    // Concurrent res_add on the same file-backed buffer: unlocked mlock races balance cleanly
+    id<MTLBuffer> b4 = [g_dev newBufferWithBytesNoCopy:m + 192 * pg length:64 * pg options:MTLResourceStorageModeShared deallocator:nil];
+    pthread_t th[4];
+    for (int i = 0; i < 4; i++) pthread_create(&th[i], NULL, race_add, (__bridge void *)b4);
+    for (int i = 0; i < 4; i++) pthread_join(th[i], NULL);
+    wired(m + 192 * pg, 64 * pg, &lo, &hi);
+    CHECK("concurrent res_add leaves one user wire before the commit", lo == 1 && hi == 1);
+    res_commit();
+    wired(m + 192 * pg, 64 * pg, &lo, &hi);
+    CHECK("and the commit leaves nothing wired after concurrent res_add", lo == 0 && hi == 0);
 
     // Anonymous memory: no wiring at all
     uint8_t *a = mmap(NULL, n, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0); if (a == MAP_FAILED) abort();
@@ -78,7 +91,8 @@ int main(void) { @autoreleasepool {
     res_add(own); res_commit();
     CHECK("a buffer Metal allocated goes in as before", in_set(own));
 
-    res_remove(b); res_remove(b2); res_remove(b3); res_remove(ab); res_remove(own); res_commit();
+    res_remove(b); res_remove(b2); res_remove(b3); res_remove(b4); res_remove(ab); res_remove(own); res_commit();
+    munmap(m, n); munmap(a, n); close(fd);
     printf("t_file_wire: %d checks, %d failed\n", checks, failed);
     return failed != 0;
 } }

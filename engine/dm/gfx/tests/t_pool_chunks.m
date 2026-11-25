@@ -33,6 +33,9 @@ static int gpu_fill_ok(uint64_t a, uint64_t n, uint8_t v) {
 }
 int main(void) { @autoreleasepool {
     mtl_init();
+    // The stand-ins and the dummy whatever the game's profile says: Ocarina of Time's pool_skip_retired gives retired IDs the dummy, and this test's textures have no live
+    // texture object, so they register as retired (nvn_mtl.m pool_entry)
+    g_pool_skip_retired = 0;
     const uint64_t GB = 1ull << 30, MB = 1ull << 20;
     uint8_t *mem = mmap(NULL, GB, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0); if (mem == MAP_FAILED) abort();
     uint64_t base = (uint64_t)(uintptr_t)mem;

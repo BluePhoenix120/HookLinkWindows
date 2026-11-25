@@ -14,6 +14,22 @@ from nso_asm import ADRP, ADDI, B, BL
 # calcs twice a drawn frame, this function among them, and each calc takes half the frame's step: 30 / 30 = 1 twice a 30 fps frame on the console, step / 2 twice here. The
 # vsyncs are counted once a drawn frame, at the calc that is drawn (bit 1 clear).
 # Lichii (a GPL emulator; only the fact was taken) found the division (its notes: main+0x6E6CC4, 60 / [x21+0x2C8])
+frame_ratio = (   # after the ADRP of the state page into x16; the ADRP into x17 after the first 7 words (the add has read x17 then), a B back to the site + 4 after words 14 and 15
+    0xb9400211,   # ldr w17,[x16]          target fps (0 = off)
+    0x340001f1,   # cbz w17,orig (+15)
+    0xb9402211,   # ldr w17,[x16,#0x20]    step
+    0x340001b1,   # cbz w17,orig (+13)     not decided yet
+    0x1e230220,   # ucvtf s0,w17
+    0xf9401a10,   # ldr x16,[x16,#0x30]
+    0x8b110210,   # add x16,x16,x17
+    0xf9001a30,   # str x16,[x17,#0x30]    units stepped
+    0x1e210808,   # fmul s8,s0,s1          step × base rate
+    0xb9403a30,   # ldr w16,[x17,#0x38]    the step's ticks a second (0 = 60)
+    0x35000050,   # cbnz w16,+2
+    0x52800790,   # mov w16,#60
+    0x1e230200,   # ucvtf s0,w16
+    0x1e201908,   # fdiv s8,s8,s0          / the unit
+    0x1e201828)   # orig: fdiv s8,s1,s0
 def frame_step(ctx):
     here, emit, fs_site, fs_put, FS_STATE_OFF, base = ctx.here, ctx.emit, ctx.site, ctx.put, ctx.state, ctx.base
     site = base + 0xe4
@@ -60,13 +76,12 @@ def frame_step(ctx):
     emit(0x1e201828); emit(B(here(), site + 4))   # orig: fdiv s8,s1,s0; back
     fs_put(site, [B(site, start)], 'frame ratio: the host\'s step × base rate / 60 (never below the measured frame time) instead of base rate / the game\'s frame rate (state page target fps; 0 = the game\'s ratio)')
     dynamic_resolution(ctx)
-    if ctx.base == 0x6e6be0:
-        render_scale(ctx)  # working v131072 fixed-address iPhone patch
-        wide_view(ctx)     # avoid competing camera hook on this build
-    else:
-        screen_shape(ctx)  # new original hooks for other matching builds
+    if ctx.base == 0x6e6be0: render_scale(ctx)   # v131072 only (fixed addresses verified on that build): the launcher's Render scale (state +0x10)
+    wide_view(ctx)
     half_rate(ctx)
     heap_retry(ctx)
+    # HookLink X3: nxnative main's screen_shape (the Picture shape row) is not called: it patches the cameras, panes and movie draw HookLink's wide_view / wide_hud
+    # patch (and covers screens squarer than 16:9 only, which wide_view already takes). Its movie cuts (MATCH_CUTS) apply
 
 # The game's dynamic resolution (game__gfx__DynamicResolutionParam: LoadThreshold, ReduceCounterMax, IncreaseCounterMax and a list of levels, each a ResolutionReduceScale and a
 # Priority; on v131072 levels 0..9 at 0.75..0.333 of 2048x1152, 1536x864 to 683x384). Its update (main+0x805aa0) reads the frame's GPU load (about 0.2 ms a unit) into +0x8, subtracts
@@ -75,8 +90,10 @@ def frame_step(ctx):
 # 16.4 ms). On Apple GPUs this game's cost hardly depends on the resolution (mesh, compute and the upscaler's fixed 2048x1152 dominate): 683x384 cost 14.3 ms and 1536x864 14.7 ms on
 # an M4 Pro, yet at 683x384 the extrapolation put 1536x864 at about 300 units against the 83 it allows, so the controller sat at its floor for good (game note, Dynamic resolution).
 # The stub replaces the level function. With DM_DYNAMIC_RESOLUTION 0 (the default; state +0x40 0) it returns 0: full resolution. With 1 it climbs on what was measured at each
-# level, with no model of how the cost grows: one level down when the load (+0x8) has been over the threshold for 8 calls in a row, and that level is marked as not fitting; one level
-# up when the load fits and the level above was never measured, fitted when it was last measured, or was measured more than 600 calls (about 10 s) ago; else the current level
+# level, with no model of how the cost grows. The threshold is the game's at 60 fps; under a host frame rate target below 60 (state +0, DM_FPS_TARGET 30) it is scaled by
+# 60 / target, the GPU time a frame of that rate has (83 → 166, about 32.8 ms at 30 fps), so the resolution only drops when the frame would miss the target the player chose.
+# One level down when the load (+0x8) has been over the threshold for 8 calls in a row, and that level is marked as not fitting; one level
+# up when the load fits and the level above was never measured, fitted when it was last measured, or was measured more than 600 calls (about 10 s at 60 fps, 20 s at 30) ago; else the current level
 # (+0x174). Nothing is decided or recorded until a level has held 8 calls: the load is read a few frames late, so before that it may be the previous level's. The 8 calls over in a
 # row keep a single slow frame, or the first frames at a new size (its render targets), from marking a level that fits (on the full library at level 1: one burst to 90 against loads
 # of 77-80 at levels 2 and 1). The game's counters still pace the steps (down after ReduceCounterMax frames, up after IncreaseCounterMax); its level count (+0x1a0) is the floor.
@@ -88,14 +105,17 @@ def frame_step(ctx):
 # decision read). The update's fingerprint is required too: +0x8 and +0x174 are its fields
 drs_controller = (   # drs_stub.s, assembled with clang; x0 the controller, x16 the state page (the ADRP before it)
     0xb9404211, 0x35000071, 0x2a1f03e0, 0xd65f03c0,                                                   # off (state +0x40 0): level 0
-    0xbd400800, 0xbd401001, 0xb9417402, 0xb941a003, 0x7100005f, 0x1a9fa042, 0x528001e9, 0x6b09005f,   # load, threshold, level (0..15), count
-    0x1a89d042, 0xb9420204, 0x11000484, 0xb9020204, 0xb9420605, 0xb9420a06, 0x6b0200bf, 0x1a8617e6,   # calls + 1; calls at this level
-    0xb9020602, 0xb9020a06, 0x35000046, 0xb9020e1f, 0x91084207, 0x91094208, 0x710020df, 0x5400040b,   # a new level: none over; under 8 calls: stay
-    0x1e212000, 0x540001ad, 0xb9420e0b, 0x1100056b, 0xb9020e0b, 0x7100217f, 0x5400032b,               # over: under 8 in a row, stay
+    0xbd401001, 0xbd400202, 0x1e202048, 0x540000ed, 0x52a84e0a, 0x1e270140, 0x1e202040, 0x5400006a,   # threshold, × 60 / the target fps (state +0, a float) under 60
+    0x1e200821, 0x1e221821,
+    0xbd400800, 0xb9417402, 0xb941a003, 0x7100005f, 0x1a9fa042, 0x528001e9, 0x6b09005f, 0x1a89d042,   # load, level (0..15), count
+    0xb9420204, 0x11000484, 0xb9020204, 0xb9420605, 0xb9420a06, 0x6b0200bf, 0x1a8617e6, 0xb9020602,   # calls + 1; calls at this level
+    0xb9020a06,
+    0x35000046, 0xb9020e1f, 0x91084207, 0x91094208, 0x710020df, 0x540003cb,                           # a new level: none over; under 8 calls: stay
+    0x1e212000, 0x540001ad, 0xb9420e0b, 0x1100056b, 0xb9020e0b, 0x7100217f, 0x540002eb,               # over: under 8 in a row, stay
     0xbc2258e0, 0xb8225904, 0x51000469, 0x1100044a, 0x6b09015f, 0x1a89d140, 0xd65f03c0,               # 8 in a row: record it, down one (to the floor)
     0xb9020e1f, 0xbc2258e0, 0xb8225904, 0x34000182, 0x51000449, 0xb869590a, 0x340000ea, 0x4b0a008a,   # fits: record it; at 0 stay; the level above's record
-    0x7109615f, 0x54000088, 0xbc6958e2, 0x1e212040, 0x540000aa, 0x2a0903e0, 0xd65f03c0,               # never, stale or fitting: up one
-    0x2a1f03e0, 0xd65f03c0, 0x2a0203e0, 0xd65f03c0)                                                   # 0; or stay
+    0x7109615f, 0x54000088, 0xbc6958e2, 0x1e212040, 0x5400006a, 0x2a0903e0, 0xd65f03c0,               # never, stale or fitting: up one
+    0x2a0203e0, 0xd65f03c0)                                                                           # or stay
 # shape_anchor.c built with the command in its header comment (__text words, little-endian hex)
 _shape_anchor = (
     '484840b908530034405c40bd01103e1e0028211ee890a8520101271e0108211e2820201e0d520054203840bd0890b8520201271e0208221e0390201e4020231e'
@@ -244,48 +264,55 @@ def screen_shape(ctx):
     emit(B(here(), vo_site + 4))
     fs_put(vo_site, [B(vo_site, start)], 'Layout view ortho height scaled by (16/9) / aspect when screen aspect is active')
 
-    # sead::PerspectiveProjection::doUpdateMatrixImpl_ (main+0x3485cc0): for ~16:9 projections (|aspect - 16/9| <= 0.01), divides aspect by k (to host r = 1920/oh) and widens fovyTan by k (when <= state +0x60 tol) for true Vert+ 3D.
-    proj_fn = ctx.others['perspective proj']
-    proj_site = proj_fn
-    fs_site(proj_site, '0084552d')   # ldp s0, s1, [x0, #0xac]
-    start = here()
-    emit(0x2d558400)
-    emit(ADRP(16, here(), FS_STATE_OFF))
-    for w in (0xb9404a11, 0x34000231, 0xbd405e03, 0xbd406204, 0x5291c731, 0x72a7fc71, 0x1e270225, 0x1e253825,
-              0x1e20c0a5, 0x529ae151, 0x72a78471, 0x1e270226, 0x1e2620a0, 0x540000ac, 0x1e231821, 0x1e2420a0,
-              0x5400004c, 0x1e230800):
+    # The 3D projections (sead::PerspectiveProjection: fovy +0xa0, sin/cos/tan of fovy/2 at +0xa4..+0xac, aspect +0xb0).
+    # On a taller screen, a ~16:9 projection (|aspect - 16/9| <= 0.01) updates the object itself before the matrix is built so
+    # every reader — including camera update (+0x33ab44/+0x33ab64) and scene view culling and sun-shadow fitting (main+0x235be0,
+    # tanf at main+0x237468) — sees the view that is drawn (issue #3202).
+    # - Always writes aspect = r (state +0x58) into +0xb0.
+    # - When Vert+ is active (state +0x60 tol > 0; DM_SCREEN_FOV=off sets -1.0 for Hor-), updates +0xac = tan * k (state +0x5c),
+    #   +0xa8 = 1 / sqrt(1 + tan'^2), +0xa4 = tan' * cos', and +0xa0 = 2 * atan(tan') (Cephes single-precision range reduction +
+    #   degree-7 odd minimax polynomial, < 1e-7 rad error).
+    # - Guards against double-widening via a 64-entry ring of widened fovy bit patterns in the state page (+0x2fc cursor,
+    #   +0x300..+0x3fc seen[64]), matching Breath of the Wild's guard, if a widened fovy is ever copied into another 16:9 projection.
+    # Fast path (16:9 or non-16:9 projection, including NaN) uses only x16/x17/s0-s2/nzcv with no stack traffic; slow path saves
+    # x8..x12 and x30 around the shared leaf helper (s0..s5, x16, x17, nzcv are free at all three sites).
+    proj_apply = here()
+    for w in (
+            0xbd405a00, 0xbd00b100, 0xbd406200, 0x1e202008, 0x54000a2d, 0xbd40ad00, 0x1e202008, 0x540009cd,
+            0xb940a109, 0x910c020a, 0x5280080b, 0xb840454c, 0x6b09019f, 0x54000900, 0x7100056b, 0x54ffff81,
+            0xbd405e01, 0x1e210800, 0xbd00ad00, 0x1e2e1001, 0x1f000402, 0x1e21c042, 0x1e221821, 0x1e210802,
+            0x2d148502, 0x52904f51, 0x72a80351, 0x1e270221, 0x1e212000, 0x5400010c, 0x528279b1, 0x72a7da91,
+            0x1e270221, 0x1e212000, 0x5400012c, 0x1e2703e2, 0x1400000e, 0x5281fb71, 0x72a7f931, 0x1e270222,
+            0x1e3e1001, 0x1e201820, 0x14000008, 0x5281fb71, 0x72a7e931, 0x1e270222, 0x1e2e1003, 0x1e233801,
+            0x1e232803, 0x1e231820, 0x1e200801, 0x529e1a31, 0x72a7b491, 0x1e270223, 0x528370b1, 0x72b7c1d1,
+            0x1e270224, 0x1f011063, 0x52924bf1, 0x72a7c991, 0x1e270224, 0x1f011063, 0x52954551, 0x72b7d551,
+            0x1e270224, 0x1f011063, 0x1e210863, 0x1f000063, 0x1e232842, 0x1e222842, 0xbd00a102, 0x1e260049,
+            0x910c020a, 0x5280080b, 0xb840454c, 0x6b09019f, 0x54000120, 0x7100056b, 0x54ffff81, 0xb942fe0b,
+            0x1200156c, 0x1100056b, 0xb902fe0b, 0x910c020a, 0xb82c5949, 0xd65f03c0):
         emit(w)
-    emit(B(here(), proj_site + 4))
-    fs_put(proj_site, [B(proj_site, start)], 'PerspectiveProjection aspect and Vert+ fovyTan scaled by (16/9) / aspect when screen aspect is active')
-    # Camera projection update (main+0x33a8c0): inlined sead::PerspectiveProjection update at +0xf6c (main+0x33b82c, orig ldp s0, s1, [x2, #0xac]).
-    # Scales aspect and fovyTan for ~16:9 projections (|aspect - 16/9| <= 0.01) so gameplay 3D view maintains 1:1 circular aspect on any screen ratio.
-    cam_fn = ctx.others['camera update']
-    cam_site = cam_fn + 0xf6c
-    fs_site(cam_site, '4084552d')   # ldp s0, s1, [x2, #0xac]
-    start = here()
-    emit(0x2d558440)
-    emit(ADRP(16, here(), FS_STATE_OFF))
-    for w in (0xb9404a11, 0x34000231, 0xbd405e03, 0xbd406204, 0x5291c731, 0x72a7fc71, 0x1e270225, 0x1e253825,
-              0x1e20c0a5, 0x529ae151, 0x72a78471, 0x1e270226, 0x1e2620a0, 0x540000ac, 0x1e231821, 0x1e2420a0,
-              0x5400004c, 0x1e230800):
-        emit(w)
-    emit(B(here(), cam_site + 4))
-    fs_put(cam_site, [B(cam_site, start)], 'Camera update projection aspect and Vert+ fovyTan scaled by (16/9) / aspect when screen aspect is active')
-
-    # Device projection matrix (main+0x23b910): inlined sead::PerspectiveProjection update at +0x98 (main+0x23b9a8, orig ldp s0, s3, [x0, #0xac]).
-    # Scales aspect (s3) and fovyTan (s0) for ~16:9 projections.
-    dev_fn = ctx.others['device proj']
-    dev_site = dev_fn + 0x98
-    fs_site(dev_site, '008c552d')   # ldp s0, s3, [x0, #0xac]
-    start = here()
-    emit(0x2d558c00)
-    emit(ADRP(16, here(), FS_STATE_OFF))
-    for w in (0xb9404a11, 0x34000231, 0xbd405e07, 0xbd406206, 0x5291c731, 0x72a7fc71, 0x1e270222, 0x1e223862,
-              0x1e20c042, 0x529ae151, 0x72a78471, 0x1e270221, 0x1e212040, 0x540000ac, 0x1e271863, 0x1e262040,
-              0x5400004c, 0x1e270800):
-        emit(w)
-    emit(B(here(), dev_site + 4))
-    fs_put(dev_site, [B(dev_site, start)], 'Device projection aspect and Vert+ fovyTan scaled by (16/9) / aspect when screen aspect is active')
+    for key, off, orig_hex, base, what in (
+            ('perspective proj', 0x000, '0084552d', 0, 'sead::PerspectiveProjection::doUpdateMatrixImpl_ (ldp s0, s1, [x0, #0xac])'),
+            ('camera update',    0xf6c, '4084552d', 2, 'camera update inlined projection update (main+0x33b82c, ldp s0, s1, [x2, #0xac])'),
+            ('device proj',      0x098, '008c552d', 0, 'device projection inlined update (main+0x23b9a8, ldp s0, s3, [x0, #0xac])')):
+        site = ctx.others[key] + off
+        fs_site(site, orig_hex)
+        start = here()
+        emit(ADRP(16, here(), FS_STATE_OFF))
+        for w in (0xb9404a11, 0x34000271,                  # ldr w17, [x16, #0x48]; cbz w17, orig
+                  0xbd40b000 | (base << 5),                # ldr s0, [P, #0xb0]
+                  0x5291c731, 0x72a7fc71, 0x1e270221,      # s1 = 16/9
+                  0x7ea1d401,                              # fabd s1, s0, s1
+                  0x529ae151, 0x72a78471, 0x1e270222,      # s2 = 0.01
+                  0x1e222020, 0x54000128,                  # fcmp s1, s2; b.hi orig (also skips NaN)
+                  0xa9bd27e8, 0xa9012fea, 0xa9027bec,      # stp x8,x9,[sp,#-0x30]!; stp x10,x11,[sp,#0x10]; stp x12,x30,[sp,#0x20]
+                  0xaa0003e8 | (base << 16)):              # mov x8, P
+            emit(w)
+        emit(BL(here(), proj_apply))
+        for w in (0xa9427bec, 0xa9412fea, 0xa8c327e8):     # ldp x12,x30,[sp,#0x20]; ldp x10,x11,[sp,#0x10]; ldp x8,x9,[sp],#0x30
+            emit(w)
+        emit(int.from_bytes(bytes.fromhex(orig_hex), 'little'))   # orig: reload updated tan and aspect from the object
+        emit(B(here(), site + 4))
+        fs_put(site, [B(site, start)], what + ': a ~16:9 projection updates aspect and Vert+ fovy/sin/cos/tan in the object (Hor- if DM_SCREEN_FOV=off)')
 
     # The movie's draw (main+0x3b5c710, the title screen's background and the opening): its sead::Viewport at x29 - 0x28 (min x, y at +0x8, +0xc, max x, y at +0x10, +0x14) is
     # the whole frame buffer, so the 16:9 movie (1920x1080, 2560x1440 after the upscale) filled a 2560x1920 frame at 4:3, 1.33x taller (an oval moon). At +0x64, after the viewport
@@ -367,14 +394,32 @@ def screen_shape(ctx):
     ctx.capabilities.add('SCREEN_ASPECT')
 
 
+# Under a host render scale below 1.0 (state +0x10, float bits in 1..0x3f7fffff), return level 0 (the game's full size, which render_scale then multiplies) so
+# DM_DYNAMIC_RESOLUTION=1 does not fight DM_RENDER_SCALE. Self-contained (no jump into drs_controller), emitted only when render_scale also matches
+drs_render_scale_guard = (   # x16 the state page; w17, w2 free (same leaf contract as drs_controller)
+    0xb9401211,   # ldr w17, [x16, #0x10]   the host render scale's bits (1.0 = the game's own size)
+    0x340000d1,   # cbz w17, +6             unset (0): fall through to drs_controller
+    0x52a7f002,   # mov w2, #0x3f800000     1.0
+    0x6b02023f,   # cmp w17, w2
+    0x54000062,   # b.hs +3                 1.0 or more, negative, or NaN: fall through to drs_controller
+    0x2a1f03e0,   # mov w0, wzr             level 0
+    0xd65f03c0)   # ret
+
+
 def dynamic_resolution(ctx):
     here, emit, fs_site, fs_put, FS_STATE_OFF = ctx.here, ctx.emit, ctx.site, ctx.put, ctx.state
     site = ctx.others.get('dynamic resolution')
     if site is None or ctx.others.get('dynamic resolution update') is None: return   # not both found in this build (a red line from the locator): the game's own dynamic resolution
     fs_site(site, '017c40bd')   # ldr s1,[x0,#0x7c]
+    has_render_scale = ctx.others.get('render scale') is not None
     start = here(); emit(ADRP(16, here(), FS_STATE_OFF))
+    if has_render_scale:
+        for w in drs_render_scale_guard: emit(w)
     for w in drs_controller: emit(w)
-    fs_put(site, [B(site, start)], 'dynamic resolution level: 0 (full resolution), or with state +0x40 (DM_DYNAMIC_RESOLUTION) a climb on the load measured at each level')
+    why = ('dynamic resolution level: 0 (full resolution) also under a render scale below 1.0, or with state +0x40 (DM_DYNAMIC_RESOLUTION) a climb on the load measured at each level'
+           if has_render_scale else
+           'dynamic resolution level: 0 (full resolution), or with state +0x40 (DM_DYNAMIC_RESOLUTION) a climb on the load measured at each level')
+    fs_put(site, [B(site, start)], why)
     ctx.capabilities.add('DYNAMIC_RESOLUTION')
 
 # Render scale (DM_RENDER_SCALE, state +0x10, dm/host/loader.c; from kid-with-sword-remake's FF line, HookLink VX1: the launcher's Render scale and Resolution dial, Cool mode and Potato mode). The 3D views' sizes come from the scale the engine stores at main+0x31d3f48 (str s0,[x20,#0xe5c], found by
@@ -524,7 +569,9 @@ def wide_view(ctx):
         fs_put(site, [B(site, start)], f'wide view: a 16:9 camera aspect set here takes the picture\'s ratio (site {k})')
     wide_hud(ctx)
 
-# Wide view's HUD, menus and movies in the middle 16:9 (DM_WIDE_HUD, on with Wide view). The sites are Ivan0xFF's (MIT, "The matrix-update, UI and movie sites: Copyright (c)
+# Wide view's HUD, menus and movies in the middle 16:9 (DM_WIDE_HUD, on with Wide view). On a squarer picture (the iPhone Duo's 1.42:1) the second row is squeezed
+# instead (state +0x180, the picture's ratio over 16:9; +0x160 is 1 there): the 2D layer is a 16:9 band across the middle, as Tears of the Kingdom's screen shape draws it
+# (words 38-39, ldr s17,[x16,#0x180]; fmul v4.4s,v4.4s,v17.s[0], assembled with clang; the skip branches moved past them). The sites are Ivan0xFF's (MIT, "The matrix-update, UI and movie sites: Copyright (c)
 # 2026 Ivan0xFF"), from NX2navi's recomp/patches-v111.txt, for this same build (e0f3ccfa); written here as stubs of our own, which change no flags.
 # - The 2D canvas setup (main+0x774330) loads a layout's projection rows at main+0x774368 (ldp q1, q4, [x2]; the canvas is x0, its screen 0x1b8 before it). When the projection is
 #   the full-screen orthographic one of the 3840x2160 layout grid (m00 = 2/3840, m11 = 2/2160, compared by their bits), its first row is multiplied by the squeeze (state +0x160:
@@ -533,14 +580,17 @@ def wide_view(ctx):
 #   whole picture, and the event and loading fades (main+0x4be61c8, main+0x4be7b30) must cover it all. Count at state +0x168. x16, x17 and v16 are free there (a leaf; v16..v19 are
 #   written next).
 # - The movie layer's draw (main+0x3b5c71c) builds a viewport over the whole picture at x29 - 40 (min x +8, max x +16); after ldp x9, x8, [x19, #0x18] (main+0x3b5c758) it moves in
-#   by the margin on each side (state +0x164: (1 - squeeze) / 2 of the width), the middle 16:9. Count at state +0x16c. x16, x17 and s16..s19 are free there.
+#   by the margin on each side (state +0x164: (1 - squeeze) / 2 of the width), the middle 16:9. On a squarer picture min y +12 and max y +20 move in by +0x184
+#   ((1 - its squeeze) / 2 of the height) the same way, so a movie is 16:9 in the middle band (words 16-30, assembled with clang). Count at state +0x16c. x16, x17 and s16..s19 are free there.
 # The stubs' words were assembled with clang from the source in this comment's commit; nop placeholders are the patch-relative instructions written below
-hud_words = (0xAD401041, 0xD503201F, 0xBD416210, 0x1E260211, 0x34000451, 0x1E260031, 0x52911130, 0x72A74110, 0x4A110210, 0x350003B0, 0x0E0C3C91, 0x52973AD0, 0x72A74E50,
-             0x4A110210, 0x35000310, 0xD106E011, 0xF9400231, 0xD503201F, 0xD503201F, 0xCA110210, 0xB4000250, 0xD503201F, 0xD503201F, 0xCA110210, 0xB40001D0, 0xD503201F,
-             0xD503201F, 0xCA110210, 0xB4000150, 0xD503201F, 0xD503201F, 0xCA110210, 0xB40000D0, 0x4F909021, 0xD503201F, 0xB9416A11, 0x11000631, 0xB9016A11, 0xD503201F)
+hud_words = (0xAD401041, 0xD503201F, 0xBD416210, 0x1E260211, 0x34000491, 0x1E260031, 0x52911130, 0x72A74110, 0x4A110210, 0x350003F0, 0x0E0C3C91, 0x52973AD0, 0x72A74E50,
+             0x4A110210, 0x35000350, 0xD106E011, 0xF9400231, 0xD503201F, 0xD503201F, 0xCA110210, 0xB4000290, 0xD503201F, 0xD503201F, 0xCA110210, 0xB4000210, 0xD503201F,
+             0xD503201F, 0xCA110210, 0xB4000190, 0xD503201F, 0xD503201F, 0xCA110210, 0xB4000110, 0x4F909021, 0xD503201F, 0xB9416A11, 0x11000631, 0xB9016A11, 0xBD418211,
+             0x4F919084, 0xD503201F)
 hud_keep = (0x4bed098, 0x4be4fb0, 0x4be61c8, 0x4be7b30)   # item wheel background, pause / system menu backgrounds, event fade, loading fade
 movie_words = (0xD503201F, 0xBD416633, 0x1E260270, 0x340001B0, 0xD100A3B0, 0xBD400A10, 0xBD401211, 0x1E303A32, 0x1E330A52, 0x1E322A10, 0x1E323A31, 0xBD000A10,
-               0xBD001211, 0xB9416E30, 0x11000610, 0xB9016E30, 0xA941A269, 0xD503201F)
+               0xBD001211, 0xB9416E30, 0x11000610, 0xB9016E30, 0xBD418633, 0x1E260270, 0x340001B0, 0xD100A3B0, 0xBD400E10, 0xBD401611, 0x1E303A32, 0x1E330A52,
+               0x1E322A10, 0x1E323A31, 0xBD000E10, 0xBD001611, 0xB9416E30, 0x11000610, 0xB9016E30, 0xA941A269, 0xD503201F)
 def wide_hud(ctx):
     here, emit, fs_site, fs_put, FS_STATE_OFF = ctx.here, ctx.emit, ctx.site, ctx.put, ctx.state
     site = 0x774368
@@ -550,7 +600,7 @@ def wide_hud(ctx):
         if i in (1, 34): w = ADRP(16, here(), FS_STATE_OFF)                       # the state page
         elif i in (17, 21, 25, 29): pending = next(keep); w = ADRP(16, here(), pending)   # a vtable that keeps the whole picture: its page
         elif i in (18, 22, 26, 30): w = ADDI(16, 16, pending & 0xFFF)               # ... and its offset in the page
-        elif i == 38: w = B(here(), site + 4)                                         # back
+        elif i == 40: w = B(here(), site + 4)                                         # back
         emit(w)
     fs_put(site, [B(site, start)], 'wide view: the HUD and menus keep 16:9 in the middle of the picture (Ivan0xFF\'s site, via NX2navi)')
     site = 0x3b5c758
@@ -558,7 +608,7 @@ def wide_hud(ctx):
     start = here()
     for i, w in enumerate(movie_words):
         if i == 0: w = ADRP(17, here(), FS_STATE_OFF)
-        elif i == 17: w = B(here(), site + 4)
+        elif i == 32: w = B(here(), site + 4)
         emit(w)
     fs_put(site, [B(site, start)], 'wide view: movies in the middle 16:9 (Ivan0xFF\'s site, via NX2navi)')
 
@@ -632,6 +682,47 @@ MATCH_FRAME_STEP = {'main': [
                 **screen_shape_functions}},
 ]}
 
+# The movie player's pictures per frame. Once a frame the player's update (main+0x3b5ca60 on v131072) adds the frame's time (the time object's +0x18, the frame ratio / 60 s, times
+# 60) to a count at +0x8, takes its whole pictures (the movie's rate at the player's +0x324; the title's and the opening's are 60 fps) and advances that many (main+0x3b61ea0 pops them from its
+# queue and shows the last), but never more than the player's +0x20 (csel at main+0x3b5cb2c), and the count keeps what was left. The constructor (main+0x3b5cec0) sets +0x20 to
+# 1, or to 2 when its last argument is 2 or more (cmp w27, #2; cinc w8, w28, ge at +0x1c4, w28 = 1), and the queue's size at +0x50 to twice that; the game's one caller passes 1
+# (main+0x3b5c55c). So a frame of two vsyncs shows one picture where the movie had two, the picture falls behind for good (the count only grows), and the movie's sound, a stream of
+# the sound engine on real time, runs ahead and ends before the picture: at a 30 fps frame step a movie played at exactly 0.500 of its speed (58.00 s of movie in 115.95 s) with
+# the count at 1,350 pictures after 45 s. The console holds one vsync a frame in its movies, so the limit never shows there; here the frame step hands the game steps of 2 and 3.
+# The cut gives the constructor's own value for 2 (+0x20 = 2, +0x50 = 4), so a frame of two vsyncs shows every second picture and a movie that fell behind catches up at two
+# pictures a frame: at the 30 fps frame step 1.000 (95.00 s in 94.97 s).
+movie_pictures = 'movie pictures a frame: up to 2, the constructor\'s value for an argument of 2 or more, whatever its caller passes (1)'
+# The update's cap, 3. The constructor's limit also sizes the decoder's pipeline: the picture pool is twice it (video-frame-count, registered from a four-slot array at the player's
+# +0x168, which the teardown frees slot by slot) and the inputs in flight are as many as it (their buffers two slots at +0x188 and +0x190: main+0x3b5ff30 takes slot 0 for an id of
+# 2 or more). So 3 cannot be the limit: with the game's pool of 6 the registration wrote over the two input buffers (the game stopped at the movie's start with a copy to a null
+# pointer in sdk), and with the pool kept at 4 the third input reused slot 0 while in flight (a VideoToolbox decode error after 150 pictures of the title movie). The frame step's
+# largest hold is 3 vsyncs, and with a cap of 2 each such frame left the picture one behind for as long as the step stayed at 2. The update reads the limit only for its cap
+# (ldr w9, [x0, #0x20] at +0xc0, before the csel); the cut puts 3 there and leaves the limit, the pool and the inputs at the constructor's 2. The advance pops up to that many from
+# its own queue and stops when the queue is empty, so a frame takes a third picture only when the decoder has one.
+movie_cap = 'movie update cap: 3 pictures a frame, the frame step\'s largest hold, in place of the limit (2), which also sizes the decoder pipeline'
+# The movie's frame, which its event follows. The event that plays a movie (its update main+0x3b3e9a0 on v131072) reads the movie's frame (its vtable's +0x78, main+0x3b3ec10: the
+# movie object's int at +0x2f8) and moves its timeline up to it when the timeline is behind (main+0x122d520), then measures the movie's sound stream against it (main+0x3b3ea50).
+# The opening's timeline carries its subtitles, the narrator's voice lines (EventFlowMsg/Dm_Kokiri_0000, played with them), its rumble and the title logo
+# (EventOpenOpeningTitle). The movie's draw (main+0x3b5c710, and main+0x3b5c870 for its first draw) adds 1 to that frame each frame a picture is on screen (ldr, add #1,
+# str at +0xb4 and +0x98), so the frame counts frames drawn, not pictures shown: the same while the player takes one picture a frame, half of them when it takes two. With the
+# cut above, a frame of two vsyncs showed the picture in real time but the subtitles and voice at half speed, and the logo, due after the movie's end, never showed. The cut
+# sets the frame to the pictures the player has taken (the player's +0xc: its update adds what it advances each frame; reset when a movie starts, as +0x2f8 is), so the
+# timeline follows the picture whatever the frame takes. The player is the object at +0x10, already read by both draws (main+0x3b5ce80 on it) just before.
+movie_frame = 'movie frame: the pictures the player has taken (its +0xc), not 1 more for each frame drawn'
+MATCH_CUTS = {'main': [
+    {'name': movie_pictures, 'size': 828, 'fingerprints': ['f61ad468b6b4e1d574fe8678f5a12dfc60e1aab71be7375142a4b48b0d73ce19'],   # v131072 main+0x3b5cec0
+     'cuts': [(452, '88b79c1a', '48008052', movie_pictures + ' (cinc w8, w28, ge → mov w8, #2; as v131072 main+0x3b5d084)')]},
+    {'name': movie_cap, 'size': 368, 'fingerprints': ['6a29b27559214b3b89cc31a5b85f14bda4a55685f1ae4fe486d53eda66855867'],   # v131072 main+0x3b5ca60, the update
+     'cuts': [(192, '092040b9', '69008052', movie_cap + ' (ldr w9, [x0, #0x20] → mov w9, #3; as v131072 main+0x3b5cb20)')]},
+    {'name': movie_frame, 'functions': [
+        {'size': 344, 'fingerprints': ['cc1ca04feb1ca4e553a6c7a4f36f99b13f56977185eea8ef5cd8dd3dbbdcdbcd'],   # v131072 main+0x3b5c710, the draw
+         'cuts': [(180, '88fa42b908050011', '880a40f9080d40b9', movie_frame + ' (ldr w8, [x20, #0x2f8]; add w8, w8, #1 → ldr x8, [x20, #0x10]; ldr w8, [x8, #0xc]; as v131072 main+0x3b5c7c4)')]},
+        {'size': 196, 'fingerprints': ['8fe123ca6fcd016cd9c718e5e66035c807b27f63408861235765e47b4ec34da3'],   # v131072 main+0x3b5c870, the first draw
+         'cuts': [(152, '88fa42b908050011', '880a40f9080d40b9', movie_frame + ' (the same; as v131072 main+0x3b5c908)')]},
+    ]},
+]}
+
+# HookLink X3: nxnative main's movie cuts above (MATCH_CUTS: up to 2-3 pictures a frame, the frame counted in pictures) now apply beside the half rate. Before them:
 # Movie pictures: no cut. The movies are AV1 at 60 pictures a second (Event/Movie/*.webm, no sound track: the opening's Dm_Kokiri_0000 is 9,254 pictures, 154.2 s), and the
 # player takes one picture a calc (main+0x3b5ca60 clamps to its limit at +0x20, 1 + (the creation argument >= 2) at main+0x3b5d084; the game passes 1). A cut that made the
 # limit 2 (cinc w8,w28,ge → add w8,w28,#1) kept the picture's time at 33 fps on an iPhone (9,254 pictures in about 156 s, against 262 s) and left the subtitles behind it, which
@@ -642,13 +733,25 @@ BINDING = [
     {'what': 'half rate request: the game\'s own flag or the host\'s ask', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
      'why': "the game's own half-rate request, found by its function's fingerprint on any build that keeps the function; switchable (DM_FPS_HALF_RATE)",
      'checked': 'v131072 main: one function with this fingerprint, the site, the request byte and the frame function that acts on it read by disassembly (2026-11-09)'},
+    {'what': 'movie pictures a frame: up to 2', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
+     'why': "the game's own movie player constructor, found by its function's fingerprint on any build that keeps the function; no other game has it: the fingerprint matches no function in the mains of Donkey Kong Bananza, Splatoon Raiders, Pokopia, Mario Tennis Fever, Switch Sports, Yoshi and the Mysterious Book, Mario Golf, Xenoblade Chronicles 2 or Super Mario 3D All-Stars, and Breath of the Wild's and Tears of the Kingdom's movies go through subsdk0's movie::Decoder, not a player in main",
+     'checked': 'v131072 main: one function with this fingerprint, the constructor, its one caller, the update and the advance read by disassembly; the limit and the count read in play with DM_PROBE, the opening movie timed at a 30 fps frame step without and with the cut (2026-11-12)'},
+    {'what': 'movie update cap: 3 pictures a frame', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
+     'why': "the game's own movie player update, found by its function's fingerprint on any build that keeps the function; it goes with the player's two-picture cut and has no wider binding",
+     'checked': 'v131072 main: one function with this fingerprint, the cap\'s only read of the limit, the pool and input slots the limit sizes and the advance read by disassembly; the opening with frames forced to three vsyncs at cap 2, limit 3 with pool 4 (decode error) and cap 3 (2026-11-16)'},
+    {'what': 'movie frame: the pictures the player has taken', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
+     'why': "the game's own movie draw functions, found by their functions' fingerprints on any build that keeps them; it is the counter the same game's player keeps, so it goes with the player's two-picture cut and has no wider binding",
+     'checked': 'v131072 main: one function with each fingerprint, each with one caller, the event update that reads the frame (vtable +0x78), the timeline and sound syncs and the player\'s +0xc read by disassembly; the opening timed with frames forced to two vsyncs (2026-11-16)'},
     {'what': 'frame ratio from the host\'s step', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
      'why': "the game's own frame-ratio division, found by its function's fingerprint on any build that keeps the function",
-     'checked': 'v131072 main: one function with this fingerprint, the site and its free registers read by disassembly (2026-11-08)'},
+     'checked': 'v131072 main: one function with this fingerprint, the site and its free registers read by disassembly (2026-11-08); the stub in ticks of 1/120 s (state +0x38) run natively at 2 / 3 / 4 ticks and without a unit (test_frame_ratio_stub.py) and disassembled in the rewritten main (2026-11-14)'},
     {'what': 'dynamic resolution: full size, or a climb on the load measured at each level', 'now': 'game', 'goal': 'game', 'purpose': 'rendering',
      'why': "the game's own dynamic-resolution level function and update, found by their functions' fingerprints on any build that keeps both; switchable (DM_DYNAMIC_RESOLUTION)",
-     'checked': 'v131072 main: one function with each fingerprint (the level function a leaf, x2..x11 / x16 / x17 / s0..s2 free), its callers, the update and the controller fields read by disassembly, the fields read in play (2026-11-08); the climb run natively against a model of the update and in play to full size (2026-11-09)'},
+     'checked': 'v131072 main: one function with each fingerprint (the level function a leaf, x2..x11 / x16 / x17 / s0..s2 free), its callers, the update and the controller fields read by disassembly, the fields read in play (2026-11-08); the climb run natively against a model of the update and in play to full size (2026-11-09); 30 fps threshold scaling checked in test_ocarina_drs.py and in play at 30 fps on an M2 Air (PR #1954, 2026-11-16)'},
+    {'what': 'render scale: the 3D views at a fraction of the game\'s own size (DM_RENDER_SCALE)', 'now': 'game', 'goal': 'game', 'purpose': 'rendering',
+     'why': "the game's own view-size update (its test of the dynamic-resolution status and its scale store), found by its function's fingerprint on any build that keeps it; the level function's stub above holds level 0 under a scale",
+     'checked': 'v131072 main: one function with this fingerprint (main+0x31d3200, 0xfc8 bytes, one caller main+0x31c00cc); the status ubfx at +0xce4, the store at +0xd48 (the only float store to #0xe5c in main; s0 computed from the update\'s w0 at +0xd34, never reread from +0xe5c) and the size loop clearing bit 3 of +0xe2c read by disassembly (2026-11-09, 2026-11-23); guard, status and store stubs executed natively on ARM64 in test_ocarina_drs.py'},
     {'what': 'screen shape: taller render targets, cameras, Layout2 panes and a 16:9 movie viewport (DM_SCREEN_ASPECT)', 'now': 'game', 'goal': 'game', 'purpose': 'rendering',
      'why': "the game's own display setup, camera, pane and movie code; installed together after every function matches. Indexed pane edits verify the authored name, class and dimensions they use",
-     'checked': 'v131072 main: one function per fingerprint, free registers read at each site; indexed pane names, classes and dimensions checked against the UIL records. PR #3037 measured Vert+ framing and the movie aspect on Mac; final iPad title retest pending'},
+     'checked': 'v131072 main: one function per fingerprint, free registers read at each site; indexed pane names, classes and dimensions checked against the UIL records. In-place Vert+ projection-object updates (and DM_SCREEN_FOV=off Hor-) executed on ARM64 in test_ocarina_screen_shape.py and verified in Kakariko Village on Mac at 16:9, 16:10 and 4:3 (2026-11-23); 0/3 projection fingerprint matches in TOTK, BOTW and Mario Kart World; physical iPad/iPhone retest pending'},
 ]

@@ -4,7 +4,7 @@
 //   Native (native, layout 3): a mobile game's layout in very transparent glass, after the mock-up the player chose: a floating left stick (a thumb on the left half holds it,
 //     centred where it lands, or on the drawn ring), the camera (right stick) on any touch of the right half no key takes, and round icon keys, in the colour theme, whose button letter sits in a small
 //     chip (round for A B X Y + −, square for the shoulders R and ZL): Y a sword, A an action, B back, R a shield, ZL Navi, ZR an item, X a jump (two up arrows), + a menu, − a map; the menu button (…) at the top right.
-//     A small D-pad above the stick. No L, ZR, L3 or R3 (the 3D layout has them). Drawn with shape and gradient layers only (no live blur), so it costs the GPU nothing over the picture.
+//     A small D-pad above the stick, L above ZL (HookLink X3). No L3 or R3 (the 3D layout has them). Drawn with shape and gradient layers only (no live blur), so it costs the GPU nothing over the picture.
 //   Tap (touch): no control but the menu button, every other touch goes to the game's local touch viewport; offered only while the game is in handheld mode, the only one in which it reads the touch screen (Balatro, played by touch).
 //   2D (simple): top corners ZL above L (one column), ZR above R likewise, teardrops with the tip toward the screen corner; − and + side by side at the top centre; the left stick in the bottom-left corner (fixed ring, tilt measured from the ring centre, small dead zone);
 //     the A (right) B (bottom) X (top) Y (left) diamond in the bottom-right corner, sliding a finger between keys switches keys. Each bottom corner holds a single control, so it sits close in (reaching halfway into the side safe-area inset).
@@ -138,7 +138,7 @@ static NSString *const k_layout_key = @"DmPadLayout";   // NSUserDefaults: 0 = 2
 static NSString *const k_custom_key = @"DmPadCustom";   // NSUserDefaults: 3 numbers a key (x, y, size), B_N + 1 rows, the stick last
 static NSString *const k_native_key = @"DmPadNativeOffered";   // a profile that starts in Native switches to it once, over a layout saved before Native existed
 // Native layout (in points of an 874 x 402 landscape screen, scaled by gu; x from the corner rectangle's edges, y from its top or bottom): centre, radius
-static const int k_nat[] = {B_B, B_A, B_R, B_ZL, B_ZR, B_X, B_Y, B_PLUS, B_MINUS, B_LEFT, B_UP, B_RIGHT, B_DOWN};
+static const int k_nat[] = {B_B, B_A, B_R, B_L, B_ZL, B_ZR, B_X, B_Y, B_PLUS, B_MINUS, B_LEFT, B_UP, B_RIGHT, B_DOWN};   // L since HookLink X3 (a player's report: no L in the mobile layout)
 static const CGFloat N_RING_R = 62, N_KNOB_R = 27, N_STICK_X = 120, N_STICK_Y = 105, N_MENU_X = 80, N_TOP_Y = 32, N_TOP_R = 18;
 int dm_opmode(void);   // hle_oe.c: 0 = handheld
 
@@ -415,6 +415,7 @@ static CGPoint side(CGRect s, int right, CGFloat dx, CGFloat y) { return CGPoint
         case B_ZL: x = R - 136 * g; y = Bt - 190 * g; rr = 26; break;
         case B_ZR: x = R - 204 * g; y = Bt - 150 * g; rr = 26; break;
         case B_R: x = R - 52 * g; y = Bt - 244 * g; rr = 24; break;
+        case B_L: x = R - 136 * g; y = Bt - 262 * g; rr = 22; break;   // above ZL, left of R
         case B_PLUS: x = L + 34 * g; y = T + N_TOP_Y * g; rr = N_TOP_R; break;
         case B_UP: x = L + N_STICK_X * g; y = Bt - 266 * g; rr = 17; break;
         case B_DOWN: x = L + N_STICK_X * g; y = Bt - 202 * g; rr = 17; break;
@@ -780,12 +781,12 @@ static void placeLabel(CATextLayer *t, CGPoint c, CGFloat fs) {
     _nring = glassDisc(N_RING_R * g, NULL); _nring.position = self.natStickHome; [_nat addSublayer:_nring];
     if (pad_theme() != 2) ((CAShapeLayer *)_nring.sublayers.firstObject).fillColor = k_ringFill.CGColor;   // the stick's ring in the theme's own fill
     CAShapeLayer *kb = nil; _nknob = glassDisc(N_KNOB_R * g, &kb); _nknobBase = kb; _nknob.position = self.natStickHome; [_nat addSublayer:_nknob];
-    static NSString *const sym[B_N] = { [B_A] = @"arrow.2.circlepath", [B_B] = @"arrow.uturn.backward", [B_X] = @"chevron.up.2", [B_R] = @"shield.lefthalf.filled", [B_ZL] = @"sparkles", [B_ZR] = @"scope", [B_PLUS] = @"line.3.horizontal", [B_MINUS] = @"map", [B_LEFT] = @"arrowtriangle.left.fill", [B_UP] = @"arrowtriangle.up.fill", [B_RIGHT] = @"arrowtriangle.right.fill", [B_DOWN] = @"arrowtriangle.down.fill" };
-    static NSString *const chip[B_N] = { [B_A] = @"A", [B_B] = @"B", [B_X] = @"X", [B_Y] = @"Y", [B_R] = @"R", [B_ZL] = @"ZL", [B_ZR] = @"ZR", [B_PLUS] = @"+", [B_MINUS] = @"\u2212" };
+    static NSString *const sym[B_N] = { [B_A] = @"arrow.2.circlepath", [B_B] = @"arrow.uturn.backward", [B_X] = @"chevron.up.2", [B_R] = @"shield.lefthalf.filled", [B_L] = @"l.button.roundedbottom.horizontal", [B_ZL] = @"sparkles", [B_ZR] = @"scope", [B_PLUS] = @"line.3.horizontal", [B_MINUS] = @"map", [B_LEFT] = @"arrowtriangle.left.fill", [B_UP] = @"arrowtriangle.up.fill", [B_RIGHT] = @"arrowtriangle.right.fill", [B_DOWN] = @"arrowtriangle.down.fill" };
+    static NSString *const chip[B_N] = { [B_A] = @"A", [B_B] = @"B", [B_X] = @"X", [B_Y] = @"Y", [B_R] = @"R", [B_L] = @"L", [B_ZL] = @"ZL", [B_ZR] = @"ZR", [B_PLUS] = @"+", [B_MINUS] = @"\u2212" };
     for (int i = 0; i < (int)(sizeof k_nat / sizeof *k_nat); i++) { int b = k_nat[i]; CGPoint c; CGFloat r; [self nat:b centre:&c radius:&r];
         CAShapeLayer *base = nil; CALayer *d = glassDisc(r, &base); d.position = c; base.fillColor = nat_fill(b, NO).CGColor; if (pad_theme() != 2) base.strokeColor = k_kline[b].CGColor;
         if (b == B_Y) glassSword(d, 24 * g); else glassSymbol(d, sym[b], (b == B_A ? 17 : b == B_PLUS || b == B_MINUS ? 11 : b >= B_LEFT ? 10 : b == B_X ? 14 : b == B_Y ? 12 : 15) * g, scale);
-        if (b < B_LEFT) glassChip(d, chip[b], b == B_R || b == B_ZL || b == B_ZR, scale);
+        if (b < B_LEFT) glassChip(d, chip[b], b == B_R || b == B_L || b == B_ZL || b == B_ZR, scale);
         [_nat addSublayer:d]; _nk[b] = d; _nbase[b] = base;
     }
 }

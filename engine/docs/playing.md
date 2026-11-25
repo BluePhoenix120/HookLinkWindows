@@ -26,13 +26,26 @@ A controller that supplies gyro data through Apple's controller support (DualSen
 
 `DM_PHONE_MOTION=0` in `Documents/env.txt` stops the phone's gyro, `DM_MOTION=0` all motion. If motion misbehaves, pack with `--no-motion` (`MOTION = False` in Spyder) for an app without it; `DM_MOTION=1` in `Documents/env.txt` turns it back on.
 
-Joy-Con 2 and Pro Controller 2 gyro come over Bluetooth LE ([Switch 2 controllers](#switch-2-controllers-mac)). Switch Pro Controller gyro on the Mac still needs the HID support being developed in [PR #296](https://github.com/seedds/nxnative/pull/296).
+Joy-Con 2 and Pro Controller 2 gyro come over Bluetooth LE ([Switch 2 controllers](#switch-2-controllers-mac)). On the Mac, nxnative reads a single Switch Pro Controller's, DualShock 4's (over Bluetooth), or 8BitDo Ultimate 2 Wireless's (over Bluetooth, firmware 1.03+) gyro from its own HID reports when GameController provides no usable motion. It also reads gyro reports from identical Pro Controllers over USB when it assigns each one its own player slot. When multiple controllers of the same model connect over Bluetooth, nxnative falls back to GameController motion because it cannot match each HID stream to its player ([controller routing details](reference/services.md#switch-pro-controller-advertises-motion-but-sends-zeroes)). Set `DM_MOTION_HID=0` in the app's `env.txt` (`~/Library/Application Support/nxnative/<title ID>/env.txt`) to disable HID motion in both cases.
 
 **Shaking.** Shake the iPhone to shake the controller, in games that read its motion: Super Mario Odyssey's motion moves (such as the cap throw on a shake) need it, and Odyssey only takes them in its default docked mode. A light bump does not count; a sharp flick of the phone does.
 
 ## Game language
 
 English by default. Pick another when packing with `--language` (`-l`), by code or by name: `-l ja`, `-l zh-Hans`, `-l French` (`LANGUAGE` in Spyder). It must be one the game has; the script prints the game's languages and stops on one it lacks. To change it without rebuilding, pick another on the settings screen.
+
+## Mods
+
+On iPhone, the launcher's **Extras** tab has a **Mods** card that opens the mods panel (from kid-with-sword-remake). Mods replace game files: they are the usual Switch "romfs" mods, made for your version of the game (a mod for another version can crash it).
+
+- **Import Mod…** takes a **.zip** or a **folder** from the Files app (iCloud Drive, On My iPhone, a USB drive). The app finds the `romfs` folder inside, wherever it is (`romfs/`, `My Mod/romfs/`, `atmosphere/contents/<title ID>/romfs/`, `load/<title ID>/My Mod/romfs/`), and keeps only that: an installer, a readme, `exefs` patches and cheats in the same archive are left out. An archive with several `romfs` folders becomes several mods. A **7z** or **RAR** file can't be read on the phone: unpack it first (an app from the App Store, or on a computer), then import the folder.
+- Each mod has a **switch**. A new mod is on. What you turn off stays off.
+- **Order:** when two mods change the same file, the one **higher in the list** is used, and the row of the one below says so. Tap **Change Order** and drag. A new mod goes to the top.
+- **Delete:** swipe the row left (or touch and hold it).
+- Mods load when you press **Play**: change them, then play. With none on, the game starts exactly as without mods.
+- You can also copy a mod folder into the app's `mods` folder with the Files app (On My iPhone › the app › mods › *your mod* › romfs › …).
+
+**Bigger files.** The game reserves memory for each file from its resource size table, so a replacement bigger than the original can run that out and crash the game. When a mod's file is bigger, the app makes room for it in a copy of the table at Play, and the mod's row says how many files that is. An orange note means it can't: a file the table has no entry for, or a copy of the app built before mods (build it again from this version and it can). A mod that brings its own copy of the table is fine: the app uses its merged one.
 
 ## Settings in a file
 
@@ -51,9 +64,15 @@ Without them, Miis have no heads, and only the six default Miis are listed ([det
 
 A Mac app shows the game's settings in a window before the game starts ([The Mac settings window](settings.md#the-mac-settings-window)). Its `env.txt` is `~/Library/Application Support/nxnative/<title ID>/env.txt`, and its log is `~/Library/Logs/nxnative/<title ID>.log`. [NX2Apple](https://github.com/LNPANDY/NX2Apple)'s library can also start it with the settings you pick there.
 
+**Match the labels on an Xbox controller.** By default, the game uses Switch button positions, so the Xbox pad's right-hand B presses the game's A. To use the printed Xbox letters in play, connect the controller, open **System Settings → Game Controllers**, and select the controller. In its button settings, map **A to B**, **B to A**, **X to Y** and **Y to X**. Leave the other buttons on **Standard**. Changing the controller's default mapping can affect other apps. The Home quit prompt reads macOS's A and B directly, so its buttons may differ from the game's. [Apple's controller settings guide](https://support.apple.com/en-us/111099)
+
 A controller macOS pairs but Apple's controller support does not list, such as an 8BitDo in its own mode (Ultimate 2C Wireless over Bluetooth), is read as a raw HID gamepad, with full analog sticks: it becomes a player at its first button press (a device that only declares a gamepad, such as a keyboard receiver, never presses one and so takes no player), and the log says `controller '<name>' (HID) connected: press a button to play`, then `a button pressed: player N`. The press that joins also reaches the game. A pad Apple's support says it will list gets two seconds to appear there first, so it is never read twice (an Xbox, PlayStation or Nintendo controller is always left to Apple's support); if it never appears, it is read as HID after that wait, and the log says so. Raw HID pads usually use 8BitDo's numbering. The HORI Taiko Drum for Switch (USB `0f0d:00f0`) uses its own button map, which the log identifies. `DM_HID_MAP=A=1,B=2,X=4,Y=5` in `env.txt` moves them (here: the printed letters instead of the positions), `DM_HID_LOG=1` logs the number of each button pressed, and `DM_HID_PADS=0` turns this off.
 
+A wired Xbox One controller from another maker than Microsoft, such as a PDP Wired Controller, has no macOS driver: macOS sees it on USB, but its light stays off and Apple's controller support never lists it. The game reads it itself: it powers the pad on as Linux does (its light comes on), and the pad is a player from its connection; the log says `controller '<name>' (USB, Xbox One, …): no macOS driver has it: read here`, then `(USB) connected: player N`. Its buttons go by position, as an Xbox controller's do through Apple's support, and its Xbox button is Home. It has no vibration yet. A pad macOS's own Xbox driver takes (Microsoft's) is left to it. `DM_GIP_PADS=0` in `env.txt` turns this off.
+
 Two identical controllers that Apple's controller support lists as one, such as two Pro Controllers over USB, are each a player of their own: after 3 seconds the log says `GameController lists 1 of 2`, and each takes a player, by USB port. They have no vibration, player lights or Home button to quit. `DM_PAD_IDENTICAL=0` in `env.txt` turns this off.
+
+On the Mac, if a single Switch Pro-compatible controller has a thumbstick that stays at zero in Apple's controller support while its raw HID report `0x30` moves, nxnative automatically switches that stick to the passive HID reader after a brief tilt while keeping buttons, vibration, motion and any working stick on GameController ([details](reference/services.md#switch-pro-controller-stick-stays-zero-in-gamecontroller)). Set `DM_PRO_STICKS=0` in `env.txt` to disable this fallback.
 
 With [Press a button to join](settings.md#press-a-button-to-join) on in the settings (`DM_PAD_PRESS_TO_JOIN=1` in `env.txt`), on the Mac and on iOS, a controller becomes a player only when one of its buttons is pressed, as the lowest player free: the players choose their order and how many play, over Bluetooth or USB, identical pads included, and a controller connected while the game runs joins at its first press. The log says `press a button to play`, then `a button pressed: player N`. The press that joins also reaches the game. When a game asks for more players than it sees, a prompt over the game says how many are wanted and joined and waits for the others: a controller that presses a button (or connects, with the setting off) joins, A finishes once enough are in, and B or Escape closes it, as on a Switch.
 

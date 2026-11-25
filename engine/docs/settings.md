@@ -85,17 +85,25 @@ flowchart LR
 - **Cost:** none in GPU time (it saves 2.5-4 ms a frame in that case); the picture is Apple's scaler's rather than the game's. Frames where the game renders at its output size are not upscaled and keep the game's shader either way. Devices without MetalFX keep the game's upscaler.
 - **Not the same as [Upscaling](#upscaling):** that one scales the finished picture, HUD included, to the screen; this one replaces the game's own step inside the frame. Both can be on.
 
+### Texture filtering
+
+Mac (NVN games). Sets a minimum anisotropic filtering level (**2x** to **16x**) on mipmapped linear surface samplers while leaving lookup, pixel-art, shadow-comparison, reduction and single-LOD samplers unchanged. **Game default**, the default, keeps the game's own sampler settings.
+
 ### Game language
 
 The game's own languages. The app was packed with one of them; pick another here without repacking. A game packed from a dump or a NUP may come without its list: every language is offered then, with a note, and a game that lacks the one you pick may show another.
 
 ### Picture
 
-iPhone and iPad. **Fit**, the default, shows the game's picture (16:9, or the taller one of [Picture shape](#picture-shape)) as large as it fits, with black bars where the screen has another shape. **Fill** enlarges it until it covers the whole screen and crops what lies outside; nothing is stretched. An iPhone loses some of the top and bottom, an iPad some of each side, so health bars, subtitles or maps near the edges can be cut off. A picture that fills the screen without cropping needs a patch for each game that renders a wider view. Fill applies in landscape; in portrait the picture stays fitted above the controls, and on a TV it is always fitted.
+iPhone, iPad and Mac. **Fit**, the default, shows the game's picture (16:9, or the taller one of [Picture shape](#picture-shape)) as large as it fits, with black bars where the screen has another shape. **Fill** enlarges it until it covers the whole screen and crops what lies outside; nothing is stretched. An iPhone loses some of the top and bottom, an iPad some of each side, so health bars, subtitles or maps near the edges can be cut off. A picture that fills the screen without cropping needs a patch for each game that renders a wider view. On iPhone and iPad, Fill applies in landscape; in portrait the picture stays fitted above the controls, and on a TV it is always fitted. On a Mac, Fill crops the picture to the window's shape: in fullscreen on a 16:10 screen a 16:9 game fills it and loses about 5.5 % at each side, with nothing stretched.
 
 ### Picture shape
 
 Games whose profile supports it (Breath of the Wild, Animal Crossing: New Horizons). **iPhone Duo screen (1.43:1)** renders a taller picture of the Duo's own shape: the sides of 16:9 with more above and below, and the HUD at the screen's edges. **16:9** is the Switch's picture. The taller picture has about a quarter more pixels, so it runs a little slower and warmer.
+
+### Rotation
+
+iPhone and iPad. **Automatic**, the default, turns with the device as before: landscape either way on an iPhone, any way on an iPad. **Landscape** stays in landscape, either way up. **Portrait** stays upright, with the picture above the touch controls (or centred when a controller is connected). The screen turns as soon as you pick it, on the settings screen or in the in-game menu.
 
 ### Frame-rate counter
 
@@ -262,7 +270,7 @@ iCloud Drive takes a moment to carry a file from one device to the other. Quit t
 
 ## In-game menu
 
-On the iPhone and iPad the gear at the top centre of the touch controls opens a menu while the game runs; it stays when a controller hides the other controls. It holds **Console mode**, **Picture** and the **Frame-rate counter**, then **Controller layout** (**2D**, **3D**, and **Tap**, no controls and every touch to the game, in handheld mode), **Touch feedback** and **Game rumble**: the settings that take effect at once. A choice opens to show its options, the current one ticked. The menu's text keeps one size whatever the system text size, so it stays short over the game. A change is remembered as on the settings screen, which shows it at the next start; a setting `Documents/env.txt` fixes is shown, not changed. The other settings need the game to start again, so they are only on the settings screen: close the app fully and open it again.
+On the iPhone and iPad the gear at the top centre of the touch controls opens a menu while the game runs; it stays when a controller hides the other controls. It holds **Console mode**, **Picture**, **Rotation** and the **Frame-rate counter**, then **Controller layout** (**2D**, **3D**, and **Tap**, no controls and every touch to the game, in handheld mode), **Touch feedback** and **Game rumble**: the settings that take effect at once. A choice opens to show its options, the current one ticked. The menu's text keeps one size whatever the system text size, so it stays short over the game. A change is remembered as on the settings screen, which shows it at the next start; a setting `Documents/env.txt` fixes is shown, not changed. The other settings need the game to start again, so they are only on the settings screen: close the app fully and open it again.
 
 Console mode changes as on a Switch put in or taken out of its dock. While a TV shows the game it stays **Docked**, and the mode you pick applies when the TV is disconnected. **Docked** removes the Tap layout, as a docked Switch reads no touch screen.
 
@@ -276,7 +284,7 @@ A line like `DM_PRESENT_SNAP=0` in `Documents/env.txt` (in the Files app, under 
 
 | Setting | Variable | Values |
 |---|---|---|
-| Frame rate | `DM_FPS_TARGET` | `30`, `60`, `120` (games with `fps_max 120`) |
+| Frame rate | `DM_FPS_TARGET` | `30`, `40` (Ocarina of Time, a 120 Hz screen), `60`, `120` (games with `fps_max 120`) |
 | Render scale | `DM_RENDER_SCALE` | `0.5` to `1.0` (Hades II: to `3.0`) |
 | Console mode | `DM_OPMODE` | `1` docked, `0` handheld |
 | Game language | `DM_LANG` | a language code, such as `ja` |
@@ -284,7 +292,9 @@ A line like `DM_PRESENT_SNAP=0` in `Documents/env.txt` (in the Files app, under 
 | Cloud saves folder (Mac) | `DM_SAVE_SYNC` | a folder; `icloud`: iCloud Drive › nxnative Saves; `0`: off |
 | Picture (iPhone and iPad) | `DM_PICTURE_FIT` | `fit` 16:9 with black bars, `fill` covers the screen, cropped |
 | Wide view (iPhone) | `DM_WIDE_VIEW` | `1` fills a screen wider than 16:9 with a wider view, no bars (games with a wide-view stub) |
+| Picture shape | `DM_SCREEN_ASPECT` | `auto` the app window's own shape where it is taller than 16:9 (iPad 4:3, iPhone Duo 1.43:1), else 16:9 (iOS only); `1.43` the iPhone Duo's shape, `0` 16:9 |
 | Picture shape | `DM_SCREEN_ASPECT` | On builds with screen-shape stubs, `auto` the app window's own shape where it is taller than 16:9 (iPad 4:3, iPhone Duo 1.43:1), else 16:9 (iOS only); `1.6` MacBook (16:10, Mac only); `1.43` the iPhone Duo's shape, `0` 16:9 |
+| Rotation (iPhone and iPad) | `DM_ROTATION` | `auto` as the device turns, `landscape`, `portrait` |
 | Frame-rate counter | `DM_SHOW_FPS` | `1`, `0` |
 | Heat and battery (under the frame-rate counter) | `DM_SHOW_HEAT_BATTERY` | `1`, `0` (default) |
 | Touch feedback | `DM_TOUCH_HAPTICS` | `1`, `0` |
@@ -295,6 +305,7 @@ A line like `DM_PRESENT_SNAP=0` in `Documents/env.txt` (in the Files app, under 
 | Press a button to join | `DM_PAD_PRESS_TO_JOIN` | `1`, `0` |
 | Upscaling | `DM_PRESENT_UPSCALE` | `off`, `metalfx` |
 | Game's upscaler | `DM_UPSCALER` | `game`, `metalfx` |
+| Texture filtering (Mac, NVN) | `DM_NVN_ANISO` | `0` game default, or `2` to `16` |
 | Frame buffering | `DM_PRESENT_SNAP` | `1`, `0` |
 | Metal 4 pipelines | `DM_PSO_MTL4` | `1`, `0` |
 | Pipeline prebuild | `DM_PSO_PREBUILD` | `1`, `0` |

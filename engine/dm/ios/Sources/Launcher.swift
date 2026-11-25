@@ -99,12 +99,13 @@ private struct DocumentPicker: UIViewControllerRepresentable {
 // Play keeps the first launcher's column (the app's icon, its name, its version, Play) on the left and shows how the game will run on the right. Settings lists every
 // setting by section; the panel explains the chosen one and holds its control. Extras: saves and the game log through the share sheet, cloud saves, cheat files, reset, credits.
 private enum HL {
-    static let ground = Color(red: 0.106, green: 0.078, blue: 0.047), bar = Color(red: 0.145, green: 0.106, blue: 0.063), panel = Color(red: 0.055, green: 0.039, blue: 0.024)
-    static let line = Color(red: 0.365, green: 0.290, blue: 0.173), trim = Color(red: 0.541, green: 0.439, blue: 0.251), gold = Color(red: 0.788, green: 0.659, blue: 0.353)
-    static let text = Color(red: 0.937, green: 0.894, blue: 0.784), dim = Color(red: 0.788, green: 0.722, blue: 0.561), tabOn = Color(red: 0.247, green: 0.192, blue: 0.118)
-    // HookLink X1's polish: a cream for names, two quieter golds for notes and labels, the line under quiet rows and the well a slider runs in
-    static let cream = Color(red: 1.0, green: 0.965, blue: 0.871), muted = Color(red: 0.659, green: 0.592, blue: 0.478), faint = Color(red: 0.494, green: 0.439, blue: 0.353)
-    static let soft = Color(red: 0.725, green: 0.663, blue: 0.537), edge = Color(red: 0.227, green: 0.180, blue: 0.106), well = Color(red: 0.165, green: 0.125, blue: 0.078)
+    // HookLink X3's fresh palette (mock-up C3): cool charcoal surfaces with one gold, so the Settings and Extras pages match the frosted glass of Play. The names stay those of
+    // X1's warm brown palette, which this replaces
+    static let ground = Color(red: 0.075, green: 0.082, blue: 0.102), bar = Color(red: 0.098, green: 0.106, blue: 0.129), panel = Color(red: 0.047, green: 0.051, blue: 0.067)
+    static let line = Color(red: 0.235, green: 0.247, blue: 0.282), trim = Color(red: 0.545, green: 0.471, blue: 0.275), gold = Color(red: 0.925, green: 0.780, blue: 0.404)
+    static let text = Color(red: 0.945, green: 0.949, blue: 0.957), dim = Color(red: 0.722, green: 0.733, blue: 0.761), tabOn = Color(red: 0.204, green: 0.180, blue: 0.122)
+    static let cream = Color.white, muted = Color(red: 0.620, green: 0.631, blue: 0.663), faint = Color(red: 0.451, green: 0.463, blue: 0.502)
+    static let soft = Color(red: 0.698, green: 0.710, blue: 0.741), edge = Color(red: 0.196, green: 0.208, blue: 0.239), well = Color(red: 0.125, green: 0.137, blue: 0.165)
     static func serif(_ size: CGFloat) -> Font { .system(size: size, weight: .bold, design: .serif) }
     static func body(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font { .system(size: size, weight: weight, design: .rounded) }
 }
@@ -294,6 +295,11 @@ private struct LauncherView: View {
     @State private var share: ShareItems?
     @State private var picking = false
     @State private var editing = false   // the Inventory manager (InventoryManager.swift)
+    @State private var modsOpen = false   // the Mods panel (Mods.swift, from kid-with-sword-remake)
+    @State private var bgOpen = false     // the background picker (LauncherBackground.swift)
+    @State private var resOpen = false    // the Resolution dial, from the side panel's Resolution row
+    @ObservedObject private var bgs = HLBackgrounds.shared
+    @ObservedObject private var mods = ModStore.shared
     @State private var autoBackupOn = UserDefaults.standard.object(forKey: "hooklink.autobackup") as? Bool ?? true
     @State private var note = ""
     @State private var checking = false
@@ -303,7 +309,7 @@ private struct LauncherView: View {
     @State private var cheatsOn: Set<String> = Set((UserDefaults.standard.string(forKey: "hooklink.cheats") ?? "").split(separator: "\n").map(String.init))
 
     private var docs: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0] }
-    private var version: String { (info("HookLinkVersion") as? String) ?? "X2" }   // no build sets HookLinkVersion: this is the version shown (HookLink X2, the VX2 line); raise it with each HookLink release
+    private var version: String { (info("HookLinkVersion") as? String) ?? "X3" }   // no build sets HookLinkVersion: this is the version shown (HookLink X3, the VX3 line); raise it with each HookLink release
     private var playRows: [Setting] {
         let want = ["DM_FRAME_MODE", "DM_RENDER_SCALE", "DM_DYNAMIC_RESOLUTION", "DM_WIDE_VIEW", "DM_PAD_THEME"]
         return want.compactMap { e in m.settings.first { $0.env == e } }
@@ -321,19 +327,32 @@ private struct LauncherView: View {
         return ByteCountFormatter.string(fromByteCount: free, countStyle: .file) + " free"
     }
 
+    // HookLink X3 (mock-up C3): the background picture fills the screen; the tab switcher, the free memory and the background button float over it; Play has the side panel
+    // and the Play button, Settings and Extras sit in a frosted page. Every piece has its own place, inside the safe area, so nothing overlaps on any iPhone
     var body: some View {
-        VStack(spacing: 0) {
-            titleBar
-            Group {
-                switch tab {
-                case .play: playTab
-                case .settings: settingsTab
-                case .extras: extrasTab
+        GeometryReader { g in
+            ZStack(alignment: .top) {
+                HLBackdrop(bg: bgs)
+                Group {
+                    switch tab {
+                    case .play: playTab(g.size)
+                    case .settings: glassPage { settingsTab }
+                    case .extras: glassPage { ScrollView(.vertical, showsIndicators: false) { extrasTab }.scrollBounceBehavior(.basedOnSize) }
+                    }
                 }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                chrome(g.size)
+            }
         }
-        .background(RadialGradient(colors: [Color(red: 0.165, green: 0.122, blue: 0.071), HL.ground, Color(red: 0.071, green: 0.051, blue: 0.027)], center: .init(x: 0.3, y: 0.4), startRadius: 20, endRadius: 700).ignoresSafeArea())
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $bgOpen) { HLBackgroundPicker(bg: bgs) { bgOpen = false } }
+        .sheet(isPresented: $resOpen) {
+            VStack(spacing: 14) {
+                HStack { Text("Resolution").font(HLX.serif(22)).foregroundStyle(.white); Spacer(); Button("Done") { resOpen = false }.font(HLX.body(15, .semibold)).foregroundStyle(HLX.gold) }
+                if let rs = m.settings.first(where: { $0.env == "DM_RENDER_SCALE" }) { HLResolutionDial(m: m, scale: rs) }
+                Spacer(minLength: 0)
+            }
+            .padding(20).background(HLX.glass.ignoresSafeArea()).preferredColorScheme(.dark).presentationDetents([.height(260)])
+        }
         .sheet(item: $share) { ShareSheet(items: $0.urls) }
         .sheet(item: $detail) { d in
             VStack(spacing: 12) {
@@ -348,6 +367,7 @@ private struct LauncherView: View {
             .padding(20).background(HL.ground.ignoresSafeArea()).preferredColorScheme(.dark)
         }
         .fullScreenCover(isPresented: $editing) { InventoryManagerView { editing = false } }
+        .sheet(isPresented: $modsOpen) { ModsDrawer(store: mods, close: { modsOpen = false }).preferredColorScheme(.dark) }
         .confirmationDialog(SaveSyncReport.chooseTitle, isPresented: isAsking(.choose), titleVisibility: .visible, presenting: report) { r in
             Button(r.localLabel(here: "iPhone")) { go(r.localChoice) }
             Button(r.cloudLabel) { go(r.cloudChoice) }
@@ -365,9 +385,106 @@ private struct LauncherView: View {
             case .failure(let e): note = "The picker could not open that: \(e.localizedDescription)"
             }
         }
+        .confirmationDialog(SaveSyncReport.missingTitle, isPresented: isAsking(.missing), titleVisibility: .visible, presenting: report) { r in
+            Button("Try Again") { DispatchQueue.main.async { start() } }
+            Button("Play Without Sending") { go("offline") }   // this iPhone's save, not sent: the next start compares again
+            Button(r.sendLabel(here: "iPhone"), role: .destructive) { go(r.localChoice) }   // local:none
+            Button("Cancel", role: .cancel) {}
+        } message: { r in Text(r.missingMessage(here: "iPhone")) }
         .task {
             while !Task.isCancelled { memory = os_proc_available_memory(); try? await Task.sleep(for: .seconds(2)) }
         }
+        // Rotation turns the screen as soon as it is picked, before Play (front_ios.m dm_rotation_set); the saved pick at once when the screen shows
+        .onAppear { if let v = m.values["DM_ROTATION"] { dm_rotation_set(v) } }
+        .onChange(of: m.values["DM_ROTATION"]) { _, v in if let v { dm_rotation_set(v) } }
+    }
+
+    private func header(icon size: CGFloat) -> some View {
+        VStack(spacing: size > 64 ? 16 : 8) {
+            if let icon = appIcon() {
+                Image(uiImage: icon).resizable().frame(width: size, height: size)
+                    .clipShape(RoundedRectangle(cornerRadius: size * 22 / 96))
+                    .accessibilityHidden(true)
+            }
+            Text((info("CFBundleDisplayName") as? String) ?? "Game")
+                .font(.title.weight(.bold)).multilineTextAlignment(.center)
+            Text("Version \((info("CFBundleShortVersionString") as? String) ?? "")")
+                .font(.callout).foregroundStyle(.secondary)
+            playButton
+        }
+    }
+
+    private var settingsList: some View {
+        List {
+            ForEach(m.sections, id: \.self) { section in
+                let rows = m.rows(in: section)
+                if !rows.isEmpty {
+                    Section(section) {
+                        ForEach(rows) { SettingRow(s: $0, m: m) }
+                    }
+                }
+            }
+            Section {
+                Button("Reset to tested defaults") { m.reset() }
+                    .disabled(!m.changed)
+            } footer: {
+                Text("Brings back all settings this game was tested with.")
+            }
+            // The background save check reads the selected folder until it returns.
+            CloudSavesSection(checking: checking)
+            Section {
+                HStack {
+                    Text("Memory available")
+                    Spacer()
+                    Text(ByteCountFormatter.string(fromByteCount: Int64(memory), countStyle: .memory)).monospacedDigit().foregroundStyle(.secondary)
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .contentMargins(.horizontal, 12, for: .scrollContent)
+    }
+
+    private static let clusterWidth: CGFloat = 132   // the free memory and the background button, top right
+    private func panelWidth(_ size: CGFloat) -> CGFloat { min(252, max(220, size * 0.29)) }
+    // The floating top row: on Play, the switcher centres over the picture right of the side panel; elsewhere over the page. The right cluster has a fixed width and the
+    // switcher sits between two flexible spaces, so the two never meet on a narrow phone
+    private func chrome(_ size: CGSize) -> some View {
+        HStack(spacing: 0) {
+            Color.clear.frame(width: tab == .play ? panelWidth(size.width) : Self.clusterWidth, height: 1)
+            Spacer(minLength: 10)
+            HStack(spacing: 2) {
+                ForEach(HLTab.allCases, id: \.rawValue) { t in
+                    Button { tab = t } label: {
+                        Text(t.title).font(HLX.body(13, tab == t ? .semibold : .regular)).foregroundStyle(tab == t ? HLX.onGold : Color.white.opacity(0.8))
+                            .padding(.horizontal, tab == t ? 18 : 14).frame(height: 28)
+                            .background(tab == t ? AnyShapeStyle(HLX.gold) : AnyShapeStyle(Color.clear), in: Capsule())
+                            .contentShape(Capsule())
+                    }.buttonStyle(.plain).accessibilityAddTraits(tab == t ? .isSelected : [])
+                }
+            }
+            .padding(3).hlGlass(18)
+            .fixedSize()
+            Spacer(minLength: 10)
+            HStack(spacing: 6) {
+                if memory > 0 { Label(ByteCountFormatter.string(fromByteCount: Int64(memory), countStyle: .memory), systemImage: "memorychip")
+                    .font(HLX.body(11.5, .medium)).foregroundStyle(.white).monospacedDigit().lineLimit(1).minimumScaleFactor(0.8)
+                    .padding(.horizontal, 10).frame(height: 30).hlGlass(15)
+                    .accessibilityLabel("\(ByteCountFormatter.string(fromByteCount: Int64(memory), countStyle: .memory)) of memory free") }
+                Button { bgOpen = true } label: {
+                    Image(systemName: "photo").font(.system(size: 13, weight: .medium)).foregroundStyle(.white).frame(width: 30, height: 30).hlGlass(15)
+                }.buttonStyle(.plain).accessibilityLabel("Change background")
+            }
+            .frame(width: Self.clusterWidth, alignment: .trailing)
+        }
+        .padding(.horizontal, 14).padding(.top, 10)
+    }
+    // Settings and Extras: their page in frosted glass, under the floating top row
+    private func glassPage<V: View>(@ViewBuilder _ content: () -> V) -> some View {
+        content()
+            .padding(.horizontal, 16).padding(.vertical, 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .hlGlass(24, tint: 0.55)
+            .padding(.horizontal, 14).padding(.top, 52).padding(.bottom, 10)
     }
 
     // The title bar: HookLink's name, the three tabs (the chosen one raised, a gold line on top) and the free memory. Its colour runs to the screen's edges; what it holds stays
@@ -407,45 +524,164 @@ private struct LauncherView: View {
     }
     private func label(_ t: String) -> some View { Text(t).font(HL.body(12, .heavy)).tracking(0.7).foregroundStyle(HL.muted) }
 
-    // Play: the game, Play and the Resolution dial in the middle of the left side; on the right, the quick settings, each saying what it does, and the notes
-    private var playTab: some View {
-        GeometryReader { g in
-            HStack(spacing: 18) {
-                VStack(spacing: 12) {
-                    VStack(spacing: 7) {
-                        if let icon = appIcon() {
-                            Image(uiImage: icon).resizable().frame(width: 72, height: 72).clipShape(RoundedRectangle(cornerRadius: 17))
-                                .overlay(RoundedRectangle(cornerRadius: 17).stroke(HL.gold, lineWidth: 1.5)).shadow(color: .black.opacity(0.55), radius: 7, y: 6).accessibilityHidden(true)
-                        }
-                        Text((info("CFBundleDisplayName") as? String) ?? "Game").font(HL.serif(19)).foregroundStyle(.white).multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.7)
-                        Text("Version \((info("CFBundleShortVersionString") as? String) ?? "") · Ready to play").font(HL.body(12, .semibold)).foregroundStyle(HL.muted)
-                    }
-                    Button(action: { UserDefaults.standard.removeObject(forKey: "dm.stopped.storage"); applyCheats(); autoBackup(); start() }) {
-                        HStack(spacing: 10) { Image(systemName: "play.fill").font(.system(size: 17, weight: .heavy)); Text("Play").font(HL.body(22, .heavy)) }
-                            .foregroundStyle(HL.ground).frame(maxWidth: .infinity).frame(height: 52)
-                            .background(LinearGradient(colors: [Color(red: 0.945, green: 0.824, blue: 0.494), Color(red: 0.851, green: 0.690, blue: 0.310), Color(red: 0.725, green: 0.549, blue: 0.173)], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 14))
-                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(red: 1, green: 0.945, blue: 0.78), lineWidth: 1))
-                            .shadow(color: HL.gold.opacity(0.3), radius: 9, y: 6)
-                    }.buttonStyle(.plain).disabled(checking)
-                    if checking {
-                        HStack(spacing: 6) { ProgressView(); Text("Checking the cloud save…").font(HL.body(13, .medium)).foregroundStyle(HL.dim) }
-                        Button("Play without it") { checking = false; go("offline") }.font(HL.body(13, .bold)).foregroundStyle(HL.gold)
-                    }
-                    if let rs = m.settings.first(where: { $0.env == "DM_RENDER_SCALE" }) { HLResolutionDial(m: m, scale: rs) }
+    // Play (mock-up C3): a frosted side panel on the left with the game, the Resolution row and the quick settings as rows, its notes at the foot; the picture open to the right,
+    // with Play at the bottom right. The panel's rows scroll inside it on a phone too short for them, so nothing runs past its edge
+    private var gameTitle: String { (info("CFBundleDisplayName") as? String) ?? "Game" }
+    private var lastPlayed: String? {
+        guard let s = getenv("DM_SAVE") else { return nil }
+        let root = URL(fileURLWithPath: String(cString: s))
+        guard let e = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey]) else { return nil }
+        var newest: Date?
+        for case let u as URL in e { if let v = try? u.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey]), v.isRegularFile == true, let d = v.contentModificationDate, d > (newest ?? .distantPast) { newest = d } }
+        guard let d = newest else { return nil }
+        let f = DateFormatter(); f.doesRelativeDateFormatting = true; f.dateStyle = .medium; f.timeStyle = .short
+        return "Played " + f.string(from: d).lowercased()
+    }
+    private func playTab(_ size: CGSize) -> some View {
+        ZStack(alignment: .bottomTrailing) {
+            sidePanel.frame(width: panelWidth(size.width)).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.leading, 14).padding(.top, 10).padding(.bottom, 10)
+            // the notes (a warm phone, Low Power Mode, little space or memory) sit above Play, right of the panel, at most as wide as the room there
+            VStack(alignment: .trailing, spacing: 8) {
+                ForEach(Array(playNotes.prefix(2)), id: \.self) { n in
+                    Label(n, systemImage: "exclamationmark.circle").font(HLX.body(11.5)).foregroundStyle(HLX.gold).lineLimit(3).minimumScaleFactor(0.85)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 11).padding(.vertical, 7).hlGlass(14)
+                        .frame(maxWidth: min(340, size.width - panelWidth(size.width) - 60), alignment: .trailing)
                 }
-                .frame(width: min(330, g.size.width * 0.38)).frame(maxHeight: .infinity)
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(alignment: .firstTextBaseline) { label("QUICK SETTINGS"); Spacer(); Text("Tap to change").font(HL.body(11, .semibold)).foregroundStyle(HL.faint) }
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                        ForEach(quickTiles, id: \.title) { t in t }
-                    }
-                    ForEach(playNotes, id: \.self) { HLBanner(text: $0) }
-                    Spacer(minLength: 0)
-                    HStack(spacing: 8) { ForEach(playChips, id: \.self) { HLChip(text: $0) } }.lineLimit(1).minimumScaleFactor(0.8)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                playCluster
             }
-            .padding(.top, 12).padding(.bottom, 10)
+            .padding(.trailing, 20).padding(.bottom, 14)
+        }
+    }
+    private var sidePanel: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 8) {
+                Text("HookLink").font(HLX.serif(13.5)).foregroundStyle(HLX.gold)
+                Rectangle().fill(HLX.gold.opacity(0.45)).frame(height: 1)
+                Text(version).font(HLX.body(11)).foregroundStyle(HLX.faint)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(gameTitle).font(HLX.serif(23)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.7)
+                HStack(spacing: 4) {
+                    if let lp = lastPlayed { Text(lp) }
+                    if lastPlayed != nil && mods.enabledCount > 0 { Text("·") }
+                    if mods.enabledCount > 0 { Button { modsOpen = true } label: { Label("\(mods.enabledCount) mod\(mods.enabledCount == 1 ? "" : "s") on", systemImage: "puzzlepiece.extension").foregroundStyle(.white) }.buttonStyle(.plain) }
+                }
+                .font(HLX.body(11.5)).foregroundStyle(HLX.dim).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            if let rs = m.settings.first(where: { $0.env == "DM_RENDER_SCALE" }) { resolutionRow(rs) }
+            // the rows as they are when they fit, scrolling inside the panel on a shorter screen
+            ViewThatFits(in: .vertical) {
+                VStack(spacing: 2) { panelRows }
+                ScrollView(.vertical, showsIndicators: false) { VStack(spacing: 2) { panelRows } }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .hlGlass(24)
+    }
+    private func resolutionRow(_ rs: Setting) -> some View {
+        let v = Double(m.values[rs.env] ?? rs.def) ?? 0.667
+        let dyn = m.settings.first { $0.env == "DM_DYNAMIC_RESOLUTION" }
+        let auto = dyn.map { (m.values[$0.env] ?? $0.def) == $0.onValue } ?? false
+        let pct = Int((v * 100).rounded())
+        return Button { resOpen = true } label: {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle().stroke(Color.white.opacity(0.14), lineWidth: 5)
+                    Circle().trim(from: 0, to: min(1, max(0.05, v))).stroke(HLX.gold, style: StrokeStyle(lineWidth: 5, lineCap: .round)).rotationEffect(.degrees(-90))
+                    Text(auto ? "A" : "\(pct)").font(HLX.body(12, .semibold)).foregroundStyle(.white).monospacedDigit()
+                }.frame(width: 34, height: 34)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Resolution").font(HLX.body(13, .semibold)).foregroundStyle(.white)
+                    Text(auto ? "Auto (dynamic)" : m.rangeLabel(rs, v)).font(HLX.body(11)).foregroundStyle(HLX.dim).lineLimit(1).minimumScaleFactor(0.75)
+                }
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(HLX.faint)
+            }
+            .padding(.horizontal, 9).padding(.vertical, 7)
+            .background(Color.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .contentShape(Rectangle())
+        }.buttonStyle(.plain)
+    }
+    @ViewBuilder private var panelRows: some View {
+        if let fm = m.settings.first(where: { $0.env == "DM_FRAME_MODE" }) {
+            let v = m.values[fm.env] ?? fm.def
+            let state = ["0": "60 fps", "1": "30 fps", "2": "30 + FG", "3": "60 + FG"][v] ?? v
+            let next = ["0": "1", "1": "0", "2": "3", "3": "2"][v] ?? v
+            let locked = m.fixed.contains(fm.env) || m.presetLocked(fm)
+            Button {
+                if !locked, fm.options?.contains(where: { $0[0] == next }) ?? false { m.values[fm.env] = next; UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "gauge.with.dots.needle.50percent").foregroundStyle(HLX.gold).frame(width: 18)
+                    Text("Frame rate").font(HLX.body(13)).foregroundStyle(.white)
+                    Spacer(minLength: 4)
+                    Text(state).font(HLX.body(11, .semibold)).foregroundStyle(HLX.onGold).padding(.horizontal, 9).padding(.vertical, 2).background(HLX.gold, in: Capsule())
+                }
+                .padding(.horizontal, 8).frame(height: 30)
+                .background(HLX.gold.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .contentShape(Rectangle())
+            }.buttonStyle(.plain).opacity(locked ? 0.55 : 1).accessibilityLabel("Frame rate, \(state)")
+        }
+        toggleRow("DM_FRAMEGEN", "Frame generation", "waveform.path")
+        toggleRow("DM_COOL", "Cool mode", "snowflake")
+        toggleRow("DM_PRESET", "Potato mode", "leaf")
+        toggleRow("DM_WIDE_VIEW", "Wide view", "arrow.left.and.right")
+        toggleRow("DM_MIC", "Ocarina mic", "mic")
+    }
+    @ViewBuilder private func toggleRow(_ env: String, _ title: String, _ icon: String) -> some View {
+        if let s = m.settings.first(where: { $0.env == env }) {
+            let on = (m.values[s.env] ?? s.def) == s.onValue
+            let locked = m.fixed.contains(s.env) || m.presetLocked(s)
+            Button {
+                guard !locked else { return }
+                m.values[s.env] = on ? s.offValue : s.onValue; UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: icon).foregroundStyle(on ? HLX.gold : HLX.faint).frame(width: 18)
+                    Text(title).font(HLX.body(13)).foregroundStyle(on ? .white : Color.white.opacity(0.88)).lineLimit(1).minimumScaleFactor(0.8)
+                    Spacer(minLength: 4)
+                    if locked { Text(m.fixed.contains(s.env) ? "Env file" : "Potato").font(HLX.body(10.5)).foregroundStyle(HLX.faint) }
+                    else {
+                        Capsule().fill(on ? HLX.gold : Color.white.opacity(0.16)).frame(width: 34, height: 20)
+                            .overlay(alignment: on ? .trailing : .leading) { Circle().fill(on ? Color.white : Color.white.opacity(0.75)).frame(width: 16, height: 16).padding(2) }
+                    }
+                }
+                .padding(.horizontal, 8).frame(height: 30).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).opacity(locked ? 0.55 : 1)
+            .accessibilityLabel(title).accessibilityValue(locked ? "Set by \(m.fixed.contains(s.env) ? "the env file" : "Potato mode")" : on ? "On" : "Off")
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+    private var cloudOn: Bool { var stale: ObjCBool = false; return !(dm_cloud_saves_path(&stale) ?? "").isEmpty }
+    private var playCluster: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Continue your journey").font(HLX.body(11.5)).foregroundStyle(HLX.dim)
+                Text("Play").font(HLX.serif(23)).foregroundStyle(.white)
+                if checking {
+                    HStack(spacing: 6) { ProgressView().controlSize(.mini); Text("Checking the cloud save").font(HLX.body(11)).foregroundStyle(HLX.dim) }
+                    Button("Play without it") { checking = false; go("offline") }.font(HLX.body(11.5, .semibold)).foregroundStyle(HLX.gold)
+                } else if cloudOn {
+                    Label("Cloud save on", systemImage: "icloud").font(HLX.body(11)).foregroundStyle(HLX.dim)
+                }
+            }
+            .padding(.horizontal, 13).padding(.vertical, 9).hlGlass(16)
+            .fixedSize()
+            Button(action: { UserDefaults.standard.removeObject(forKey: "dm.stopped.storage"); applyCheats(); autoBackup(); start() }) {
+                ZStack {
+                    Circle().stroke(Color.white.opacity(0.6), lineWidth: 2).frame(width: 112, height: 112)
+                    Circle().fill(HLX.gold).frame(width: 96, height: 96)
+                    Image(systemName: "play.fill").font(.system(size: 38, weight: .bold)).foregroundStyle(HLX.onGold).offset(x: 3)
+                }
+                .contentShape(Circle())
+            }
+            .buttonStyle(.plain).disabled(checking).opacity(checking ? 0.7 : 1)
+            .accessibilityLabel("Play")
         }
     }
     // The quick settings: those this game has, in this order. The frame rate tile switches 60 and 30 and keeps frame generation as it is; frame generation moves the
@@ -482,6 +718,9 @@ private struct LauncherView: View {
         if let gb = UserDefaults.standard.object(forKey: "dm.stopped.storage") as? Double {
             n.append(String(format: "The game closed last time because the iPhone had only %.1f GB really free. It keeps up to about 10 GB of its memory on the phone. Settings can show more free space than that, as it counts caches iOS clears only later: restarting the iPhone clears them, or delete or offload something big, then play.", gb))
         } else if lowDisk { n.append("Less than 25 GB free: the game keeps up to about 10 GB of memory on the disk, and it stops when space runs out. Free some space first.") }
+        // HookLink X3: an install signed without the increased-memory-limit entitlement gets about half the phone's memory (an iPhone 17 Pro had 5.97 GB of room where a 12 GB
+        // phone with it has 7.97; HookLink review 2026-11-17), and the game is ended in busy places. The launcher's own footprint is small, so its room is the app's limit
+        if let note = memoryLimitNote { n.append(note) }
         if ProcessInfo.processInfo.isLowPowerModeEnabled { n.append("Low Power Mode is on: iOS slows the phone, and the game will drop frames. Turn it off in Settings \u{2192} Battery.") }
         switch ProcessInfo.processInfo.thermalState.rawValue {
         case 2...: n.append("The phone is hot: the game will run slower until it cools. A short break helps.")
@@ -490,10 +729,16 @@ private struct LauncherView: View {
         }
         return n
     }
+    private var memoryLimitNote: String? {
+        let phys = Double(ProcessInfo.processInfo.physicalMemory), room = Double(os_proc_available_memory())
+        guard phys > 0, room > 0, room < phys * 0.6 else { return nil }
+        return String(format: "This install gets only %.1f GB of the iPhone's %.0f GB of memory: it was signed without the increased memory limit, so the game may close in busy places. Install it again with a signing method that keeps that entitlement.", room / 1_073_741_824, phys / 1_073_741_824)
+    }
     private var playChips: [String] {
         var c: [String] = []
         if let s = m.settings.first(where: { $0.env == "DM_NDVE_LITE" }) { c.append("Light movies " + ((m.values[s.env] ?? s.def) == s.onValue ? "on" : "off")) }
         if let s = m.settings.first(where: { $0.env == "DM_PAD_THEME" }) { c.append("Touch: " + value(s)) }
+        if mods.enabledCount > 0 { c.append("\(mods.enabledCount) mod\(mods.enabledCount == 1 ? "" : "s") on") }
         c.append(storage + " on the phone")
         return c
     }
@@ -577,12 +822,14 @@ private struct LauncherView: View {
                                                          ("cloud", "Cloud saves", "Keep the save in step with the Mac app through iCloud Drive.", "")]
         let more: [(String, String, String, String)] = [("log", "Export game log", "The last session's log, to share when reporting a problem.", ""),
                                                         ("cheats", "Cheats", "Turn on cheats from the files in the cheats folder.", cheats.isEmpty ? "No file" : "\(cheatsOn.intersection(cheats).count) on"),
-                                                        ("reset", "Reset to tested defaults", "Every setting back to how HookLink \(version) was tested.", m.changed ? "" : "Nothing changed"),
+                                                        ("background", "Background", "The picture behind the launcher: HookLink's or your own photos.", ""),
+                                                        ("mods", "Mods", "Import mod .zip files or folders, turn them on and off, set their order.", mods.mods.isEmpty ? "" : "\(mods.enabledCount) on"),
+                                                        ("reset", "Reset to defaults", "Every setting back to how HookLink \(version) was tested.", m.changed ? "" : "No changes"),
                                                         ("credits", "Credits", "Everyone whose work is in this build.", "")]
         func card(_ c: (String, String, String, String)) -> some View {
             Button { openExtra(c.0, c.1) } label: {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline) { Text(c.1).font(HL.body(13.5, .heavy)).foregroundStyle(HL.cream).lineLimit(1).minimumScaleFactor(0.8); Spacer(minLength: 4); Text(c.3).font(HL.body(10.5, .heavy)).foregroundStyle(HL.faint).lineLimit(1) }
+                    HStack(alignment: .firstTextBaseline) { Text(c.1).font(HL.body(13.5, .heavy)).foregroundStyle(HL.cream).lineLimit(1).minimumScaleFactor(0.8).layoutPriority(1); Spacer(minLength: 4); Text(c.3).font(HL.body(10.5, .heavy)).foregroundStyle(HL.faint).lineLimit(1).minimumScaleFactor(0.7) }
                     Text(c.2).font(HL.body(11, .medium)).foregroundStyle(HL.soft).lineLimit(3).fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
@@ -609,6 +856,8 @@ private struct LauncherView: View {
         case "editor": editing = true
         case "import": picking = true
         case "log": exportLog()
+        case "mods": modsOpen = true
+        case "background": bgOpen = true
         default: detail = ExtraSheet(id: id, title: title)
         }
     }
@@ -628,7 +877,7 @@ private struct LauncherView: View {
                 words("Sends the log of your last game session (HookLink-last-game-session.txt), and of this launch. Share both when something looked or ran wrong in the game.")
                 HLRow(title: "Export game log", value: "", chosen: true) { exportLog() }
             case "cloud":
-                List { CloudSavesSection() }.listStyle(.insetGrouped).scrollContentBackground(.hidden).frame(height: 230)
+                List { CloudSavesSection(checking: checking) }.listStyle(.insetGrouped).scrollContentBackground(.hidden).frame(height: 230)
             case "editor":
                 words("Change rupees, hearts, magic, ammo, bag sizes, small keys, bottles and items in your saves. Your saves are copied to save-backups before every change. The save rules are OOT SW2SE's, by Traiver.")
                 HLRow(title: "Open the inventory manager", value: "", chosen: true) { editing = true }
@@ -811,12 +1060,13 @@ public func dmShowLauncher(_ viewController: UnsafeMutableRawPointer, _ done: @c
     guard let file = try? JSONDecoder().decode(SettingsFile.self, from: data), !file.settings.isEmpty else { fputs("[RED] launcher: dm/launcher.json cannot be read; starting the game\n", stderr); return false }
     let model = LauncherModel(deviceAdjusted(file.settings))
     gameMenuModel = model   // the in-game menu shows and saves the same choices (GameMenu.swift)
-    if ProcessInfo.processInfo.environment["DM_LAUNCHER"] == "0" { fputs("launcher: off (DM_LAUNCHER=0)\n", stderr); model.applySaved(); return false }
+    if ProcessInfo.processInfo.environment["DM_LAUNCHER"] == "0" { fputs("launcher: off (DM_LAUNCHER=0)\n", stderr); model.applySaved(); ModStore.applyEnv(); return false }
     let parent = Unmanaged<UIViewController>.fromOpaque(viewController).takeUnretainedValue()
     var host: UIViewController?
     let view = LauncherView(m: model) {
         guard let h = host else { return }
         host = nil
+        ModStore.applyEnv()   // DM_MODS: the mods that are on (Mods.swift)
         model.apply()
         h.dismiss(animated: false) { done() }
     }
