@@ -151,16 +151,31 @@ def adapt_engine(cwd, current, report):
         section = replace_once(section, "rt_acquire(rt_period_ns(o, period));", "uint64_t rtp = rt_period_ns(o, period); rt_acquire(rtp); fwg_frame(rtp);")
         # Official helpers may have survived the textual merge already.
         sa = s.find(start)
-        if sa < 0:
-            sa = s.find("typedef struct acq_wait")
+        # Never select the forward typedef near the top of this file:
+        # it precedes hundreds of independent NVN entry points and X3 QoS.
         if sa < 0 or sa > sn:
             sa = sn
-        # The official helper functions precede the acquire method. If any
-        # remain before the selected region, flag rather than duplicate them.
+        require(sn - sa < len(section), "Acquire source span includes unrelated methods")
         require("static int acq_pace_do(" not in s[:sa], "Duplicate acquire helper before replacement")
-        s = s[:sa] + section + s[se:]
+        prefix = s[:sa]
+        if "int mtl_present_screen_wait_timeout(" not in prefix:
+            prefix += "int mtl_present_screen_wait_timeout(double period, uint64_t timeout_ns, uint64_t *waited_ns);\n"
+        s = prefix + section + s[se:]
+        h = source(cwd, NEW_HOOK, "dm/gfx/nvn/hle_nvn.c")
+        for name in ("static void fwg_frame(", "void dm_frame_wg_join(", "void dm_frame_wg_leave("):
+            require(name in s, "Missing X3 workgroup symbol: " + name)
+        # Ensure this targeted adaptation did not remove any unrelated
+        # public NVN entry point from either parent.
+        entries = lambda t: set(re.findall(r"(?m)^NVN\((\w+),", t))
+        missing = (entries(o) | entries(h)) - entries(s)
+        require(not missing, "Missing NVN entry points: " + str(sorted(missing)))
         return s
     edit("dm/gfx/nvn/hle_nvn.c", acquire)
+    def pool_share(s):
+        if "uint8_t *share_mem = o->mem;" in s:
+            s = replace_once(s, "if (o->mem && !(o->flags & 0x200)) dm_device_share(o->mem, o->size, 1);", "if (share_mem && !(o->flags & 0x200)) dm_device_share(share_mem, o->size, 1);")
+        return s
+    edit("dm/gfx/nvn/hle_nvn.c", pool_share)
     # Keep the X3 frame delta accounting AND the independent official pause
     # detection and tick-unit state from surrounding nonconflicting code.
     def fstep(s):
