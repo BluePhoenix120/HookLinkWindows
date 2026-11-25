@@ -326,7 +326,11 @@ def main():
         lines = stamp.read_text(encoding='utf-8').splitlines() if stamp.exists() else []
         if f'game\t{game}' not in lines or f'inputs\t{inputs}' not in lines: die(f'the iOS shader libraries {msl_ios}/{msldir} are not a full build from this profile\'s current tables (inputs {inputs})')
         c1 = gd / 'c1_full.tsv'
-        if not (c1.exists() and c1.read_text(encoding='utf-8').splitlines()[:1] and c1.read_text(encoding='utf-8').splitlines()[0].startswith(f'# chain b-{v} inputs {inputs} ')):
+        # Current NXnative emits the exact stamp; older tables can add metadata after a space.
+        # Match the upstream chain_tables() check without accepting a different digest.
+        head = c1.read_text(encoding='utf-8').splitlines()[:1] if c1.is_file() else []
+        want = f'# chain b-{v} inputs {inputs}'
+        if not head or not (head[0] == want or head[0].startswith(want + ' ')):
             die(f'{c1} is missing or not made from these libraries (chain {v}, inputs {inputs})')
 
     sdk = tc.ios_sdk() or die('no iPhoneOS SDK: set NXW_IOS_SDK (win/sdk/extract_xip.py extracts it from Xcode.xip)')
