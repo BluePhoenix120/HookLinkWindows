@@ -6,6 +6,23 @@ def once(s, old, new):
     return s.replace(old,new,1)
 
 def repair(cwd, original, source, notes):
+    # The first run recipe merges tests from both parents. Preserve every
+    # invoked executable AND its prerequisite, including the new original
+    # crash and memory diagnostics whose dependencies fell out of the overlap.
+    host_tests=cwd/"dm/host/tests/Makefile"
+    mk=host_tests.read_text(encoding="utf-8")
+    first=re.search(r"(?m)^run: [^\n]+\n(?:\t[^\n]*\n)+",mk)
+    if first is None: raise RuntimeError("Missing host test run recipe")
+    deps=set(re.findall(r"\$\(B\)/(t_\w+)", "\n".join(re.findall(r"(?m)^run:[^\n]*",mk))))
+    invoked=set(re.findall(r"\$\(B\)/(t_\w+)",first.group(0).split("\n",1)[1]))
+    rules=set(re.findall(r"(?m)^\$\(B\)/(t_\w+):",mk))
+    missing=invoked-deps
+    if missing!={"t_crash_diag","t_memstat"} or not missing<=rules:
+        raise RuntimeError("Unexpected host test prerequisite mismatch: "+str(sorted(missing)))
+    header=first.group(0).split("\n",1)[0]
+    mk=once(mk,header+"\n",header+" "+" ".join("$(B)/"+t for t in sorted(missing))+"\n")
+    host_tests.write_text(mk,encoding="utf-8")
+    notes.append("dm/host/tests/Makefile: build both crash diagnostics and memory-stat tests before running")
     p=cwd/"dm/host/hle_thread.c"
     s=p.read_text(encoding="utf-8")
     s=once(s,"_Atomic int pause_req; int paused;","_Atomic int pause_req; int paused, act_busy, act_waiters;")

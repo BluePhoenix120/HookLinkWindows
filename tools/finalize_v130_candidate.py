@@ -192,6 +192,26 @@ class MetalABI(unittest.TestCase):
         end=M.index('link_gpu_lead(it.frame, it.t_in, cb, wk_cb[k], pres_gpu',start)
         self.assertIn('pthread_mutex_unlock(&g_pq_mu);',M[start:end])
 """,encoding="utf-8")
+    # Ensure the merged primary native host test recipe never runs a
+    # binary without declaring its build prerequisite.
+    (ROOT/"tests/test_v130_host_test_dependencies.py").write_text(r'''from pathlib import Path
+import re
+import unittest
+
+ROOT=Path(__file__).resolve().parents[1]
+
+class NativeHostTestDependencies(unittest.TestCase):
+    def test_all_primary_run_executables_have_build_dependencies(self):
+        s=(ROOT/"engine/dm/host/tests/Makefile").read_text(encoding="utf-8")
+        recipe=re.search(r"(?m)^run: [^\n]+\n(?:\t[^\n]*\n)+",s)
+        self.assertIsNotNone(recipe)
+        deps=set(re.findall(r"\$\(B\)/(t_\w+)", "\n".join(re.findall(r"(?m)^run:[^\n]*",s))))
+        invoked=set(re.findall(r"\$\(B\)/(t_\w+)",recipe.group(0).split("\n",1)[1]))
+        rules=set(re.findall(r"(?m)^\$\(B\)/(t_\w+):",s))
+        self.assertTrue({"t_crash_diag","t_memstat"} <= invoked)
+        self.assertFalse(invoked-deps)
+        self.assertFalse(invoked-rules)
+''',encoding="utf-8")
     # Source contract for new timing page and preservation of both trees.
     (ROOT/"tests/test_v130_integration.py").write_text('''"""Release-blocking X3-priority integration contracts."""\nimport hashlib\nimport json\nfrom pathlib import Path\nimport unittest\n\nROOT=Path(__file__).resolve().parents[1]\nPIN=json.loads((ROOT/"ENGINE_PIN.json").read_text(encoding="utf-8"))\nMANIFEST=json.loads((ROOT/"ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))\n\nclass X3Integration(unittest.TestCase):\n    def test_all_conflicts_resolved(self):\n        self.assertEqual(PIN["release"],"Alpha V1.3.0")\n        self.assertEqual(PIN["nxnative_commit"],"'''+NEW_ORIGINAL+'''")\n        self.assertEqual(PIN["hooklink_engine_commit"],"'''+NEW_HOOK+'''")\n        r=MANIFEST["conflict_resolution_report"]\n        self.assertEqual(sum(x["hunks"] for x in r["upstream"]),64)\n        self.assertEqual(sum(x["hunks"] for x in r["windows"]),20)\n        self.assertEqual(r["unmerged_index_entries"],0)\n        self.assertFalse(r["conflict_marker_paths"])\n        self.assertFalse(r["missing_hooklink_changes"])\n        self.assertFalse(r["missing_official_paths"])\n\n    def test_all_hooklink_blobs_accounted_for(self):\n        overrides=MANIFEST["hooklink_integration_overrides"]\n        for row in MANIFEST["hooklink_tree"]:\n            p=row["path"]; data=(ROOT/p).read_bytes()\n            expected=overrides.get(p,{}).get("integrated_sha",row["sha"])\n            def digest(b): return hashlib.sha1(b"blob "+str(len(b)).encode()+bytes([0])+b).hexdigest()\n            self.assertIn(expected,(digest(data),digest(data.replace(bytes([13,10]),bytes([10])))),p)\n\n    def test_x3_timing_abi_and_workgroup(self):\n        base=ROOT/"engine/dm/gfx/nvn"\n        self.assertIn("#define FSTEP_UNIT_OFF 0x48",(base/"nvn_fstep.h").read_text(encoding="utf-8"))\n        h=(base/"hle_nvn.c").read_text(encoding="utf-8")\n        for marker in ("dm_fps_state + 0x38","dm_fps_state + 0x3c","static void fwg_frame(","fwg_frame(rtp);","void dm_frame_wg_join("):\n            self.assertIn(marker,h)\n        stub=(ROOT/"engine/dm/games/0400486024DEC000/patches.py").read_text(encoding="utf-8").split("def frame_step(ctx):",1)[1].split("# The game's dynamic resolution",1)[0]\n        self.assertIn("0xbd403a00",stub)\n        self.assertIn("0xb9003e11",stub)\n        self.assertNotIn("ctx.capabilities.add('FRAME_STEP_120')",stub)\n        self.assertTrue((ROOT/"Resources/presets/launcher_background.jpg").is_file())\n\nif __name__=="__main__": unittest.main()\n''',encoding="utf-8")
     release_note=("## HookLinkWindows Alpha V1.3.0 (2026-11-25)\n\n"
