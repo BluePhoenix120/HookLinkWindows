@@ -110,6 +110,7 @@ def adapt_engine(cwd, current, report):
     # improvements; do not expose the official 40-fps OOT mode with this stub.
     edit("dm/gfx/nvn/nvn_fstep.h", lambda s: replace_once(s, "#define FSTEP_UNIT_OFF 0x38", "#define FSTEP_UNIT_OFF 0x48"))
     edit("dm/host/loader.c", lambda s: s.replace("page's unit (+0x38)", "page's unit (+0x48)"))
+    edit("dm/gfx/tests/t_fstep.c", lambda s: s.replace("uint8_t page[64]", "uint8_t page[0x100]").replace("unit at +0x38", "unit at +0x48").replace("(+0x38 0)", "(+0x48 0)"))
     edit("dm/tools/patch_nso.py", lambda s: s.replace("+0x40 u32 1 = the game's own dynamic resolution runs", "+0x48 u32 optional ticks per second (0 = 60); +0x40 u32 1 = the game's own dynamic resolution runs"))
     def patches(s):
         # The complete X3 frame_step function is the authoritative ABI,
@@ -232,7 +233,11 @@ def materialize(args):
             report["missing_official_paths"] = sorted(set(official)-set(integrated)-EXCLUDE)
             # Deletions must be recorded, not hidden behind a stale pin.
             report["missing_hooklink_paths"] = sorted(set(hook)-set(integrated)-EXCLUDE)
-            require(not report["missing_hooklink_paths"], "HookLink files missing after priority merge: " + str(report["missing_hooklink_paths"]))
+            ancestor = inventory(cwd, out(cwd, "merge-base", NEW_ORIGINAL, NEW_HOOK))
+            removed_cleanly = [p for p in report["missing_hooklink_paths"] if p not in official and ancestor.get(p) == hook[p]]
+            report["clean_official_deletions"] = removed_cleanly
+            report["missing_hooklink_changes"] = sorted(set(report["missing_hooklink_paths"]) - set(removed_cleanly))
+            require(not report["missing_hooklink_changes"], "Modified HookLink files missing: " + str(report["missing_hooklink_changes"]))
             args.output.mkdir(parents=True, exist_ok=True)
             (args.output/"engine.patch").write_bytes(git(cwd, "diff", "--binary", w, final).stdout)
             git(cwd, "remote", "add", "hookapp", APP_URL)
