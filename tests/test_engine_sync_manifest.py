@@ -16,8 +16,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 OLD_PIN = '3a28152fe7052c9f45ede460022d39be6c91e3cf'
 X2_PIN = '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'
-OFFICIAL_PIN = '3e1ada5b96acb61293ac790bd6dd093a947abed6'
-HOOKLINK_HOTFIX_PIN = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
+OFFICIAL_PIN = '5dfc86ae80c53a62262c3b3c66eab043f1fc574a'
+HOOKLINK_HOTFIX_PIN = 'ee3ce6a02bc737d38795f0a96cce494cee7a799c'
 
 
 def git_blob_sha(data: bytes) -> str:

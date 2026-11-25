@@ -1,5 +1,14 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.3.0 (2026-11-25)
+
+- Integrates HookLink X3 (4.0), engine ee3ce6a02bc7, with official NXnative 5dfc86ae80c5. Official NXnative is the base; X3 wins overlapping changes. All 64 upstream and 20 Windows replay conflict hunks have explicit resolutions.
+- Keeps HookLink's measured frame duration at state +0x38; the official optional tick-unit field is moved to +0x48. The conflicting official Ocarina 40 fps stub is not offered. The X3 frame-workgroup implementation is preserved.
+- Preserves independent Windows build/SDK/translator compatibility, the Ocarina 16 GiB alias, and existing caches. New shader-chain d0977c64f9e8 is generated from the integrated sources; Windows preflight verifies the installed translator and may rebuild shaders.
+- Includes the X3 engine/desktop changes, packaged background support, mod resource-size-table packaging, and native Custom controller layout. The Windows UIKit launcher does not yet include X3’s full SwiftUI photo picker or mod-management UI. End-to-end game IPA and device runtime require user testing.
+- Exact source inventories and conflict decisions are in ENGINE_PIN_FILES.json. See the original X3 changelog in docs/HOOKLINK_X3_UPSTREAM_CHANGELOG.md.
+
+
 ## HookLinkWindows Alpha V1.2.8 (2026-11-24)
 
 **Integration preparation release — HookLink X3 (4.0) and the newer official NXnative engine are NOT included yet.** The bundled engine remains HookLink X2.0.1 / official NXnative `3e1ada5b96ac`, with shader chain `f062f816dfb7`.

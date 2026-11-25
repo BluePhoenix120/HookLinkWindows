@@ -47,14 +47,15 @@ class IosMetalNativeMergeContracts(unittest.TestCase):
         cls.metal = METAL.read_text(encoding="utf-8")
         cls.ndve = NDVE.read_text(encoding="utf-8")
 
-    def test_all_present_now_calls_supply_producer_event_eight_arguments(self):
+    def test_all_present_now_calls_supply_producer_event_nine_arguments(self):
         all_calls = call_arguments(self.metal, "present_now(")
         definition = next(x for x in all_calls if x[0].startswith("const tex_t *t"))
-        self.assertEqual(len(definition), 8, "present_now signature changed")
+        self.assertEqual(len(definition), 9, "present_now signature changed")
         invocations = [args for args in all_calls if args is not definition]
         self.assertEqual(len(invocations), 3)
         for args in invocations:
-            self.assertEqual(len(args), 8, args)
+            self.assertEqual(len(args), 9, args)
+            self.assertIn(args[8], ('0', 'latched_now ? update.targetTimestamp : 0'))
         self.assertEqual(
             sorted(args[5] for args in invocations),
             ["it.ev_val", "it.ev_val", "ow.ev_val"],

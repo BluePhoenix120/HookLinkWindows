@@ -31,7 +31,7 @@ class NativeHostCallSiteContracts(unittest.TestCase):
         body = self.s[start:end]
         self.assertEqual(body.count("tex_t pair; int paired = bcp_before(c->tex, t, &pair);"), 1)
         self.assertLess(body.index("int paired = bcp_before("), body.index("if (paired) bcp_after("))
-        self.assertLess(body.index("if (!tex_level_ok("), body.index("int paired = bcp_before("))
+        self.assertLess(body.index("if (on_host && !tex_level_ok("), body.index("int paired = bcp_before("))
 
     def test_display_link_timestamp_tolerance_is_in_scope(self):
         start = self.s.index("- (void)metalDisplayLink:")
@@ -41,13 +41,13 @@ class NativeHostCallSiteContracts(unittest.TestCase):
         self.assertLess(body.index("const double tol = 0.002;"), body.index("g_fg_owe_at - tol"))
         self.assertIn("g_link_hold_until - tol", body)
 
-    def test_link_drain_receives_all_five_arguments(self):
+    def test_link_drain_receives_all_six_arguments(self):
         start = self.s.index("- (void)metalDisplayLink:")
         end = self.s.index("\n@end", start)
         body = self.s[start:end]
-        self.assertIn("link_drain_note(cb, cb - it.t_in, ticket > first, -1, 0);", body)
+        self.assertIn("link_drain_note(cb, cb - it.t_in, ticket > first, k < 0 || wk_cb[k] < 0 ? -1 : it.t_in - wk_cb[k], gl, k < 0 ? 0 : wk_room[k]);", body)
         self.assertNotIn("link_drain_note(cb, cb - it.t_in, ticket > first);", body)
-        self.assertIn("static void link_drain_note(double cb, double age, int dropped, double lead, double room)", self.s)
+        self.assertIn("static void link_drain_note(double cb, double age, int dropped, double lead, double gpu_lead, double room)", self.s)
 
     def test_v116_resource_management_remains_excluded(self):
         self.assertFalse((ROOT / "engine" / "dm" / "gfx" / "tools" / "metal_budget.py").exists())

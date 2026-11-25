@@ -56,7 +56,7 @@ class AudioProducerRealtimeContracts(unittest.TestCase):
         pin = json.loads((ROOT / "ENGINE_PIN.json").read_text(encoding="utf-8"))
         manifest = json.loads((ROOT / "ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))
         self.assertEqual(pin["audio_producer_patch_commit"], "2edad1828de247aaf46c53cb288357cb65e84be0")
-        self.assertEqual(pin["nxnative_commit"], "3e1ada5b96acb61293ac790bd6dd093a947abed6")
+        self.assertEqual(pin["nxnative_commit"], "5dfc86ae80c53a62262c3b3c66eab043f1fc574a")
         self.assertEqual(manifest["nxnative_commit"], pin["nxnative_commit"])
         path = "engine/dm/host/hle_audren.c"
         official = {entry["path"]: entry["sha"] for entry in manifest["changed_paths"]}

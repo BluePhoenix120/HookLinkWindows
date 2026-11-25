@@ -34,6 +34,7 @@ OUTPUTS = (
 # Keep the check strict, but also accept the explicitly imported X2 engine.
 # No branch HEAD or Git checkout is used to infer the engine version.
 _SUPPORTED_ENGINE_BASES = {
+    ('4.0', '5dfc86ae80c53a62262c3b3c66eab043f1fc574a', 'https://github.com/seedds/nxnative.git'),
     ('2.0', '3a28152fe7052c9f45ede460022d39be6c91e3cf',
      'https://github.com/dsi-hub/nxnative.git'),
     ('3.0', '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf',
@@ -49,6 +50,7 @@ _SUPPORTED_ENGINE_BASES = {
     ('3.0.1', '3e1ada5b96acb61293ac790bd6dd093a947abed6',
      'https://github.com/seedds/nxnative.git'),
 }
+_HOOKLINK_X3_ENGINE = 'ee3ce6a02bc737d38795f0a96cce494cee7a799c'
 _HOOKLINK_X201_ENGINE = '698b46bc5b14510fffc0a4b8fd4bf78309004e4c'
 
 
@@ -82,7 +84,7 @@ def verify_source_identity(root: Path) -> tuple[str, str]:
          f'Unsupported HookLink {version!r} / NXNative {str(engine_sha)[:12]!r} pair; '
          'use an unmodified complete HookLinkWindows release')
 
-    if version in ('3.0', '3.0.1'):
+    if version in ('3.0', '3.0.1', '4.0'):
         manifest = root / 'ENGINE_PIN_FILES.json'
         need(manifest.is_file(), 'X2 engine provenance manifest missing (ENGINE_PIN_FILES.json)')
         try:
@@ -96,6 +98,14 @@ def verify_source_identity(root: Path) -> tuple[str, str]:
              'Engine manifest does not match pinned revision; use the complete release')
         if version == '3.0':
             need(len(record['changed_paths']) == 25, 'X2 file manifest has an unexpected size')
+        elif version == '4.0':
+            need(record.get('hooklink_engine_commit') == _HOOKLINK_X3_ENGINE
+                 and meta.get('hooklink_engine_commit') == _HOOKLINK_X3_ENGINE
+                 and len(record['changed_paths']) >= 3800
+                 and isinstance(record.get('hooklink_tree'), list)
+                 and record.get('conflict_resolution_report', {}).get('unmerged_index_entries') == 0
+                 and not record.get('conflict_resolution_report', {}).get('missing_hooklink_changes'),
+                 'X3 integration manifest is incomplete')
         else:
             need(len(record['changed_paths']) >= 250
                  and record.get('from_commit') == '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf'

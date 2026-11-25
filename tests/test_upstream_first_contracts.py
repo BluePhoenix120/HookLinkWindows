@@ -31,7 +31,7 @@ def all_symbols(rel):
 
 class UpstreamFirstEngineContracts(unittest.TestCase):
     def test_complete_original_snapshot_is_represented(self):
-        self.assertEqual(PIN["nxnative_commit"],"3e1ada5b96acb61293ac790bd6dd093a947abed6")
+        self.assertEqual(PIN["nxnative_commit"],"5dfc86ae80c53a62262c3b3c66eab043f1fc574a")
         self.assertIn("upstream-first", PIN["engine_integration_policy"])
         self.assertGreaterEqual(len(MANIFEST["changed_paths"]),3800)
         self.assertEqual(len(MANIFEST["changed_paths"]),len(set(p["path"] for p in MANIFEST["changed_paths"])))
@@ -49,14 +49,7 @@ class UpstreamFirstEngineContracts(unittest.TestCase):
     def test_hooklink_and_windows_overlap_decisions_are_recorded(self):
         self.assertGreaterEqual(len(MANIFEST["original_hooklink_conflicts"]),20)
         reviewed=set(MANIFEST["windows_reviewed_hunk_conflicts"])
-        self.assertEqual(reviewed,{
-            "engine/dm/gfx/nvn/dmsh_chain.h",
-            "engine/dm/gfx/nvn/nvn_mtl.m",
-            "engine/dm/gfx/tools/dmsh_build.py",
-            "engine/dm/gfx/tools/dmsh_chain.lock",
-            "engine/dm/gfx/tools/dmsh_rewrite.py",
-            "engine/docs/reference/frame-rate.md"
-        })
+        self.assertEqual(reviewed, set(['engine/dm/games/0400486024DEC000/README.md', 'engine/dm/gfx/nvn/dmsh_chain.h', 'engine/dm/gfx/nvn/nvn_mtl.m', 'engine/dm/gfx/tools/dmsh_build.py', 'engine/dm/gfx/tools/dmsh_chain.lock', 'engine/dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate', 'engine/dm/ios/Sources/front_ios.m', 'engine/docs/reference/memory.md', 'engine/docs/settings.md']))
         self.assertTrue(set(MANIFEST["integration_overrides"]).issubset(set(MANIFEST["windows_overlays"])))
 
     def test_original_shader_split_coverage(self):

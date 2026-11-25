@@ -22,18 +22,19 @@ from unittest.mock import Mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'engine' / 'scripts' / 'build_ipa_from_nsp.py'
-TABLES = ('shader_facts_manual.tsv', 'shader_map.tsv', 'shader_facts.tsv', 'shader_pairs.tsv', 'pso_pairs.tsv')
+TABLES = ('shader_facts_manual.tsv', 'shader_map.tsv', 'shader_facts.tsv', 'shader_pairs.tsv', 'pso_pairs.tsv', 'geo_pairs.tsv', 'mesh_pairs.tsv')
 
 
 def production_functions(source, ns):
     tree = ast.parse(source.read_text(encoding='utf-8'))
     names = {'files_under', 'fingerprint', 'reused', 'package_key',
-             'split_output_key', 'split_profile_inputs', 'split_shaders'}
+             'split_output_key', 'split_profile_inputs', 'split_shaders', 'side_table'}
     funcs = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in names]
     found = {n.name for n in funcs}
     if names != found:
         raise AssertionError(f'missing production functions: {names - found}')
     ns['SPLIT_TABLES'] = TABLES
+    ns['SPLIT_SIDE_TABLES'] = ('pso_pairs.tsv', 'geo_pairs.tsv', 'mesh_pairs.tsv')
     exec(compile(ast.Module(body=funcs, type_ignores=[]), str(source), 'exec'), ns)
     return ns
 

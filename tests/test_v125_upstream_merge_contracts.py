@@ -5,7 +5,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "engine"
-TARGET = "3e1ada5b96acb61293ac790bd6dd093a947abed6"
+TARGET = "5dfc86ae80c53a62262c3b3c66eab043f1fc574a"
 
 
 class V125UpstreamMergeContracts(unittest.TestCase):
@@ -19,7 +19,7 @@ class V125UpstreamMergeContracts(unittest.TestCase):
         self.assertGreaterEqual(tuple(map(int, pin["release"].removeprefix("Alpha V").split("."))), (1, 2, 5))
         self.assertEqual(manifest["nxnative_commit"], TARGET)
         self.assertEqual(manifest["incremental_upstream_to"], TARGET)
-        self.assertEqual(manifest["incremental_upstream_from"], "3ec5b785f37f8c87d78433f152914d89c4ef93c9")
+        self.assertEqual(manifest["incremental_upstream_from"], "3e1ada5b96acb61293ac790bd6dd093a947abed6")
         self.assertGreaterEqual(len(manifest["changed_paths"]), 3895)
 
     def test_game_keeps_iphone_alias_and_new_screen_shape(self):
@@ -31,11 +31,10 @@ class V125UpstreamMergeContracts(unittest.TestCase):
         self.assertIn("def screen_shape(ctx)", patches)
         self.assertIn("def wide_view(ctx)", patches)
         self.assertIn("if ctx.base == 0x6e6be0:", patches)
-        self.assertIn("        wide_view(ctx)", patches)
-        self.assertIn("        screen_shape(ctx)", patches)
+        self.assertIn("    wide_view(ctx)", patches)
         self.assertIn("**screen_shape_functions", patches)
         self.assertIn("half_rate(ctx)", patches)
-        self.assertNotIn("MATCH_CUTS =", patches)  # documented HookLink iPhone movie fix
+        self.assertIn("MATCH_CUTS", patches)  # X3's current movie cuts take priority
 
     def test_upstream_and_hooklink_metal_rendering_both_present(self):
         code = self.read("engine/dm/gfx/nvn/nvn_mtl.m")
@@ -52,10 +51,10 @@ class V125UpstreamMergeContracts(unittest.TestCase):
 
     def test_hooklink_launcher_and_original_settings(self):
         code = self.read("engine/dm/ios/Sources/Launcher.swift")
-        self.assertIn("private var settingsTab", code)
+        self.assertIn("ModStore.shared", code)
         settings = self.read("engine/dm/games/settings.tsv")
         for env in ("DM_WIDE_VIEW\t", "DM_WIDE_HUD\t", "DM_MIC\t",
-                    "DM_SCREEN_ASPECT\t", "DM_NVN_RC_STALE\t"):
+                    "DM_NVN_RC_STALE\t"):
             self.assertIn(env, settings)
 
     def test_no_unresolved_three_way_markers(self):

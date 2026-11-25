@@ -67,7 +67,7 @@ class OriginalBahsRecordGuard(unittest.TestCase):
         raw = SPLITTER.read_bytes()
         digest = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw).hexdigest()
         official = {item["path"]:item["sha"] for item in record["changed_paths"]}
-        self.assertEqual(official[path], "0272b8d46727ed5d8139b5510df35ddd0633c321")
+        self.assertEqual(official[path], "bd09b9e5eabc9f7451f0735055cdeeb47f2f3989")
         if digest == official[path]:
             self.assertNotIn(path, record["integration_overrides"])
             self.assertNotIn(path, record["windows_overlays"])

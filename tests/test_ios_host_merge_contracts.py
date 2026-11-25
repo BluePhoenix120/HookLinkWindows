@@ -19,9 +19,15 @@ class IOSHostMergeContracts(unittest.TestCase):
         cls.front = FRONT.read_text(encoding='utf-8')
 
     def test_texture_alias_result_is_bridge_safe(self):
-        self.assertIn(
-            'if (shared) { if (!g_pool_walk) tu_stamp(shared, 0); '
-            'return tex_mtl_result(shared, owned); }', self.mtl)
+        start = self.mtl.index('alias_key ak = tex_alias_key(t);')
+        end = self.mtl.index('int again = 0;', start)
+        path = self.mtl[start:end]
+        self.assertIn('if (!have) have = own_alias_take(t->serial, &ak);', path)
+        self.assertIn('have = sparse_buf_tex_refresh(t, cur, root);', path)
+        self.assertIn('if (!g_pool_walk) tu_stamp(have, 0); return tex_mtl_result(have, owned);', path)
+        self.assertNotIn('return have;', path)
+        self.assertIn('if (owned) *owned = texture;', self.mtl)
+        self.assertIn('return (__bridge void *)texture;', self.mtl)
         self.assertNotIn('tu_stamp(shared, 0); return shared;', self.mtl)
 
     def test_compressed_alias_declarations_precede_early_users(self):
