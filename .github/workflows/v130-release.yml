@@ -117,6 +117,8 @@ jobs:
           old="dirs = list(dict.fromkeys(os.path.dirname(s) for s in srcs))"
           assert old in s
           s=s.replace(old,"srcs += [os.path.join(repo, 'win/ios', f) for f in sorted(os.listdir(os.path.join(repo, 'win/ios'))) if f.endswith('.m')]\n"+old)
+          assert "'-O1', '-w'" in s
+          s=s.replace("'-O1', '-w'", "'-O1', '-w', '-ferror-limit=0'")
           p.write_text(s)
           PY
           python3 dm/ios/tools/compile_check.py

@@ -63,5 +63,17 @@ def repair(cwd, original, source, notes):
     region=region.replace("t.width >> level","t.width >> hl").replace("t.height >> level","t.height >> hl")
     region=once(region,"    fam_prepare_write(t, fam_full);","    if (on_host) fam_prepare_write(t, fam_full);")
     s=s[:a]+region+s[b:]
+    # The sparse refresh path already performs the alias lookup; retain X3's
+    # retirement check without repeating the lookup or declaring ak twice.
+    s=once(s,"    alias_key ak = tex_alias_key(t);\n    id shared = own_alias_take(t->serial, &ak);   // found and published in one hold (nvn_owner.m)\n    if (shared) { if (!g_pool_walk) tu_stamp(shared, 0); return tex_mtl_result(shared, owned); }\n","")
+    # X3's periodic pool report and original's memory-pressure accounting
+    # occupy adjacent insertion points. Retain both implementations.
+    a=o.index("    static unsigned long long last_rss, last_gpu, last_frame, last_wired;")
+    b=o.index("    int sparse = lines",a)
+    a2=s.index("    static unsigned long long last_rss, last_gpu, last_frame;")
+    b2=s.index("    int sparse = lines",a2)
+    s=s[:a2]+o[a:b]+s[b2:]
+    decl="static _Atomic uint64_t g_lib_data_n, g_lib_data_bytes, g_lib_data_fails, g_lib_data_fail_bytes;\nstatic int lib_borrow(void);\n"
+    s=once(s,"void mtl_mem_stat(unsigned long long frame, unsigned long long rss_mb) {",decl+"void mtl_mem_stat(unsigned long long frame, unsigned long long rss_mb) {")
     p.write_text(s,encoding="utf-8")
     notes.append(path+": reconcile memory trim, eviction, frame generation/latch ABI and mip alias ordering")
