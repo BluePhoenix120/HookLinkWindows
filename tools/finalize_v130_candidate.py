@@ -142,6 +142,56 @@ def finalize(dest):
     edit(p,"def test_all_present_now_calls_supply_producer_event_eight_arguments","def test_all_present_now_calls_supply_producer_event_nine_arguments")
     edit(p,'self.assertEqual(len(definition), 8,','self.assertEqual(len(definition), 9,')
     edit(p,"self.assertEqual(len(args), 8, args)","self.assertEqual(len(args), 9, args)\n            self.assertIn(args[8], ('0', 'latched_now ? update.targetTimestamp : 0'))")
+    # The previous shared variable was folded into the sparse-aware 'have'
+    # path. Assert the ownership helper, lookup, refresh and bridge on the
+    # same actual path rather than reinstating a duplicate alias lookup.
+    p="tests/test_ios_host_merge_contracts.py"
+    old="""        self.assertIn(
+            'if (shared) { if (!g_pool_walk) tu_stamp(shared, 0); '
+            'return tex_mtl_result(shared, owned); }', self.mtl)
+        self.assertNotIn('tu_stamp(shared, 0); return shared;', self.mtl)"""
+    new="""        start = self.mtl.index('alias_key ak = tex_alias_key(t);')
+        end = self.mtl.index('int again = 0;', start)
+        path = self.mtl[start:end]
+        self.assertIn('if (!have) have = own_alias_take(t->serial, &ak);', path)
+        self.assertIn('have = sparse_buf_tex_refresh(t, cur, root);', path)
+        self.assertIn('if (!g_pool_walk) tu_stamp(have, 0); return tex_mtl_result(have, owned);', path)
+        self.assertNotIn('return have;', path)
+        self.assertIn('if (owned) *owned = texture;', self.mtl)
+        self.assertIn('return (__bridge void *)texture;', self.mtl)
+        self.assertNotIn('tu_stamp(shared, 0); return shared;', self.mtl)"""
+    edit(p,old,new)
+    # Additional regressions against precisely the native compiler failures.
+    (ROOT/"tests/test_v130_metal_abi.py").write_text("""from pathlib import Path
+import unittest
+
+ROOT=Path(__file__).resolve().parents[1]
+M=(ROOT/'engine/dm/gfx/nvn/nvn_mtl.m').read_text(encoding='utf-8')
+G=(ROOT/'engine/dm/gfx/nvn/nvn_geometry.inc').read_text(encoding='utf-8')
+
+class MetalABI(unittest.TestCase):
+    def test_borrowed_pipeline_pointer(self):
+        self.assertEqual(M.count('static void *pso_get_(NvProg *pr, MTLRenderPassDescriptor *unused)'),2)
+        self.assertIn('((__bridge id<MTLRenderPipelineState>)pso_get_ref(pr, unused))',M)
+        start=M.index('static void *pso_get_(NvProg *pr, MTLRenderPassDescriptor *unused) {')
+        body=M[start:M.index('static NSString *warm_key(',start)]
+        self.assertNotIn('return nil;',body)
+        self.assertIn('return (__bridge void *)ps;',body)
+
+    def test_pending_slot_metadata_before_free(self):
+        start=M.index('static id<MTLRenderPipelineState> pso_pend_take(')
+        body=M[start:M.index('static int pso_pend_try(',start)]
+        self.assertLess(body.index('int off = g_pp[at].off;'),body.index('pso_pend_free(at)'))
+        self.assertIn('return pso_build(d, off, &e);',body)
+
+    def test_mesh_archive_and_display_link(self):
+        self.assertIn('mtk_desc4(d, ts, ms, ff, k->border, 0)',G)
+        self.assertNotIn('mtk_desc4(d, ts, ms, ff, k->border)',G)
+        self.assertIn('static _Atomic int g_test_link_hold;',M)
+        start=M.index('const double pres_gpu = g_present_gpu_s;')
+        end=M.index('link_gpu_lead(it.frame, it.t_in, cb, wk_cb[k], pres_gpu',start)
+        self.assertIn('pthread_mutex_unlock(&g_pq_mu);',M[start:end])
+""",encoding="utf-8")
     # Source contract for new timing page and preservation of both trees.
     (ROOT/"tests/test_v130_integration.py").write_text('''"""Release-blocking X3-priority integration contracts."""\nimport hashlib\nimport json\nfrom pathlib import Path\nimport unittest\n\nROOT=Path(__file__).resolve().parents[1]\nPIN=json.loads((ROOT/"ENGINE_PIN.json").read_text(encoding="utf-8"))\nMANIFEST=json.loads((ROOT/"ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))\n\nclass X3Integration(unittest.TestCase):\n    def test_all_conflicts_resolved(self):\n        self.assertEqual(PIN["release"],"Alpha V1.3.0")\n        self.assertEqual(PIN["nxnative_commit"],"'''+NEW_ORIGINAL+'''")\n        self.assertEqual(PIN["hooklink_engine_commit"],"'''+NEW_HOOK+'''")\n        r=MANIFEST["conflict_resolution_report"]\n        self.assertEqual(sum(x["hunks"] for x in r["upstream"]),64)\n        self.assertEqual(sum(x["hunks"] for x in r["windows"]),20)\n        self.assertEqual(r["unmerged_index_entries"],0)\n        self.assertFalse(r["conflict_marker_paths"])\n        self.assertFalse(r["missing_hooklink_changes"])\n        self.assertFalse(r["missing_official_paths"])\n\n    def test_all_hooklink_blobs_accounted_for(self):\n        overrides=MANIFEST["hooklink_integration_overrides"]\n        for row in MANIFEST["hooklink_tree"]:\n            p=row["path"]; data=(ROOT/p).read_bytes()\n            expected=overrides.get(p,{}).get("integrated_sha",row["sha"])\n            def digest(b): return hashlib.sha1(b"blob "+str(len(b)).encode()+bytes([0])+b).hexdigest()\n            self.assertIn(expected,(digest(data),digest(data.replace(bytes([13,10]),bytes([10])))),p)\n\n    def test_x3_timing_abi_and_workgroup(self):\n        base=ROOT/"engine/dm/gfx/nvn"\n        self.assertIn("#define FSTEP_UNIT_OFF 0x48",(base/"nvn_fstep.h").read_text(encoding="utf-8"))\n        h=(base/"hle_nvn.c").read_text(encoding="utf-8")\n        for marker in ("dm_fps_state + 0x38","dm_fps_state + 0x3c","static void fwg_frame(","fwg_frame(rtp);","void dm_frame_wg_join("):\n            self.assertIn(marker,h)\n        stub=(ROOT/"engine/dm/games/0400486024DEC000/patches.py").read_text(encoding="utf-8").split("def frame_step(ctx):",1)[1].split("# The game's dynamic resolution",1)[0]\n        self.assertIn("0xbd403a00",stub)\n        self.assertIn("0xb9003e11",stub)\n        self.assertNotIn("ctx.capabilities.add('FRAME_STEP_120')",stub)\n        self.assertTrue((ROOT/"Resources/presets/launcher_background.jpg").is_file())\n\nif __name__=="__main__": unittest.main()\n''',encoding="utf-8")
     release_note=("## HookLinkWindows Alpha V1.3.0 (2026-11-25)\n\n"

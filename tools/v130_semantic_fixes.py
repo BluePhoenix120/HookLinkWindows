@@ -75,5 +75,29 @@ def repair(cwd, original, source, notes):
     s=s[:a2]+o[a:b]+s[b2:]
     decl="static _Atomic uint64_t g_lib_data_n, g_lib_data_bytes, g_lib_data_fails, g_lib_data_fail_bytes;\nstatic int lib_borrow(void);\n"
     s=once(s,"void mtl_mem_stat(unsigned long long frame, unsigned long long rss_mb) {",decl+"void mtl_mem_stat(unsigned long long frame, unsigned long long rss_mb) {")
+    # A stolen pending pipeline must use its own captured border flag,
+    # before the slot is freed and another worker can reuse it.
+    s=once(s,"MTLRenderPipelineDescriptor *d = g_pp[at].d; g_pp[at].d = nil; pso_pend_free(at); g_pp_stolen++;",
+           "MTLRenderPipelineDescriptor *d = g_pp[at].d; int off = g_pp[at].off; g_pp[at].d = nil; pso_pend_free(at); g_pp_stolen++;")
+    # The renderer's borrowed pointer ABI wins: the forward declaration,
+    # wrapper, and all successful returns already use bridged void pointers.
+    a=s.index("static __unsafe_unretained id<MTLRenderPipelineState> pso_get_(")
+    b=s.index("\nstatic NSString *warm_key(",a)
+    region=s[a:b]
+    region=once(region,"static __unsafe_unretained id<MTLRenderPipelineState> pso_get_(","static void *pso_get_(")
+    region=once(region,"                        return nil;","                        return NULL;")
+    s=s[:a]+region+s[b:]
+    # Capture the GPU duration while the queue mutex still protects it.
+    s=once(s,"    pthread_cond_broadcast(&g_pq_cv);\n    pthread_mutex_unlock(&g_pq_mu);\n    // Hold the whole ticks",
+           "    const double pres_gpu = g_present_gpu_s;\n    pthread_cond_broadcast(&g_pq_cv);\n    pthread_mutex_unlock(&g_pq_mu);\n    // Hold the whole ticks")
+    s=once(s,"static CAMetalDisplayLink *g_link; static CFRunLoopRef g_link_rl; static int g_link_started;",
+           "static CAMetalDisplayLink *g_link; static CFRunLoopRef g_link_rl; static int g_link_started;\nstatic _Atomic int g_test_link_hold;  // DM_TEST_LINK_STALL diagnostic")
+    # Archive probe uses the complete (specialized) descriptor, exactly as
+    # the normal build path. Keep the six-argument mesh base interface.
+    g=cwd/"dm/gfx/nvn/nvn_geometry.inc"
+    geo=g.read_text(encoding="utf-8")
+    geo=once(geo,"mtk_desc4(d, ts, ms, ff, k->border) : nil;","mtk_desc4(d, ts, ms, ff, k->border, 0) : nil;")
+    g.write_text(geo,encoding="utf-8")
+    notes.append("dm/gfx/nvn/nvn_geometry.inc: archive lookup uses complete mesh descriptor")
     p.write_text(s,encoding="utf-8")
     notes.append(path+": reconcile memory trim, eviction, frame generation/latch ABI and mip alias ordering")
