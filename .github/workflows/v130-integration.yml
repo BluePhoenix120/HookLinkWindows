@@ -1,0 +1,33 @@
+name: V1.3.0 HookLink-priority integrated engine validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/integrate_v130_hooklink_priority.py'
+      - '.github/workflows/v130-integration.yml'
+permissions:
+  contents: read
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Apply all upstream changes with HookLink priority
+        run: python3 -B tools/integrate_v130_hooklink_priority.py --output "$RUNNER_TEMP/v130"
+      - name: Check Python syntax and compile frame pacing test
+        run: |
+          python3 -m compileall -q engine/win engine/dm/tools engine/dm/gfx/tools engine/scripts
+          cc -std=c11 -O2 engine/dm/gfx/tests/t_fstep.c -lm -o "$RUNNER_TEMP/t_fstep"
+          "$RUNNER_TEMP/t_fstep"
+      - name: Preserve exact integrated patch and conflict decision report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v130-integrated-source
+          path: ${{ runner.temp }}/v130
+          if-no-files-found: error
