@@ -22,12 +22,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.3.1](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**[Latest Alpha release](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.3.1-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.3.1-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest/download/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest/download/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).
@@ -38,59 +38,11 @@ Windows may display an unsigned-app security warning. Check the publisher/source
 
 ## Project status
 
-**Alpha V1.3.0 — experimental Windows port (November 2026).**
+HookLinkWindows is experimental Alpha software. The Windows GUI and release packaging are checked by automated CI. Earlier Windows-generated IPAs have been confirmed to reach playable gameplay on an iPhone 18 Pro Max running iOS 27.2.
 
-| Area | Status |
-|---|---|
-| Windows GUI, package creation and automated regression tests | Windows GUI CI gates the release; end-to-end V1.2.8 IPA and device testing remain outstanding |
-| Source integration | Complete original NXnative `3e1ada5b` integrated through 50 upstream commits, with HookLink/Windows source differences reviewed at the hunk level; see [Engine and upstream](#engine-and-upstream) |
-| Fresh Windows install → full NUP build → signed IPA → iPhone game rendering | **Verified by developer for V1.2.0** on iPhone 18 Pro Max/iOS 27.2: gameplay and graphics work. V1.2.1 audio scheduling fix still needs device validation |
-| Device compatibility and performance | **Limited testing**. Results from upstream HookLink or older local builds are not guarantees for this release |
-| Installation, entitlements and on-device game-data transfer | Depend on the user's device, signing method and toolchain |
+Automated build and regression checks do not establish end-to-end IPA compilation, installation, gameplay, or device compatibility for the current release. Results depend on the game input, toolchain, signing method, and device.
 
-The developer has confirmed that a Windows-generated V1.2.0 IPA reaches playable gameplay with correct graphics and controls on an iPhone 18 Pro Max (iOS 27.2). The same build exhibited audio static/popping caused by logged underruns. V1.2.1 ports an upstream scheduling fix for that audio issue; its iPhone runtime result remains unverified.
-
-For development history, see [CHANGELOG.md](CHANGELOG.md). For the longer Windows setup and diagnostics reference, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
-
-## Alpha V1.2.3 — repair mixed-generation shader splitter and profile
-
-The V1.2.2 Windows build stopped at shader stage 4/7 with a registered-vs-split map mismatch for Ocarina of Time (0400486024DEC000, v131072). NXnative's newer official profile already removes the false BAHS descriptor `ce0eba6c3584814d` (`AglShader.sharcb@0x1b41cc`), but our HookLink-preserved `shader_split.py` still scanned it and shifted 3,022 later vertex rows. V1.2.3 restores the original NXnative PR #2943 record-descriptor validation and pairing into the existing Windows-adjusted splitter, and adds a synthetic regression test that excludes descriptor-shaped false entries. The integration now starts with the complete original NXnative `d2fd78b402f9` tree and reapplies actual HookLink changes and Windows-specific deltas using their shared history, rather than preserving older whole files. All upstream definitions checked by the source audit are present; six Windows conflict hunks have explicit recorded resolutions. The Windows toolchain metadata is retained for verification, not assumed to be compatible with the updated shader chain. See [the upstream-first integration report](docs/UPSTREAM_FIRST_ENGINE_INTEGRATION.md). **This fixes the identified parser mismatch in source; successful on-device IPA generation still requires testing.** The build's three malformed `.zs` texture warnings are separate problems in the supplied NUP and are not fixed by this change. Reuse the same work directory and choose **Build IPA**; the shader split input fingerprint should detect this updated source and rerun stage 4 without deleting good shader caches.
-
-## Alpha V1.2.2 — complete original NXnative update
-
-This release merges the entire latest original [NXnative main](https://github.com/seedds/nxnative/commit/d2fd78b402f92d5a83b78987e49aba22e8626719) into HookLink and HookLinkWindows through a three-way source merge. HookLink's X2.0.1 engine changes and the Windows build integration remain preserved where they conflict; `ENGINE_PIN_FILES.json` enumerates every modified integrated upstream file and its original Git blob hash. Previously omitted original source files have been restored, apart from two explicitly documented non-Windows translator binaries. **The Windows regression suite passed (199 tests); successful iOS cross-compilation and iPhone runtime behavior for this broad engine update have not yet been verified.** For diagnostics use [the full-sync provenance report](docs/FULL_NXNATIVE_SYNC_CANDIDATE.md). Keep your working V1.2.1 IPA and shader-cache backup while testing.
-
-## Alpha V1.2.1 — audio renderer real-time scheduling
-
-The V1.2.0 Windows-built IPA reached gameplay on an iPhone 18 Pro Max, but its audio output consistently crackled through speakers and AirPods Pro 3. The 48 kHz output negotiated the requested 5 ms callback buffer, yet the device logs recorded repeated underruns while PCM mixing itself typically completed in less than 0.2 ms per frame. V1.2.1 backports [upstream NXnative's targeted producer scheduling fix](https://github.com/seedds/nxnative/commit/2edad1828de247aaf46c53cb288357cb65e84be0): a preemptible 5 ms Mach time-constraint deadline on the audio rendering worker, with standard policy restored on teardown. The policy is enabled by default; set `DM_AUDREN_RT=0` in the app's `env.txt` to compare against previous scheduling after upgrading to a V1.2.1 build. Failure to obtain the policy falls back to previous behavior. **The V1.2.1 iOS audio fix has not yet been validated on-device.** The pinned engine base, graphic/shader pipeline and compiler memory behavior are unchanged.
-
-## Alpha V1.2.0 — native host call/variable repairs
-
-V1.1.9 reached native Clang compilation but failed on four mismatched `nvn_mtl.m` regions: the pool-entry function was missing its `uint32_t *lead` parameter; compressed-texture copy called `bcp_after` without an earlier `bcp_before` result; the display-link callback used undefined `tol`; and `link_drain_note` was called with only three of its five arguments. V1.2.0 restores the 10-argument pool-entry interface and compressed-texture pairing, uses a 2 ms display-link tolerance consistent with the pinned NXnative hold margin, and passes the unlatched timing sentinel (-1, 0) into the existing 5-argument drain helper. No memory scheduler/Job Object or shader worker changes are included. The full native iOS compilation, IPA, and phone runtime are still **unverified**. Keep the existing build cache and retry **Build IPA**.
-
-## Previous Alpha V1.1.9 pool-spare / demand recorder host compiler repair
-
-The V1.1.8 iOS host compile advanced past the archive helpers and then failed in `nvn_mtl.m` because the demand recorder was defined twice, while the pool-spare reuse functions referenced declarations and helpers removed in the previous engine merge. V1.1.9 removes the byte-identical duplicate and restores the pinned NXnative pool-spare type, capacity, accounting, and `spare_live` / `spare_out` helpers. The original V1.1.5 Windows pipeline, shader workers, and cache remain unchanged; V1.1.6 memory/job controls are **not** included. Offline integration tests run in CI, but a real iOS host compile, IPA, and on-device rendering **remain unverified**. Reuse the existing shader cache and select **Build IPA**, not **New clean**.
-
-## Previous Alpha V1.1.8 archive host compiler fix (V1.1.5 baseline)
-
-V1.1.7 reached the native host compilation stage but failed in `nvn_mtl.m` (undeclared `arch_file_check`, malformed `arch_plan`, type-conflicting `p`, invalid returns). Inspecting the complete host source revealed that three required archive helper definitions had been omitted from the integrated NXnative source. V1.1.8 restores the exact corresponding helper block from pinned original NXnative commit `0b5fd6020093407af8bb5ad166e78e00bd2b7242`: `arch_plan`, `arch_vm_room`, `arch_admit`, `pso_bundle_open`, and the small `arch_file_check` bridge. The rest of V1.1.7 remains unchanged. No V1.1.6 RAM limiting, Metal scheduler, or process-control work is reintroduced. Full iOS host compilation and device functionality are **not yet verified**. Preserve the existing shader cache; select **Build IPA**, not **New clean**.
-
-## Previous Alpha V1.1.7 native-host compiler fix (V1.1.5 baseline)
-
-This is **V1.1.5 with only targeted native iOS host compilation repairs**, plus tests and release metadata. It restores missing compressed-texture alias, deferred unbind, and depth/stencil declarations and fixes an Objective-C texture result cast in `nvn_mtl.m`; in `front_ios.m` it removes the duplicate screen-rate function and adds `<stdatomic.h>`. No V1.1.6 Metal worker cap, RAM budget, Job Object, or stop behavior changes are included. A successful full iOS host compile, IPA, and device run are **not yet verified**; preserve your V1.1.5 shader cache for a retry.
-
-## Previous Alpha V1.1.5 changes
-
-A fresh V1.1.4 Windows build completed 42,848 shader translations and 52,980 iOS Metal compilations, then failed when `cb_extent.py` imported missing `memo_reflection` from an older HookLink `c1_guard.py`. V1.1.5 replaces the stale guard with the **exact pinned original NXnative implementation**, preserving the analyzer and normalized memo-key behavior. Source-contract and functional tests now detect this mismatch in CI. **IPA creation and on-device rendering are still unverified.** Retain your compiled shader work directory rather than creating another clean one for the first retry.
-
-## Previous Alpha V1.1.4 changes
-
-A fresh V1.1.3 Windows build reached shader compilation and exposed another merged-engine API mismatch: the builder calls `dmsh_rewrite.membar_fence()`, but the original NXnative rewrite module did not contain HookLink's implementation. V1.1.4 restores HookLink's device-scope memory-fence rewrite in that module, retaining the original NXnative changes, and adds regression tests for the merged shader helper APIs. The underlying build had already rewritten its main/SDK binaries, split 186,587 shader inputs, and discovered 42,848 shaders; **no completed IPA or iPhone rendering verification is claimed for V1.1.4**.
-
-## Previous Alpha V1.1.3 changes
-
-This Alpha release fixes a source compatibility failure discovered in a clean Windows build of V1.1.2. The original NXnative `dmsh_atomic.py` no longer exports `cross_args()`, but the merged HookLink shader builder still called it. V1.1.3 removes those calls, uses the integrated shader-chain MSL 3.2 flags, fixes the worker exception handler for Windows/Python 3.14, and adds regression tests to catch API drift. **This is a testable fix, not a claim of a completed iOS shader compile or an on-device rendering fix.** Preserve existing build-work directories for retry; the shader-chain check may need to resynchronize local metadata.
+For release-specific changes and known limitations, see [GitHub Releases](https://github.com/BluePhoenix120/HookLinkWindows/releases) and [CHANGELOG.md](CHANGELOG.md). For detailed setup and diagnostics, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
 ## Requirements
 
@@ -129,7 +81,7 @@ The normal path uses the **GUI**; there is no need to hand-edit JSON configurati
 5. Review **Preview command**, then select **Build IPA**. Read **Build output and diagnostics** for progress and any toolchain errors. The first build may take hours; cached rebuilds can be faster, but neither completion time nor successful compilation is guaranteed.
 6. Sign and install the generated IPA using your own compatible sideloading tool, then transfer the files described in [Install on iPhone](#install-on-iphone).
 
-**Testing from scratch?** The GUI's **New clean…** button creates a fresh sibling build directory and clears optional previous-shader reuse without deleting your existing build folders. This is the preferred way to validate V1.1.5 independently of an older shader cache.
+**Testing from scratch?** The GUI's **New clean…** button creates a fresh sibling build directory and clears optional previous-shader reuse without deleting your existing build folders. Use this to validate a build independently of an older shader cache.
 
 **Advanced controls:** You can configure shader split workers (automatic mode detects logical CPUs with a cap of 61), Bundle ID, runtime settings, optional previous shader work, compatibility settings, and experimental native app-only packaging. The default Bundle ID is `PhoenixNetwork.HookLinkWindows`. **Changing it may create a separate iPhone app and leave previous saves inaccessible from the new app.** Start with the defaults unless testing a specific issue.
 
@@ -181,18 +133,13 @@ Still stuck? Open a [GitHub issue](https://github.com/BluePhoenix120/HookLinkWin
 
 ## Engine and upstream
 
-V1.1.5 retains V1.1.2's integration of **original NXnative**, **HookLink's customized engine**, and the project's **Windows-specific adaptations**. It is **not** an unmodified copy of any one upstream repository.
+HookLinkWindows integrates the original [NXnative](https://github.com/seedds/nxnative) engine, [HookLink](https://github.com/dsi-hub/HookLink)'s customized engine, and Windows-specific build adaptations. It is not an unmodified copy of any one upstream repository.
 
-| Component | Pinned revision |
-|---|---|
-| [Original `seedds/nxnative`](https://github.com/seedds/nxnative) | [`0b5fd6020093407af8bb5ad166e78e00bd2b7242`](https://github.com/seedds/nxnative/commit/0b5fd6020093407af8bb5ad166e78e00bd2b7242) |
-| [HookLink engine `dsi-hub/nxnative`](https://github.com/dsi-hub/nxnative) | [`698b46bc5b14510fffc0a4b8fd4bf78309004e4c`](https://github.com/dsi-hub/nxnative/commit/698b46bc5b14510fffc0a4b8fd4bf78309004e4c) |
-| Integrated engine source | `19528cf1e3115e64ecc8f02ab555ed0341579c09`, with preserved Windows overlays |
-| HookLink base | `3.0.1` (X2.0.1) |
+Official NXnative is the foundation. Where implementations conflict, HookLink's game-specific behavior takes priority, while necessary Windows compatibility changes are retained.
 
-Conflicting merge hunks favored HookLink's existing behavior to retain game-specific fixes. The current pin and policy are recorded in [ENGINE_PIN.json](ENGINE_PIN.json); file provenance is in [ENGINE_PIN_FILES.json](ENGINE_PIN_FILES.json). The Windows GUI's upstream commit link points to the **original NXnative base**, not to an assertion that the merged engine is byte-identical to it.
+The authoritative engine revisions and integration policy are recorded in [ENGINE_PIN.json](ENGINE_PIN.json); file-level provenance and integration overrides are recorded in [ENGINE_PIN_FILES.json](ENGINE_PIN_FILES.json). The Windows GUI's upstream commit link identifies the original NXnative base, not the merged engine itself.
 
-Other relevant project documentation: [fork integration](docs/FORK_INTEGRATION.md), [shader-chain validation](docs/SHADER_CHAIN.md), [contribution guide](CONTRIBUTING.md), [changelog](CHANGELOG.md), and [upstream HookLink README snapshot](docs/UPSTREAM_HOOKLINK_README.md).
+For development details, see [fork integration](docs/FORK_INTEGRATION.md), [shader-chain validation](docs/SHADER_CHAIN.md), and the [contribution guide](CONTRIBUTING.md).
 
 ## Contributing
 
