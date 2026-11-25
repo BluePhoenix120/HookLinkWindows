@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'tools/finalize_v130_candidate.py'
+      - 'tools/v130_semantic_fixes.py'
+      - 'tools/integrate_v130_hooklink_priority.py'
       - '.github/workflows/v130-release.yml'
 permissions:
   contents: read

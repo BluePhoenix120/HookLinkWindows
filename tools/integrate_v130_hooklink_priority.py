@@ -199,6 +199,8 @@ def adapt_engine(cwd, current, report):
         require("hasattr(os, 'pread')" in s, "Windows shader reader fallback lost")
         return s
     edit("dm/gfx/tools/dmsh_build.py", compiler)
+    from v130_semantic_fixes import repair
+    repair(cwd, NEW_ORIGINAL, source, notes)
     report["abi_adaptations"] = notes
     print("Cross-file ABI and Windows adaptations:", notes, flush=True)
 
