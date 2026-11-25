@@ -166,8 +166,46 @@ def sha256(path: Path) -> str:
 
 
 def source_sha(project: Path) -> str:
-    return hashlib.sha256((project / 'Program.cs').read_bytes() +
-                          (project / 'dmsh_xlate.csproj').read_bytes()).hexdigest()[:16]
+    """Use the engine's authoritative digest, including vendored Ryujinx inputs.
+
+    X3 uses this same digest in native_tools.sh and tool_lock.py. Do not
+    duplicate the inventory or hash only Program.cs and the project file.
+    """
+    chain = project.parent / 'dmsh_chain.py'
+    need(chain.is_file(), f'Missing canonical translator fingerprint tool: {chain}')
+    digest = execute([sys.executable, '-B', chain, '--xlate-source-sha'])
+    need(re.fullmatch(r'[0-9a-f]{16}', digest) is not None,
+         f'Malformed translator source fingerprint: {digest!r}')
+    return digest
+
+
+def publish_managed_translator(dotnet, project: Path, output: Path, expected: str) -> None:
+    """Compile and verify the managed Windows translator before installation.
+
+    Shared by the GUI bootstrap and the real Windows CI build. X3 generates
+    XlateSourceSha.g.cs at CoreCompile from this explicit MSBuild property.
+    """
+    need(re.fullmatch(r'[0-9a-f]{16}', expected) is not None,
+         'Invalid expected translator source fingerprint')
+    need(source_sha(project) == expected, 'Translator sources changed before publish')
+    ryu = project.parents[2] / 'third_party' / 'ryujinx'
+    need((ryu / 'src/Ryujinx.Graphics.Shader/Ryujinx.Graphics.Shader.csproj').is_file(),
+         f'Missing bundled Ryujinx translator sources: {ryu}')
+    cmd = [dotnet, 'publish', project / 'dmsh_xlate.csproj',
+           '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false',
+           '-p:PublishAot=false', '-p:PublishSingleFile=false',
+           '-p:PublishTrimmed=false', '-p:UseSharedCompilation=false',
+           f'-p:XlateSourceSha={expected}', f'-p:RyuSrc={ryu}',
+           '-o', output, '-nologo']
+    execute(cmd, env=isolated_dotnet_build_environment(), timeout=600, verbose=True)
+    for name in OUTPUTS:
+        need((output / name).is_file(), f'Publish missing dependency: {name}')
+    embedded = execute([dotnet, output / 'dmsh_xlate.dll', '--source-sha'])
+    need(embedded == expected,
+         f'New translator does not embed the bundled source fingerprint '
+         f'(expected {expected}, embedded {embedded!r})')
+    need(source_sha(project) == expected, 'Translator sources changed during publish')
+    print('PASS: Fresh managed translator embeds expected source fingerprint:', expected)
 
 
 def locate_spirv(toolchain, explicit: str | None) -> Path:
@@ -303,18 +341,7 @@ def install(root: Path, explicit_spirv: str | None, consent: bool) -> None:
         shutil.copytree(p['dll_dir'], backup / 'dmsh_xlate_bin')
     changed = False
     try:
-        cmd = [info['dotnet'], 'publish', p['project'] / 'dmsh_xlate.csproj',
-               '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false',
-               '-p:PublishAot=false', '-p:PublishSingleFile=false',
-               '-p:PublishTrimmed=false', '-p:UseSharedCompilation=false',
-               '-o', output, '-nologo']
-        execute(cmd, env=isolated_dotnet_build_environment(), timeout=600, verbose=True)
-        for name in OUTPUTS:
-            need((output / name).is_file(), f'Publish missing dependency: {name}')
-        embedded = execute([info['dotnet'], output / 'dmsh_xlate.dll', '--source-sha'])
-        need(embedded.splitlines()[-1].strip() == info['source_sha'],
-             'New translator does not embed the bundled source fingerprint')
-        print('PASS: Fresh managed translator embeds expected source fingerprint')
+        publish_managed_translator(info['dotnet'], p['project'], output, info['source_sha'])
         # Install all DLL dependencies as a unit, retaining anything else already present.
         p['dll_dir'].mkdir(parents=True, exist_ok=True)
         changed = True

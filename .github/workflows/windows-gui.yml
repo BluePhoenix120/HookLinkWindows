@@ -40,6 +40,15 @@ jobs:
         run: |
           python -B -m unittest discover -s tests -p 'test_*.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'GUI tests failed' }
+      - name: Set up .NET 10 for the real translator smoke test
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Publish and verify the actual managed shader translator
+        shell: pwsh
+        run: |
+          python -B tools/check_windows_translator.py
+          if ($LASTEXITCODE -ne 0) { throw 'Windows shader translator publish or fingerprint verification failed' }
       - name: Build standalone GUI EXE
         shell: pwsh
         run: ./tools/build_windows_gui_exe.ps1

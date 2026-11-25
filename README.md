@@ -1,3 +1,9 @@
+## Alpha V1.3.1 — Windows X3 translator fingerprint repair
+
+- Fixes V1.3.0's Windows graphics setup failure: the translator compiled successfully but did not embed the required source fingerprint. Use the engine's canonical `dmsh_chain.py --xlate-source-sha` digest (including vendored Ryujinx inputs) and pass it to MSBuild as `XlateSourceSha`. The embedded fingerprint is checked before installing the managed DLLs and regenerating the local shader tool lock and header.
+- Adds regression tests for fingerprint coverage, publish arguments and rejection of incorrect fingerprints, plus a real .NET 10 managed translator publish/verification step on Windows CI before release. The engine source pins, all 84 merge resolutions, and the bundled shader-chain ID remain unchanged. A correctly generated local Windows shader chain may differ from the bundled placeholder.
+- Retry with the complete Windows ZIP extracted to a separate folder; keep the existing game/build directory and shader archives. No manual fingerprint edits or bypasses are required. End-to-end Apple Metal compilation and device gameplay are not covered by the translator smoke test.
+
 ## Alpha V1.3.0 — HookLink X3 + updated original NXnative
 
 - Integrates HookLink X3 (4.0), engine ee3ce6a02bc7, with official NXnative 5dfc86ae80c5. Official NXnative is the base; X3 wins overlapping changes. All 64 upstream and 20 Windows replay conflict hunks have explicit resolutions.
@@ -60,12 +66,12 @@ HookLinkWindows combines the [HookLink](https://github.com/dsi-hub/HookLink) , [
 
 ## Download
 
-**Latest release: [Alpha V1.3.0](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
+**Latest release: [Alpha V1.3.1](https://github.com/BluePhoenix120/HookLinkWindows/releases/latest)**
 
 | Download | Intended use |
 |---|---|
-| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.3.0-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
-| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.3.0-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
+| **[Complete Windows package (ZIP)](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.3.1-alpha.1/HookLinkWindows-Windows-x64.zip)** | **Recommended.** Contains the Windows GUI executable together with the source tree, integrated engine and build scripts needed for IPA compilation. |
+| [Standalone GUI EXE](https://github.com/BluePhoenix120/HookLinkWindows/releases/download/v1.3.1-alpha.1/HookLinkWindows.exe) | GUI launcher only. **Not sufficient to build an IPA by itself.** Use the complete ZIP instead. |
 | [Source code](https://github.com/BluePhoenix120/HookLinkWindows) | For contributors and users who want to inspect the project or work from a Git checkout. |
 
 1. Download the **complete ZIP** and extract it to a writable Windows folder (for example, somewhere on `D:\`).

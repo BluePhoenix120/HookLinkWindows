@@ -10,7 +10,7 @@ MANIFEST=json.loads((ROOT/"ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))
 
 class X3Integration(unittest.TestCase):
     def test_all_conflicts_resolved(self):
-        self.assertEqual(PIN["release"],"Alpha V1.3.0")
+        self.assertRegex(PIN["release"], r"^Alpha V1\.3\.\d+$")
         self.assertEqual(PIN["nxnative_commit"],"5dfc86ae80c53a62262c3b3c66eab043f1fc574a")
         self.assertEqual(PIN["hooklink_engine_commit"],"ee3ce6a02bc737d38795f0a96cce494cee7a799c")
         r=MANIFEST["conflict_resolution_report"]

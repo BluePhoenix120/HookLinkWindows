@@ -18,14 +18,83 @@ spec.loader.exec_module(bootstrap)
 
 
 class TestAlphaTranslatorBootstrap(unittest.TestCase):
-    def test_source_fingerprint_is_ordered_raw_bytes(self):
+    def make_translator_fixture(self, root):
+        import shutil
+        src = root / 'dm/gfx/tools/dmsh_xlate'
+        src.mkdir(parents=True)
+        chain = BOOT.parents[1] / 'engine/dm/gfx/tools/dmsh_chain.py'
+        shutil.copyfile(chain, src.parent / chain.name)
+        (src / 'Program.cs').write_bytes(b'hello\r\n')
+        (src / 'dmsh_xlate.csproj').write_bytes(b'project\n')
+        ryu = root / 'dm/third_party/ryujinx/src/Ryujinx.Graphics.Shader'
+        ryu.mkdir(parents=True)
+        (ryu / 'Ryujinx.Graphics.Shader.csproj').write_bytes(b'ryu\n')
+        (ryu / 'Shader.cs').write_bytes(b'compiled source\n')
+        return src, ryu
+
+    def test_source_fingerprint_covers_vendored_inputs_and_excludes_build_outputs(self):
         with tempfile.TemporaryDirectory() as folder:
-            src = Path(folder)
-            (src / 'Program.cs').write_bytes(b'hello\r\n')
-            (src / 'dmsh_xlate.csproj').write_bytes(b'project\n')
+            src, ryu = self.make_translator_fixture(Path(folder))
             import hashlib
-            digest = hashlib.sha256(b'hello\r\nproject\n').hexdigest()[:16]
-            self.assertEqual(bootstrap.source_sha(src), digest)
+            digest = hashlib.sha256()
+            for f in sorted([src / 'Program.cs', src / 'dmsh_xlate.csproj',
+                             ryu / 'Shader.cs', ryu / 'Ryujinx.Graphics.Shader.csproj'],
+                            key=lambda p: p.relative_to(Path(folder) / 'dm').as_posix()):
+                digest.update(f.relative_to(Path(folder) / 'dm').as_posix().encode()
+                              + b'\0' + f.read_bytes() + b'\0')
+            original = bootstrap.source_sha(src)
+            self.assertEqual(original, digest.hexdigest()[:16])
+            for name in ('bin', 'obj'):
+                (ryu / name).mkdir()
+                (ryu / name / 'Generated.cs').write_bytes(b'build output')
+            self.assertEqual(bootstrap.source_sha(src), original)
+            (ryu / 'Shader.cs').write_bytes(b'changed compiled source')
+            self.assertNotEqual(bootstrap.source_sha(src), original)
+
+    def test_missing_canonical_digest_fails_closed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaisesRegex(RuntimeError, 'Missing canonical'):
+                bootstrap.source_sha(Path(folder) / 'dmsh_xlate')
+
+    def test_publish_passes_canonical_stamp_and_verifies_real_output_contract(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            src, ryu = self.make_translator_fixture(root)
+            output = root / 'publish with spaces'
+            output.mkdir()
+            expected = bootstrap.source_sha(src)
+            for name in bootstrap.OUTPUTS:
+                (output / name).touch()
+            real_execute = bootstrap.execute
+            def fake_execute(args, **kwargs):
+                if args[0] == 'dotnet':
+                    if args[1] == 'publish':
+                        self.assertIn(f'-p:XlateSourceSha={expected}', args)
+                        self.assertIn(f'-p:RyuSrc={ryu.parents[1]}', args)
+                        return ''
+                    self.assertEqual(args, ['dotnet', output / 'dmsh_xlate.dll', '--source-sha'])
+                    return expected
+                return real_execute(args, **kwargs)
+            with mock.patch.object(bootstrap, 'execute', side_effect=fake_execute):
+                bootstrap.publish_managed_translator('dotnet', src, output, expected)
+
+    def test_publish_rejects_wrong_embedded_stamp(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            src, _ = self.make_translator_fixture(root)
+            output = root / 'publish'
+            output.mkdir()
+            expected = bootstrap.source_sha(src)
+            for name in bootstrap.OUTPUTS:
+                (output / name).touch()
+            real_execute = bootstrap.execute
+            def fake_execute(args, **kwargs):
+                if args[0] == 'dotnet':
+                    return 'unknown' if args[-1] == '--source-sha' else ''
+                return real_execute(args, **kwargs)
+            with mock.patch.object(bootstrap, 'execute', side_effect=fake_execute):
+                with self.assertRaisesRegex(RuntimeError, 'embedded .*unknown'):
+                    bootstrap.publish_managed_translator('dotnet', src, output, expected)
 
     def test_portable_root_paths(self):
         root = Path('C:/TestCheckout')

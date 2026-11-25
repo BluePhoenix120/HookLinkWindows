@@ -1,5 +1,11 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.3.1 (2026-11-25)
+
+- Fixes V1.3.0's Windows graphics setup failure: the translator compiled successfully but did not embed the required source fingerprint. Use the engine's canonical `dmsh_chain.py --xlate-source-sha` digest (including vendored Ryujinx inputs) and pass it to MSBuild as `XlateSourceSha`. The embedded fingerprint is checked before installing the managed DLLs and regenerating the local shader tool lock and header.
+- Adds regression tests for fingerprint coverage, publish arguments and rejection of incorrect fingerprints, plus a real .NET 10 managed translator publish/verification step on Windows CI before release. The engine source pins, all 84 merge resolutions, and the bundled shader-chain ID remain unchanged. A correctly generated local Windows shader chain may differ from the bundled placeholder.
+- Retry with the complete Windows ZIP extracted to a separate folder; keep the existing game/build directory and shader archives. No manual fingerprint edits or bypasses are required. End-to-end Apple Metal compilation and device gameplay are not covered by the translator smoke test.
+
 ## HookLinkWindows Alpha V1.3.0 (2026-11-25)
 
 - Integrates HookLink X3 (4.0), engine ee3ce6a02bc7, with official NXnative 5dfc86ae80c5. Official NXnative is the base; X3 wins overlapping changes. All 64 upstream and 20 Windows replay conflict hunks have explicit resolutions.
