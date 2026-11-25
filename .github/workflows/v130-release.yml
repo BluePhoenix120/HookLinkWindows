@@ -1,0 +1,171 @@
+name: V1.3.0 candidate validation and guarded release
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/finalize_v130_candidate.py'
+      - '.github/workflows/v130-release.yml'
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Materialize and pin complete integrated sources
+        run: |
+          python3 -B tools/integrate_v130_hooklink_priority.py --output "$RUNNER_TEMP/v130"
+          python3 -B tools/finalize_v130_candidate.py --output "$RUNNER_TEMP/v130"
+          python3 -B tools/release_audit.py .
+          cc -std=c11 -O2 engine/dm/gfx/tests/t_fstep.c -lm -o "$RUNNER_TEMP/t_fstep"
+          "$RUNNER_TEMP/t_fstep"
+      - name: Run X3 ARM64 frame stub regression tests
+        run: |
+          python3 -m pip install --user unicorn
+          python3 -m unittest -v engine/dm/tools/tests/test_oot_frame_step.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v130-candidate
+          path: ${{ runner.temp }}/v130
+          if-no-files-found: error
+  windows:
+    needs: candidate
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: v130-candidate
+          path: ${{ runner.temp }}/v130
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Checkout exact integrated candidate and run Windows regression suite
+        shell: pwsh
+        run: |
+          git fetch "$env:RUNNER_TEMP/v130/candidate.bundle" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch candidate' }
+          git checkout --detach FETCH_HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Could not checkout candidate' }
+          $c = Get-Content "$env:RUNNER_TEMP/v130/candidate.json" -Raw | ConvertFrom-Json
+          if ((git rev-parse HEAD) -ne $c.commit) { throw 'Candidate identity mismatch' }
+          python -B tools/release_audit.py .
+          if ($LASTEXITCODE -ne 0) { throw 'Source-only audit failed' }
+          python -B -m unittest discover -s tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Integrated engine regression tests failed' }
+      - name: Build standalone Windows GUI
+        shell: pwsh
+        run: ./tools/build_windows_gui_exe.ps1
+      - name: Archive exact integrated engine and GUI
+        shell: pwsh
+        run: |
+          $zip = 'dist/HookLinkWindows-Windows-x64.zip'
+          git archive --format=zip "--output=$zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Git archive failed' }
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $z = [IO.Compression.ZipFile]::Open((Join-Path $PWD $zip),[IO.Compression.ZipArchiveMode]::Update)
+          try { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z,(Join-Path $PWD 'dist/HookLinkWindows.exe'),'HookLinkWindows.exe',[IO.Compression.CompressionLevel]::Optimal) | Out-Null } finally { $z.Dispose() }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v130-windows-package
+          path: |
+            dist/HookLinkWindows-Windows-x64.zip
+            dist/HookLinkWindows.exe
+          if-no-files-found: error
+  native:
+    needs: candidate
+    runs-on: xcode-27
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+      GAME: 0400486024DEC000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: v130-candidate
+          path: ${{ runner.temp }}/v130
+      - name: Compile exact integrated iOS engine and Windows UIKit launcher
+        run: |
+          git fetch "$RUNNER_TEMP/v130/candidate.bundle" HEAD
+          git checkout --detach FETCH_HEAD
+          xcodebuild -downloadComponent MetalToolchain
+          cd engine
+          # The upstream compiler check already covers native host sources.
+          # Add the Windows UIKit entrypoints, which replace SwiftUI at link.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("dm/ios/tools/compile_check.py")
+          s=p.read_text()
+          old="dirs = list(dict.fromkeys(os.path.dirname(s) for s in srcs))"
+          assert old in s
+          s=s.replace(old,"srcs += [os.path.join(repo, 'win/ios', f) for f in sorted(os.listdir(os.path.join(repo, 'win/ios'))) if f.endswith('.m')]\n"+old)
+          p.write_text(s)
+          PY
+          python3 dm/ios/tools/compile_check.py
+      - name: Native host and CPU frame pacing tests
+        run: |
+          cd engine
+          make -C dm/host/tests GAME="$GAME" -j3 run
+          make -C dm/gfx/tests GAME="$GAME" -j3 t_fstep
+          dm/gfx/tests/t_fstep
+  publish:
+    needs: [candidate, windows, native]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: v130-candidate
+          path: ${{ runner.temp }}/v130
+      - uses: actions/download-artifact@v4
+        with:
+          name: v130-windows-package
+          path: ${{ runner.temp }}/v130-assets
+      - name: Push only the fully validated candidate to main and publish regular release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          base=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["base"])' "$RUNNER_TEMP/v130/candidate.json")
+          candidate=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["commit"])' "$RUNNER_TEMP/v130/candidate.json")
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$base"
+          git fetch "$RUNNER_TEMP/v130/candidate.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$candidate"
+          git checkout --detach "$candidate"
+          test "$(python3 -c 'import json;print(json.load(open("ENGINE_PIN.json"))["release"])')" = "Alpha V1.3.0"
+          python3 - <<'PY'
+          import json
+          r=json.load(open("ENGINE_PIN_FILES.json"))["conflict_resolution_report"]
+          assert r["unmerged_index_entries"]==0 and not r["conflict_marker_paths"]
+          assert not r["missing_hooklink_changes"] and not r["missing_official_paths"]
+          assert sum(x["hunks"] for x in r["upstream"])+sum(x["hunks"] for x in r["windows"])==84
+          PY
+          git push origin "$candidate:refs/heads/main"
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path("CHANGELOG.md").read_text()
+          section=s.split("## HookLinkWindows Alpha V1.3.0",1)[1].split("## HookLinkWindows ",1)[0]
+          Path("/tmp/v130-notes.md").write_text(section.split("\n",1)[1].strip()+"\n")
+          PY
+          gh release create v1.3.0-alpha.1 "$RUNNER_TEMP/v130-assets/HookLinkWindows-Windows-x64.zip" "$RUNNER_TEMP/v130-assets/HookLinkWindows.exe" --target "$candidate" --title "HookLinkWindows Alpha V1.3.0" --notes-file /tmp/v130-notes.md --latest
