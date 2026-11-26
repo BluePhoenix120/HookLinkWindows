@@ -61,8 +61,16 @@ class WindowsSDKPatchCompatibilityTests(unittest.TestCase):
 
     def test_default_no_mod_path_remains_unmodified(self):
         shim = (ROOT / "engine/win/pyshim/sitecustomize.py").read_text(encoding="utf-8")
-        self.assertIn("if os.environ.get('NXW_AUTO_SDK_CUTS') or os.environ.get('NXW_MOD_CUTS'):", shim)
+        # Only the legacy SDK fallback registers fixed CUTS through the shim.
+        # User mods must not create a CUTS entry, which disables native matching.
+        self.assertIn("if os.environ.get('NXW_AUTO_SDK_CUTS'):", shim)
+        self.assertNotIn("NXW_MOD_CUTS", shim)
         self.assertIn("if not hasattr(m, 'CUTS'): m.CUTS = {}", shim)
+        native = PATCH_NSO.read_text(encoding="utf-8")
+        self.assertLess(native.index("if BUILD_ID not in PATCHES['CUTS']:"),
+                        native.index("if os.environ.get('NXW_MOD_CUTS'):"))
+        self.assertLess(native.index("if os.environ.get('NXW_MOD_CUTS'):"),
+                        native.index("ALIAS_APPLIED ="))
 
 
 if __name__ == "__main__":
