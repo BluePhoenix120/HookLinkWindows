@@ -17,7 +17,7 @@ PRESET_REL = 'config/iphone-oot.env'
 ALLOWED_KEYS = {
     'input_path', 'work_dir', 'env_file', 'output_ipa', 'bundle_id',
     'workers', 'auto_workers', 'allow_damaged', 'allow_metal', 'entitlements', 'output_auto', 'package_mode',
-    'reuse_shader_work', 'native_app_only',
+    'reuse_shader_work', 'native_app_only', 'mods_dir',
 }
 
 
@@ -94,7 +94,7 @@ class SettingsStore:
                 values.pop('allow_metal', None)
             if values.get('package_mode') not in ('app_only', 'full'):
                 values.pop('package_mode', None)
-            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'bundle_id', 'reuse_shader_work'):
+            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'bundle_id', 'reuse_shader_work', 'mods_dir'):
                 if key in values and not isinstance(values[key], str):
                     values.pop(key)
             for key in ('auto_workers', 'allow_damaged', 'allow_metal', 'entitlements', 'output_auto', 'native_app_only'):
@@ -103,7 +103,7 @@ class SettingsStore:
             n = values.get('workers')
             if not isinstance(n, int) or isinstance(n, bool) or not 1 <= n <= 61:
                 values.pop('workers', None)
-            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'reuse_shader_work'):
+            for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'reuse_shader_work', 'mods_dir'):
                 if key in values:
                     values[key] = native_display_path(_decode_path(values[key], self.root))
             warnings = ['Previous GUI preferences loaded; compatibility defaults upgraded to enabled.'] if legacy else []
@@ -113,7 +113,7 @@ class SettingsStore:
 
     def save(self, values: dict) -> None:
         safe = {k: v for k, v in values.items() if k in ALLOWED_KEYS}
-        for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'reuse_shader_work'):
+        for key in ('input_path', 'work_dir', 'env_file', 'output_ipa', 'reuse_shader_work', 'mods_dir'):
             if isinstance(safe.get(key), str):
                 safe[key] = _encode_path(safe[key], self.root)
         payload = {'version': SETTINGS_VERSION, 'settings': safe}

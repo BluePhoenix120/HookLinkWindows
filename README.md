@@ -87,6 +87,8 @@ The normal path uses the **GUI**; there is no need to hand-edit JSON configurati
 
 For step-by-step details and developer options, use [the full Windows setup guide](docs/GETTING_STARTED.md).
 
+For optional build-time ExeFS and RomFS mods, including BodiesOfTruth, see [Windows mod setup](docs/WINDOWS_MODS.md).
+
 ## Install on iPhone
 
 The usual **App-only** build produces an IPA **and** a matching directory of game-derived files. The IPA is not a finished, independently playable download.

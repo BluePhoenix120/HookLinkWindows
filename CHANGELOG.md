@@ -1,5 +1,11 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.3.3 (2026-11-26)
+
+- Adds opt-in build-time mods via the Windows GUI's Advanced settings, including the two-folder output of BodiesOfTruth's Recomp conversion mode. ExeFS IPS/IPS32 patches are applied to matching game modules before rewriting; conflicting and malformed patches are rejected without suppressing official function-matched fixes.
+- Adds a packed RomFS overlay builder that preserves the original extracted image, includes replacements and additions (including the converter's unified resource-size table), and supplies the corresponding image to app-only transfer packaging. Mod-free builds remain unchanged. Shader-changing mods and overlapping files are not supported by this path.
+- Retains the engine base pins and shader-toolchain sources. Regression tests cover synthetic image overlays, code patch validation, and app-only transfer. Actual BodiesOfTruth gameplay on an iPhone is not yet verified.
+
 ## HookLinkWindows Alpha V1.3.2 (2026-11-25)
 
 - Fixes the Windows IPA packager rejecting a valid `c1_full.tsv` header after successful shader compilation. Accepts the current NXnative exact chain/input stamp as well as legacy headers with space-delimited metadata, while still rejecting missing files, empty headers and mismatched stamps.

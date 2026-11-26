@@ -39,6 +39,7 @@ class BuildConfig:
     entitlements: bool = True
     reuse_shader_work: Path | None = None  # completed old WORK DIR, read-only: refuse on any mismatch
     native_app_only: bool = False          # experimental direct split-data builder
+    mods_dir: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -108,8 +109,8 @@ def verified_shader_chain_from_ipa(source: Path, host_header: Path) -> str:
 
 def find_transfer_sources(work_dir: Path, env_file: Path, chain: str | None = None,
                           *, donor_shader_work: Path | None = None,
-                          donor_verified: bool = False) -> dict[str, Path]:
-    roms = sorted((work_dir / 'extract').glob('*/RomFS.img'))
+                          donor_verified: bool = False, romfs_override: Path | None = None) -> dict[str, Path]:
+    roms = [romfs_override] if romfs_override is not None else sorted((work_dir / 'extract').glob('*/RomFS.img'))
     if len(roms) != 1:
         raise ValueError(f'Expected one extracted RomFS.img, found {len(roms)}; inspect {work_dir / "extract"}.')
     shaders = sorted((work_dir / 'shader' / 'ios').glob('b-*.img'))
@@ -135,7 +136,7 @@ def prepare_transfer_folder(work_dir: Path, env_file: Path, output_dir: Path,
                             chain: str | None = None,
                             reporter: Callable[[str], None] | None = None,
                             *, donor_shader_work: Path | None = None,
-                            donor_verified: bool = False) -> Path:
+                            donor_verified: bool = False, romfs_override: Path | None = None) -> Path:
     """Prepare ready-to-copy files; hard-link where possible to avoid duplicating huge assets.
 
     Does not modify source images. If the transfer directory exists, select a numbered
@@ -144,7 +145,7 @@ def prepare_transfer_folder(work_dir: Path, env_file: Path, output_dir: Path,
     reporter = reporter or (lambda _: None)
     sources = find_transfer_sources(work_dir, env_file, chain,
                                     donor_shader_work=donor_shader_work,
-                                    donor_verified=donor_verified)
+                                    donor_verified=donor_verified, romfs_override=romfs_override)
     dest = output_dir
     suffix = 2
     while dest.exists() or dest.with_name(dest.name + '.building').exists():
@@ -203,6 +204,8 @@ def verify_build_config(c: BuildConfig) -> None:
         raise ValueError('Output cannot overwrite the input game file.')
     if c.work_dir.resolve() in (c.input_path.resolve(), c.root.resolve()):
         raise ValueError('Choose a separate build work directory.')
+    if c.mods_dir is not None and not c.mods_dir.is_dir():
+        raise ValueError('Select an existing mods folder, or clear the field to disable mods.')
     if c.reuse_shader_work is not None:
         if not c.reuse_shader_work.is_dir():
             raise ValueError('The existing shader work folder does not exist; select a completed WORK directory.')
@@ -233,6 +236,7 @@ def make_build_environment(c: BuildConfig) -> dict[str, str]:
     env = os.environ.copy()
     env['J'] = str(c.workers)
     env['DMSH_PROCS'] = '0'  # Avoid the unsupported Unix 'fork' context on Windows.
+    env['NXW_MODS_DIR'] = str(c.mods_dir.resolve()) if c.mods_dir is not None else ''
     if c.reuse_shader_work is not None:
         env['NXW_REUSE_SHADER_WORK'] = str(c.reuse_shader_work.resolve())
     else:

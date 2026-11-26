@@ -300,10 +300,20 @@ def main():
     for m in mods:
         if not ((patched / f'{m}.patched.bin').exists() and (patched / f'{m}.fixups.tsv').exists()): die(f'no rewritten module {patched}/{m} (run dm/tools/patch_nso.py first)')
     if not (romfs / marker).exists(): die(f'no RomFS at {romfs} (missing {marker})')
-    if image and env.get('NXW_MODS_ROMFS'): die('mods\' RomFS folders are laid over a RomFS folder, and this extraction is one RomFS image (RomFS.img)')
-    if env.get('NXW_MODS_ROMFS'):   # mods' RomFS folders (win/mods.py): hard links of the game's files with the mods' laid over them
-        import mods
-        romfs = mods.overlay_romfs(romfs, env['NXW_MODS_ROMFS'].split(os.pathsep), w / 'build/romfs_mods', log=t)
+    mod_root = w / 'build/romfs_mods'
+    receipt = mod_root / 'current.txt'
+    receipt.unlink(missing_ok=True)
+    if env.get('NXW_MODS_ROMFS'):
+        import mods as mod_tools
+        from mod_romfs import overlay_image
+        try:
+            dirs = env['NXW_MODS_ROMFS'].split(os.pathsep)
+            if image: romfs = rfs.Path(overlay_image(os.fspath(romfs), dirs, mod_root, log=t))
+            else: romfs = mod_tools.overlay_romfs(romfs, dirs, mod_root / 'folder', log=t)
+        except (OSError, ValueError) as exc: die(str(exc))
+    if env.get('NXW_MODS_DIR'):
+        mod_root.mkdir(parents=True, exist_ok=True)
+        receipt.write_text(os.fspath(romfs), encoding='utf-8')
     hdr = (DM / 'gfx/nvn/dmsh_chain.h').read_text(encoding='utf-8')
     v = (re.search(r'^#define DMSH_CHAIN "(.*)"', hdr, re.M) or die('no DMSH_CHAIN in dmsh_chain.h')).group(1)
     gfx = env.get('GFXAPI') or ('nvn' if shader_lib.has_library(msl_ios / f'b-{v}') else 'vulkan' if (msl_ios / 'vk/vk_shaders.metallib').exists()

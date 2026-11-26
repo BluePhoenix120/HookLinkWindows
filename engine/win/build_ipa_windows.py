@@ -130,12 +130,16 @@ def main():
         if jf.exists(): os.environ['NXW_AUTO_SDK_CUTS'] = env['NXW_AUTO_SDK_CUTS'] = str(jf)
         else: os.environ.pop('NXW_AUTO_SDK_CUTS', None); env.pop('NXW_AUTO_SDK_CUTS', None)
         # Mods (win/mods.py): <game folder>/mods, in the emulators' layout. Code patches -> rewriter cuts of the build they name, added to that build's registered cuts by the shim
-        # (NXW_MOD_CUTS: extend = builds a patch file registers, new = builds none does); RomFS folders -> the app build's RomFS (NXW_MODS_ROMFS)
+        # (NXW_MOD_CUTS: appended only after upstream resolves its own cuts); RomFS folders -> the app build's RomFS (NXW_MODS_ROMFS)
         import mods
         mf = out.with_name(out.name + '.mod_cuts.json')
         if mf.exists(): mf.unlink()
-        mdir = Path(os.environ.get('NXW_MODS_DIR') or exe_dir.parents[3] / 'mods')   # the window stages the game files elsewhere and names the mods folder beside the originals
-        pfiles, rdirs = mods.find(mdir)
+        selected = os.environ.get('NXW_MODS_DIR')
+        mdir = Path(selected) if selected else exe_dir.parents[3] / 'mods'
+        try:
+            pfiles, rdirs = mods.find(mdir) if selected != '' else ([], [])
+        except ValueError as exc: raise BuildError(str(exc)) from exc
+        if selected and not (pfiles or rdirs): raise BuildError('Selected mods directory contains no ExeFS patches or RomFS folders')
         if pfiles:
             sys.path.insert(0, str(REPO / 'dm/tools'))
             import importlib.util as ilu, glob
@@ -145,10 +149,11 @@ def main():
                 try: sp.loader.exec_module(mm)
                 except Exception: continue
                 for k, v in getattr(mm, 'CUTS', {}).items(): registered.setdefault(k, list(v))
-            cuts = mods.cuts_for(pfiles, exe_dir, g.get('modules').split(), registered, log=up.say)
+            try: cuts = mods.cuts_for(pfiles, exe_dir, g.get('modules').split(), registered, log=up.say)
+            except ValueError as exc: raise BuildError(str(exc)) from exc
             if cuts:
                 mf.parent.mkdir(parents=True, exist_ok=True)
-                mf.write_text(json.dumps({'extend': {k: v for k, v in cuts.items() if k in registered}, 'new': {k: v for k, v in cuts.items() if k not in registered}}, indent=1), encoding='utf-8')
+                mf.write_text(json.dumps(cuts, indent=1), encoding='utf-8')
         if mf.exists(): os.environ['NXW_MOD_CUTS'] = env['NXW_MOD_CUTS'] = str(mf)
         else: os.environ.pop('NXW_MOD_CUTS', None); env.pop('NXW_MOD_CUTS', None)
         if rdirs:

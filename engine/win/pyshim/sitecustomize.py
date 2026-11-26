@@ -115,9 +115,8 @@ if (os.name == 'nt' or os.environ.get('NXW_LINUX')) and not os.environ.get('NXW_
 
     # NXW_AUTO_SDK_CUTS (a JSON file the Windows driver writes, win/sdk_auto_cuts.py): {sdk build ID: [[offset, old, new, reason], ...]} for sdk builds dm/tools/sdk_patches.py does not
     # register. patch_nso.py loads sdk_patches.py by its path (importlib.util.spec_from_file_location); its CUTS gain these entries, never replacing a registered build's
-    # NXW_MOD_CUTS (win/mods.py through the driver): {"extend": {build ID: cuts}, "new": {build ID: cuts}}: a mod's code patches join the cuts of the patch file that registers the
-    # build (extend), or sdk_patches.py's table when none does (new), so patch_nso.py's one-claim-per-build rule holds
-    if os.environ.get('NXW_AUTO_SDK_CUTS') or os.environ.get('NXW_MOD_CUTS'):
+    # User mod cuts are applied separately by patch_nso.py after function matching.
+    if os.environ.get('NXW_AUTO_SDK_CUTS'):
         import importlib.util, json
         _sffl = importlib.util.spec_from_file_location
         def _json(var):
@@ -131,12 +130,8 @@ if (os.name == 'nt' or os.environ.get('NXW_LINUX')) and not os.environ.get('NXW_
                 def exec_module(m):
                     load(m)
                     if not hasattr(m, 'CUTS'): m.CUTS = {}
-                    mods = _json('NXW_MOD_CUTS')
                     if loc.endswith('dm/tools/sdk_patches.py'):
                         for bid, cuts in _json('NXW_AUTO_SDK_CUTS').items(): m.CUTS.setdefault(bid, [tuple(c) for c in cuts])
-                        for bid, cuts in mods.get('new', {}).items(): m.CUTS.setdefault(bid, [tuple(c) for c in cuts])
-                    for bid, cuts in mods.get('extend', {}).items():
-                        if bid in m.CUTS: m.CUTS[bid] = list(m.CUTS[bid]) + [tuple(c) for c in cuts]
                 spec.loader.exec_module = exec_module
             return spec
         importlib.util.spec_from_file_location = _spec_from_file_location

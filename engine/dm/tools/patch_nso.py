@@ -191,6 +191,18 @@ if STUB_RULES and BUILD_ID not in PATCHES['STUBS']:
 # every other module keeps its layout
 if (BUILD_ID in PATCHES['FRAME_STEP'] or FS_MATCH) and NAME == 'main' and not FAR and PATCH_OFF < KEY_PAGE_OFF + 0x4000 + 0x1000:
     PATCH_OFF += 0x10000
+# Windows user mods join the resolved cuts, never register a new CUTS
+# build (which would suppress the official function-matched rules).
+if os.environ.get('NXW_MOD_CUTS'):
+    import json as _mod_json
+    with open(os.environ['NXW_MOD_CUTS'], encoding='utf-8') as _mod_file:
+        _mod_cuts = _mod_json.load(_mod_file).get(BUILD_ID, [])
+    for _cut in _mod_cuts:
+        _off, _old, _new, _why = _cut
+        _end = _off + len(bytes.fromhex(_new))
+        if any(_off < o + len(bytes.fromhex(ob)) and o < _end for o, ob, nb, why in cuts):
+            sys.exit(f'[RED] {NAME}: mod overlaps a resolved game/SDK cut at {_off:#x}: {_why}')
+        cuts.append(_cut)
 ALIAS_APPLIED = [c for c in cuts if c[0] in ALIAS_OFFS]
 assert len(ALIAS_APPLIED) <= 32, f'too many ALIAS_CUTS ({len(ALIAS_APPLIED)} > 32)'
 for off, ob, nb, why in cuts:

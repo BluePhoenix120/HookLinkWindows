@@ -40,7 +40,7 @@ from hooklink_clean_build import new_clean_test_work_dir
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent
 DEFAULT_WORK = ROOT.parent / DEFAULT_WORK_NAME
 DEFAULT_ENV = ROOT / 'config' / 'iphone-oot.env'
-GUI_VERSION = 'Alpha V1.3.2'
+GUI_VERSION = 'Alpha V1.3.3'
 DEFAULT_BUNDLE_ID = 'PhoenixNetwork.HookLinkWindows'
 
 
@@ -87,6 +87,7 @@ class App(tk.Tk):
         self.entitlements = tk.BooleanVar(value=prefs.get('entitlements', True))
         self.reuse_var = tk.StringVar(value=prefs.get('reuse_shader_work', ''))
         self.native_var = tk.BooleanVar(value=prefs.get('native_app_only', False))
+        self.mods_var = tk.StringVar(value=prefs.get('mods_dir', ''))
         self.state_var = tk.StringVar(value='Select a .nup file, then check prerequisites and build settings.')
         self.progress_var = tk.StringVar(value='')
         self._last_progress_stage = None
@@ -167,6 +168,9 @@ class App(tk.Tk):
         self._field(self.advanced_box, 2, 'Previous shader work', self.reuse_var, self._browse_reuse)
         ttk.Label(self.advanced_box, text='Optional: reuse only after exact shader-package and library verification; never alters the previous build.', foreground='#555').grid(row=3, column=0, columnspan=3, sticky='w', pady=(0, 4))
         ttk.Checkbutton(self.advanced_box, text='Experimental native app-only packaging (avoids temporary full IPA)', variable=self.native_var).grid(row=4, column=0, columnspan=3, sticky='w', pady=(0, 4))
+        self._field(self.advanced_box, 5, 'Mods folder (optional)', self.mods_var, self._browse_mods)
+        ttk.Button(self.advanced_box, text='Clear mods', command=lambda: self.mods_var.set('')).grid(row=6, column=1, sticky='w')
+        ttk.Label(self.advanced_box, text='Select Converted for BodiesOfTruth (both mod folders); blank disables mods.', foreground='#555').grid(row=7, column=0, columnspan=3, sticky='w')
         self.advanced_visible = False
         form.columnconfigure(1, weight=1)
 
@@ -276,6 +280,10 @@ class App(tk.Tk):
         else:
             self.worker_spin.configure(state='normal')
 
+    def _browse_mods(self):
+        folder = filedialog.askdirectory(title='Select the folder containing both converted mods', initialdir=self.mods_var.get() or str(ROOT.parent))
+        if folder: self.mods_var.set(folder)
+
     def _browse_reuse(self):
         folder = filedialog.askdirectory(title='Select an existing completed shader build directory', initialdir=self.reuse_var.get() or str(ROOT.parent))
         if folder: self.reuse_var.set(native_display_path(folder))
@@ -315,6 +323,7 @@ class App(tk.Tk):
             'package_mode': self.package_mode.get(),
             'reuse_shader_work': self.reuse_var.get().strip(),
             'native_app_only': self.native_var.get(),
+            'mods_dir': self.mods_var.get().strip(),
         })
 
     def _on_close(self):
@@ -339,7 +348,8 @@ class App(tk.Tk):
                            workers=n, allow_damaged=self.allow_damaged.get(),
                            allow_other_metal=self.allow_metal.get(), entitlements=self.entitlements.get(),
                            reuse_shader_work=Path(self.reuse_var.get().strip()) if self.reuse_var.get().strip() else None,
-                           native_app_only=self.native_var.get())
+                           native_app_only=self.native_var.get(),
+                           mods_dir=Path(self.mods_var.get().strip()) if self.mods_var.get().strip() else None)
 
     def _safe_config(self) -> BuildConfig | None:
         try:
@@ -772,14 +782,20 @@ class App(tk.Tk):
                 # Donor is only allowed if the completed compiler explicitly confirmed
                 # its exact CONTENT/toolchain/profile/pulling-policy/table equivalence.
                 donor = c.reuse_shader_work if self._verified_shader_reuse else None
+                romfs_override = None
+                if c.mods_dir is not None:
+                    receipt = c.work_dir / 'ipa/build/romfs_mods/current.txt'
+                    romfs_override = Path(receipt.read_text(encoding='utf-8').strip()).resolve()
+                    if not romfs_override.is_relative_to(c.work_dir.resolve()) or not romfs_override.is_file():
+                        raise ValueError('Mod build did not produce a valid packed RomFS in the work directory')
                 find_transfer_sources(c.work_dir, c.env_file, chain,
-                                      donor_shader_work=donor, donor_verified=self._verified_shader_reuse)
+                                      donor_shader_work=donor, donor_verified=self._verified_shader_reuse, romfs_override=romfs_override)
                 report = export_app_only_ipa(plan.builder_ipa, plan.final_ipa,
                                              lambda m: self.messages.put(('text', m + '\n')))
                 folder = prepare_transfer_folder(c.work_dir, c.env_file, plan.transfer_dir, chain,
                                                  lambda m: self.messages.put(('text', m + '\n')),
                                                  donor_shader_work=donor,
-                                                 donor_verified=self._verified_shader_reuse)
+                                                 donor_verified=self._verified_shader_reuse, romfs_override=romfs_override)
                 exported_errors = oot_runtime_errors(folder / 'env.txt')
                 if exported_errors:
                     raise ValueError('Transfer folder has incompatible runtime settings: ' + ', '.join(exported_errors))

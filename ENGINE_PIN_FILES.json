@@ -17343,8 +17343,8 @@
         },
         "engine/dm/tools/patch_nso.py": {
             "upstream_sha": "9ff762d0a5d5ccc367879671f46f1a2f3ec67700",
-            "integrated_sha": "538fe24c1074f7c0dd1715baf7137abae4d4b91d",
-            "reason": "X3-first original/HookLink merge, independently retained Windows changes, or documented ABI adaptation"
+            "integrated_sha": "39e28e92b308a93f303e262ff1ab2259df48e7f0",
+            "reason": "X3-first original/HookLink merge, independently retained Windows changes, or documented ABI adaptation; append user mod cuts after upstream matching, reject overlaps"
         },
         "engine/dm/tools/proc_group.py": {
             "upstream_sha": "ffb8abcda38b3f92604b53d19f4b1e4f0d7d1e29",
@@ -34883,8 +34883,8 @@
         },
         "engine/dm/tools/patch_nso.py": {
             "upstream_sha": "02a49cd3d1f0185682ea548fae6536dd5895dec9",
-            "integrated_sha": "538fe24c1074f7c0dd1715baf7137abae4d4b91d",
-            "reason": "X3-first original/HookLink merge, independently retained Windows changes, or documented ABI adaptation"
+            "integrated_sha": "39e28e92b308a93f303e262ff1ab2259df48e7f0",
+            "reason": "X3-first original/HookLink merge, independently retained Windows changes, or documented ABI adaptation; append user mod cuts after upstream matching, reject overlaps"
         },
         "engine/dm/tools/proc_group.py": {
             "upstream_sha": "ffb8abcda38b3f92604b53d19f4b1e4f0d7d1e29",

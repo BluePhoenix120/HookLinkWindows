@@ -3,8 +3,8 @@
 #   mods/<any name>/romfs/...                          files that replace the game's (or add to them)
 #   mods/atmosphere/contents/<title ID>/exefs|romfs    the same, as on a console's SD card
 # Code patches become rewriter cuts (dm/tools/patch_nso.py "Registered patches": the original bytes are asserted, then replaced before the rewrite), so they reach the iPhone
-# as the profile's own patches do: they apply only to the module whose build ID they name, and a patch for another game version is reported and skipped.
-# A patch overlapping a cut the game profile already makes is skipped too (the profile's fix wins). RomFS files are overlaid on the packed version's RomFS by hard links.
+# as the profile's own patches do: they apply only to the module whose build ID they name; mismatched or overlapping patches fail the build.
+# Loose RomFS folders are overlaid by hard links; packed images use mod_romfs.py.
 import os, re, struct, sys
 from pathlib import Path
 
@@ -22,8 +22,9 @@ def find(mods_dir):
         for d in list(dns):
             if d.lower() == 'romfs': romfs.append(Path(dp) / d); dns.remove(d)   # its contents are files to overlay, not more mods
         for f in fns:
-            if f.lower().endswith(('.ips', '.pchtxt')) and Path(dp).name.lower() == 'exefs' or f.lower().endswith('.pchtxt'):
-                patches.append(Path(dp) / f)
+            if Path(dp).name.lower() != 'exefs': continue
+            if f.lower().endswith(('.ips', '.pchtxt')): patches.append(Path(dp) / f)
+            else: raise ValueError(f'Unsupported ExeFS module {Path(dp) / f}; choose the converter Recomp platform (IPS only).')
     return sorted(set(patches)), sorted(romfs)
 
 
@@ -31,14 +32,20 @@ def parse_ips(data):
     if data[:5] == b'PATCH': n, end = 3, b'EOF'
     elif data[:5] == b'IPS32': n, end = 4, b'EEOF'
     else: raise ValueError('not an IPS / IPS32 file')
-    i, out = 5, []
+    i, out, ended = 5, [], False
     while i < len(data):
-        if data[i:i + len(end)] == end and i + len(end) >= len(data) - 3: break
+        if data[i:i + len(end)] == end and i + len(end) == len(data):
+            ended = True; break
+        if i + n + 2 > len(data): raise ValueError('truncated IPS record')
         off = int.from_bytes(data[i:i + n], 'big'); i += n
         size = int.from_bytes(data[i:i + 2], 'big'); i += 2
         if size == 0:   # RLE record
+            if i + 3 > len(data): raise ValueError('truncated IPS RLE record')
             rl = int.from_bytes(data[i:i + 2], 'big'); out.append((off, data[i + 2:i + 3] * rl)); i += 3
-        else: out.append((off, data[i:i + size])); i += size
+        else:
+            if i + size > len(data): raise ValueError('truncated IPS payload')
+            out.append((off, data[i:i + size])); i += size
+    if not ended or not out or any(not v for _, v in out): raise ValueError('invalid or empty IPS patch')
     return out
 
 
@@ -87,19 +94,19 @@ def cuts_for(patch_files, exe_dir, names, registered=None, log=print):
         try:
             if pf.suffix.lower() == '.pchtxt': groups = parse_pchtxt(pf.read_text(encoding='utf-8', errors='replace'))
             else: groups = [(re.sub(r'[^0-9a-f]', '', pf.stem.lower()), parse_ips(pf.read_bytes()))]
-        except ValueError as e: log(f'[RED] mod {pf}: {e}; skipped'); continue
+        except ValueError as e: raise ValueError(f'mod {pf}: {e}') from e
+        if not groups: raise ValueError(f'mod {pf}: no enabled code patches')
         for bid, recs in groups:
-            hit = next((k for k in mods if bid and (bid.startswith(k) or k.startswith(bid[:32]))), None)
+            hit = next((k for k in mods if len(bid) >= 32 and bid[:32] == k), None)
             if not hit:
-                log(f'mod {pf.parent.parent.name}/{pf.name}: for build {bid[:16] or "?"}, which is not a module of this game version ({", ".join(m[0] + " " + k[:16] for k, m in mods.items())}); skipped')
-                continue
+                raise ValueError(f'mod {pf.name}: build {bid[:32]} does not match this game version')
             name, img, text_end = mods[hit]
-            taken = [(o, o + len(bytes.fromhex(ob))) for o, ob, nb, why in (registered or {}).get(hit, [])]
+            taken = [(o, o + len(bytes.fromhex(ob))) for o, ob, nb, why in list((registered or {}).get(hit, [])) + out.get(hit, [])]
             n = 0
             for off, val in recs:
                 o = off - NSO_HEADER
-                if o < 0 or o + len(val) > len(img): log(f'[RED] mod {pf.name}: patch at {off:#x} is outside {name}; skipped'); continue
-                if any(o < b and a < o + len(val) for a, b in taken): log(f'mod {pf.name}: patch at {name}+{o:#x} overlaps a cut the game profile makes; the profile\'s fix is kept'); continue
+                if o < 0 or o + len(val) > len(img): raise ValueError(f'mod {pf.name}: patch at {off:#x} is outside {name}')
+                if any(o < b and a < o + len(val) for a, b in taken): raise ValueError(f'mod {pf.name}: overlapping patch at {name}+{o:#x}')
                 old = bytes(img[o:o + len(val)])
                 if old == val: continue
                 out.setdefault(hit, []).append([o, old.hex(), val.hex(), f'mod {pf.parent.parent.name}/{pf.name}'])
