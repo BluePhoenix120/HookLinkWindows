@@ -67,7 +67,11 @@ class OriginalBahsRecordGuard(unittest.TestCase):
         raw = SPLITTER.read_bytes()
         digest = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw).hexdigest()
         official = {item["path"]:item["sha"] for item in record["changed_paths"]}
-        self.assertEqual(official[path], "bd09b9e5eabc9f7451f0735055cdeeb47f2f3989")
+        expected = {
+            "5dfc86ae80c53a62262c3b3c66eab043f1fc574a": "bd09b9e5eabc9f7451f0735055cdeeb47f2f3989",
+            "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf": "f67961d934e45437a9a3c2f943c471413500cb92",
+        }
+        self.assertEqual(official[path], expected[record["nxnative_commit"]])
         if digest == official[path]:
             self.assertNotIn(path, record["integration_overrides"])
             self.assertNotIn(path, record["windows_overlays"])

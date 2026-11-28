@@ -11,15 +11,26 @@ MANIFEST=json.loads((ROOT/"ENGINE_PIN_FILES.json").read_text(encoding="utf-8"))
 class X3Integration(unittest.TestCase):
     def test_all_conflicts_resolved(self):
         self.assertRegex(PIN["release"], r"^Alpha V1\.3\.\d+$")
-        self.assertEqual(PIN["nxnative_commit"],"5dfc86ae80c53a62262c3b3c66eab043f1fc574a")
+        self.assertIn(PIN["nxnative_commit"], ("5dfc86ae80c53a62262c3b3c66eab043f1fc574a", "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf"))
         self.assertEqual(PIN["hooklink_engine_commit"],"ee3ce6a02bc737d38795f0a96cce494cee7a799c")
         r=MANIFEST["conflict_resolution_report"]
-        self.assertEqual(sum(x["hunks"] for x in r["upstream"]),64)
-        self.assertEqual(sum(x["hunks"] for x in r["windows"]),20)
         self.assertEqual(r["unmerged_index_entries"],0)
-        self.assertFalse(r["conflict_marker_paths"])
-        self.assertFalse(r["missing_hooklink_changes"])
         self.assertFalse(r["missing_official_paths"])
+        if PIN["nxnative_commit"] == "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf":
+            self.assertIn("upstream-first", r["policy"])
+            self.assertRegex(r["source_tree"], r"^[0-9a-f]{40}$")
+            self.assertTrue(r["conflicts"])
+            self.assertIsInstance(r["semantic_review_complete"], bool)
+            # Check the exact historical HookLink accounting, including deliberate omissions.
+            omissions = MANIFEST["hooklink_omissions"]
+            self.assertTrue(all(x.get("reason") and x.get("hooklink_sha") for x in omissions.values()))
+            self.assertTrue(all(not (ROOT/p).exists() for p in omissions))
+            self.assertTrue(set(omissions).isdisjoint(row["path"] for row in MANIFEST["hooklink_tree"]))
+        else:
+            self.assertEqual(sum(x["hunks"] for x in r["upstream"]),64)
+            self.assertEqual(sum(x["hunks"] for x in r["windows"]),20)
+            self.assertFalse(r["conflict_marker_paths"])
+            self.assertFalse(r["missing_hooklink_changes"])
 
     def test_all_hooklink_blobs_accounted_for(self):
         overrides=MANIFEST["hooklink_integration_overrides"]

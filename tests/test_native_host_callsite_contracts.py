@@ -3,11 +3,13 @@
 CI lacks the iPhoneOS SDK; this complements, not replaces, real arm64 Clang compilation.
 """
 from pathlib import Path
+import json
 import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "engine" / "dm" / "gfx" / "nvn" / "nvn_mtl.m"
+V134 = json.loads((ROOT / "ENGINE_PIN.json").read_text(encoding="utf-8"))["nxnative_commit"] == "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf"
 
 
 class NativeHostCallSiteContracts(unittest.TestCase):
@@ -17,13 +19,16 @@ class NativeHostCallSiteContracts(unittest.TestCase):
 
     def test_pool_entry_signature_has_lead_parameter(self):
         prototype = "static uint64_t pool_entry(int samp, int dtt, int id_, uint64_t limit, int *gone, int *left, int *left_req, int *transient, int *dead, uint32_t *lead) {"
+        if V134:
+            prototype = prototype.replace('int dtt, int id_', 'int dtt, int dpf, int id_')
         self.assertEqual(self.s.count(prototype), 1)
         self.assertIn("if (lead && got == MTLTextureTypeTextureBuffer) *lead = tbuf_lead", self.s)
 
     def test_pool_entry_callers_supply_tenth_argument(self):
         self.assertEqual(len(re.findall(r"\bpool_entry\s*\(", self.s)), 3)
-        self.assertIn("pool_entry(samp, dtt, ids[k], limit, &gone, &left, &left_req, &t, &d, NULL)", self.s)
-        self.assertIn("pool_entry(samp, dtt, base + i, limit, &gone, &left, &left_req, &t, &d, leads ? leads + i : NULL)", self.s)
+        prefix = "pool_entry(samp, dtt, dpf, " if V134 else "pool_entry(samp, dtt, "
+        self.assertIn(prefix + "ids[k], limit, &gone, &left, &left_req, &t, &d, NULL)", self.s)
+        self.assertIn(prefix + "base + i, limit, &gone, &left, &left_req, &t, &d, leads ? leads + i : NULL)", self.s)
 
     def test_buffer_to_texture_pairs_alias_before_copy(self):
         start = self.s.index("static void copy_b2t(")

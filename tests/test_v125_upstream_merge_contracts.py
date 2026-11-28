@@ -15,12 +15,16 @@ class V125UpstreamMergeContracts(unittest.TestCase):
     def test_pinned_full_50_commit_tip_and_manifest(self):
         pin = json.loads(self.read("ENGINE_PIN.json"))
         manifest = json.loads(self.read("ENGINE_PIN_FILES.json"))
-        self.assertEqual(pin["nxnative_commit"], TARGET)
+        self.assertIn(pin["nxnative_commit"], (TARGET, "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf"))
         self.assertGreaterEqual(tuple(map(int, pin["release"].removeprefix("Alpha V").split("."))), (1, 2, 5))
-        self.assertEqual(manifest["nxnative_commit"], TARGET)
-        self.assertEqual(manifest["incremental_upstream_to"], TARGET)
-        self.assertEqual(manifest["incremental_upstream_from"], "3e1ada5b96acb61293ac790bd6dd093a947abed6")
-        self.assertGreaterEqual(len(manifest["changed_paths"]), 3895)
+        self.assertEqual(manifest["nxnative_commit"], pin["nxnative_commit"])
+        self.assertEqual(manifest["incremental_upstream_to"], pin["nxnative_commit"])
+        if pin["nxnative_commit"] == "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf":
+            self.assertEqual(manifest["incremental_upstream_from"], TARGET)
+            self.assertEqual(len(manifest["changed_paths"]), 3082)
+        else:
+            self.assertEqual(manifest["incremental_upstream_from"], "3e1ada5b96acb61293ac790bd6dd093a947abed6")
+            self.assertGreaterEqual(len(manifest["changed_paths"]), 3895)
 
     def test_game_keeps_iphone_alias_and_new_screen_shape(self):
         settings = self.read("engine/dm/games/0400486024DEC000/game.tsv")

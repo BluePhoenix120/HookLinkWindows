@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -29,12 +30,18 @@ def production_functions(source, ns):
     tree = ast.parse(source.read_text(encoding='utf-8'))
     names = {'files_under', 'fingerprint', 'reused', 'package_key',
              'split_output_key', 'split_profile_inputs', 'split_shaders', 'side_table'}
+    if any(isinstance(n, ast.FunctionDef) and n.name == 'dlc_inputs' for n in tree.body):
+        names.add('dlc_inputs')
     funcs = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in names]
     found = {n.name for n in funcs}
     if names != found:
         raise AssertionError(f'missing production functions: {names - found}')
-    ns['SPLIT_TABLES'] = TABLES
-    ns['SPLIT_SIDE_TABLES'] = ('pso_pairs.tsv', 'geo_pairs.tsv', 'mesh_pairs.tsv')
+    # Read production's literal table inventory; the fixture supplies a superset.
+    for name in ('SPLIT_TABLES', 'SPLIT_SIDE_TABLES'):
+        node = next(n for n in tree.body if isinstance(n, ast.Assign) and
+                    any(isinstance(t, ast.Name) and t.id == name for t in n.targets))
+        ns[name] = ast.literal_eval(node.value)
+        assert set(ns[name]) <= set(TABLES)
     exec(compile(ast.Module(body=funcs, type_ignores=[]), str(source), 'exec'), ns)
     return ns
 
@@ -70,10 +77,15 @@ class DamagedExtractionCachingTests(unittest.TestCase):
         self.calls = []
         self.shaders = b'synthetic-shader-record-1'
 
-    def run_split(self, allow_damaged=True, env=None):
+    def run_split(self, allow_damaged=True, env=None, dlc_roms=()):
         def run(args, logfile, env=None, on_line=None):
             self.calls.append(list(args))
-            partial_pkg = Path(args[4])
+            if args[2] == '--json-paths':
+                self.assertEqual(json.loads(args[3]), [str(self.rom)])
+                self.assertEqual(json.loads(args[4]), [str(self.main)])
+                partial_pkg = Path(args[5])
+            else:
+                partial_pkg = Path(args[4])
             partial_pkg.mkdir(parents=True, exist_ok=True)
             (partial_pkg / 'shader.bin').write_bytes(self.shaders)
             tables = partial_pkg.parent / 'tables'
@@ -93,15 +105,15 @@ class DamagedExtractionCachingTests(unittest.TestCase):
             os.replace(source, target)
 
         ns = production_functions(SOURCE, {
-            'os': os, 'Path': Path, 'rfs': types.SimpleNamespace(os=os, Path=Path),
-            'hashlib': hashlib, 're': re, 'subprocess': subprocess, 'shutil': shutil,
+            'os': os, 'Path': Path, 'rfs': types.SimpleNamespace(os=os, Path=Path, open=open),
+            'hashlib': hashlib, 'json': json, 're': re, 'subprocess': subprocess, 'shutil': shutil,
             'ALLOW_DAMAGED': allow_damaged, 'PROG': Mock(),
             'python_tool_files': lambda *a: [], 'run': run, 'rmtree': remove,
             'swap_in': swap, 'data_rows': lambda b: b.splitlines(),
             'table_difference': lambda *a: 'synthetic difference', 'say': lambda *a: None,
         })
         return ns['split_shaders']('python', self.root, [self.rom], [self.main],
-                                   self.pkg, env or {}, self.logs, self.game)
+                                   self.pkg, env or {}, self.logs, self.game, dlc_roms=dlc_roms)
 
     def test_damaged_mode_writes_stage_proof_and_reuses_identical_inputs(self):
         key1 = self.run_split(True)

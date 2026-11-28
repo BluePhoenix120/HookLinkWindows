@@ -83,7 +83,12 @@ class NativeAndReuseTests(unittest.TestCase):
         self.assertIn("key = fingerprint(*inputs, *split_profile_inputs(g))",body)
         self.assertIn("('stat' if provisional or ALLOW_DAMAGED else 'tree', r)",body)
         self.assertIn('RomFS.img.formats',body)
-        self.assertIn('reused(outputkf, split_output_key(pkg, g))',body)
+        if 'write_tables' in {arg.arg for arg in fn.args.args}:
+            self.assertIn('pkg_key = package_key(pkg)',body)
+            self.assertIn('reused(outputkf, split_output_key(pkg, g, pkg_key))',body)
+            self.assertIn('outputkf.write_text(split_output_key(pkg, g, pkg_key)',body)
+        else:
+            self.assertIn('reused(outputkf, split_output_key(pkg, g))',body)
         self.assertNotIn('verified_external_ios_shaders',body)
 
 

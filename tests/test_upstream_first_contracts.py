@@ -31,9 +31,14 @@ def all_symbols(rel):
 
 class UpstreamFirstEngineContracts(unittest.TestCase):
     def test_complete_original_snapshot_is_represented(self):
-        self.assertEqual(PIN["nxnative_commit"],"5dfc86ae80c53a62262c3b3c66eab043f1fc574a")
+        self.assertIn(PIN["nxnative_commit"], ("5dfc86ae80c53a62262c3b3c66eab043f1fc574a", "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf"))
         self.assertIn("upstream-first", PIN["engine_integration_policy"])
-        self.assertGreaterEqual(len(MANIFEST["changed_paths"]),3800)
+        if PIN["nxnative_commit"] == "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf":
+            self.assertEqual(len(MANIFEST["changed_paths"]), 3082)
+            self.assertEqual(MANIFEST["incremental_upstream_from"], "5dfc86ae80c53a62262c3b3c66eab043f1fc574a")
+            self.assertEqual(MANIFEST["conflict_resolution_report"]["missing_official_paths"], [])
+        else:
+            self.assertGreaterEqual(len(MANIFEST["changed_paths"]),3800)
         self.assertEqual(len(MANIFEST["changed_paths"]),len(set(p["path"] for p in MANIFEST["changed_paths"])))
         self.assertEqual(MANIFEST["engine_integration_commit"],PIN["engine_integration_commit"])
 

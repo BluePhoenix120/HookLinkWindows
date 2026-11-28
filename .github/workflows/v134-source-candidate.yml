@@ -13,6 +13,7 @@ on:
       - 'tools/reconcile_v134_provenance.py'
       - 'tools/nxw_proc_group.py'
       - 'tools/test_nxw_proc_group.py'
+      - 'tests/test_*.py'
       - '.github/workflows/v134-source-candidate.yml'
 permissions:
   contents: read
