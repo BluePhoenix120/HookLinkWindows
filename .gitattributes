@@ -11,6 +11,8 @@
 *.metal text eol=lf
 *.swift text eol=lf
 *.cs text eol=lf
+*.glsl text eol=lf
+*.patch text eol=lf
 *.tsv text eol=lf
 *.json text eol=lf
 *.md text eol=lf

@@ -6,6 +6,8 @@ on:
     paths:
       - 'tools/reconcile_v134_timing.py'
       - 'tools/reconcile_v134_shaders.py'
+      - 'tools/check_windows_translator.py'
+      - '.gitattributes'
       - 'tools/reconcile_v134_pso.py'
       - 'tools/reconcile_v134_mesh.py'
       - 'tools/reconcile_v134_renderer.py'
@@ -193,12 +195,41 @@ jobs:
         if: always() && steps.checkout-candidate.outcome == 'success'
         with:
           dotnet-version: '10.0.x'
+      - name: Build official pinned and patched SPIRV-Cross for Windows
+        if: steps.checkout-candidate.outcome == 'success'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = "$env:RUNNER_TEMP/spirv-cross-src"
+          $build = "$env:RUNNER_TEMP/spirv-cross-build"
+          git clone --depth 1 --branch vulkan-sdk-1.4.363.0 https://github.com/KhronosGroup/SPIRV-Cross.git $src
+          if ($LASTEXITCODE -ne 0) { throw 'SPIRV-Cross clone failed' }
+          if ((git -C $src rev-parse HEAD) -ne 'f11ba9f0b21ba8fc15153d50a2a1ae31ab1cf8f7') { throw 'SPIRV-Cross pin mismatch' }
+          git -C $src apply "$PWD/engine/dm/gfx/tools/spirv_cross_bin/ordered-ne.patch"
+          if ($LASTEXITCODE -ne 0) { throw 'Official SPIRV-Cross patch failed' }
+          cmake -S $src -B $build -A x64 -DSPIRV_CROSS_ENABLE_TESTS=OFF -DSPIRV_CROSS_SKIP_INSTALL=ON
+          if ($LASTEXITCODE -ne 0) { throw 'SPIRV-Cross configure failed' }
+          cmake --build $build --config Release --target spirv-cross --parallel 4
+          if ($LASTEXITCODE -ne 0) { throw 'SPIRV-Cross build failed' }
+          $exe = Get-ChildItem $build -Filter spirv-cross.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw 'SPIRV-Cross binary missing' }
+          & $exe.FullName --revision
+          if ($LASTEXITCODE -ne 0) { throw 'SPIRV-Cross execution failed' }
+          "CANDIDATE_SPIRV_CROSS=$($exe.FullName)" >> $env:GITHUB_ENV
       - name: Build and verify real managed shader translator
         if: always() && steps.checkout-candidate.outcome == 'success'
         shell: pwsh
         run: |
-          python -B tools/check_windows_translator.py
+          $summary = Get-Content "$env:RUNNER_TEMP/v134/summary.json" -Raw | ConvertFrom-Json
+          if (-not $env:CANDIDATE_SPIRV_CROSS) { throw 'Pinned SPIRV-Cross was not built' }
+          python -B tools/check_windows_translator.py --expected-source $summary.final_source_audit.canonical_source_fingerprint --spirv-cross "$env:CANDIDATE_SPIRV_CROSS" --evidence "$env:RUNNER_TEMP/v134-windows-toolchain.json"
           if ($LASTEXITCODE -ne 0) { throw 'Candidate translator smoke test failed' }
+      - name: Upload measured Windows toolchain evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v134-windows-toolchain
+          path: ${{ runner.temp }}/v134-windows-toolchain.json
+          if-no-files-found: error
       - name: Build candidate GUI executable (not a release)
         if: always() && steps.checkout-candidate.outcome == 'success'
         shell: pwsh

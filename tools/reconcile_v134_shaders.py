@@ -77,9 +77,29 @@ def reconcile(cwd, target, windows, read):
     if (gd / 'pso_manifest.tsv').is_file(): shutil.copy2(gd / 'pso_manifest.tsv', dmres)"""
     s = replace(s, old, new)
     put(APP, s)
-    # Preserve the Windows toolchain lock as a provisional fingerprint.
-    # Actual translator rebuild and lock refresh remain release gates.
-    put(LOCK, read(windows, LOCK))
+    # Pin the actual repository source bytes, but never represent the previous
+    # translator or compiler as measured on this candidate. Windows preflight
+    # replaces these placeholders with the actual installed tool fingerprints.
+    source = subprocess.check_output([sys.executable, "dm/gfx/tools/dmsh_chain.py", "--xlate-source-sha"], cwd=cwd, text=True).strip()
+    assert len(source) == 16 and all(c in "0123456789abcdef" for c in source)
+    put(LOCK, "# Unmeasured Windows tools; run the Windows GUI shader setup/preflight.\n"
+              "# Previous Windows compiler: metalfe-custom-windows (not a candidate measurement).\n"
+              "dmsh_xlate\tunmeasured\nxlate_source\t"+source+"\nspirv-cross\tunmeasured\n"
+              "metal_macosx\tunmeasured\nmetal_iphoneos\tunmeasured\n")
+    # Fail closed if a missing tool happens to match a placeholder or missing
+    # historical lock entry. A full refresh must measure every required tool.
+    p = "dm/gfx/tools/tool_lock.py"
+    lock = get(p)
+    lock = replace(lock, "    ran = not now['xlate_source'].startswith(NO_RUN)",
+        "    ran = not now['xlate_source'].startswith(NO_RUN)")
+    lock = replace(lock, "    if not ran: bad.append(no_run_message(now['xlate_source']))",
+        "    bad += [f'{k}: required tool fingerprint unavailable' for k, v in now.items() if v in ('missing', 'unmeasured', '')]\n"
+        "    if not ran: bad.append(no_run_message(now['xlate_source']))")
+    lock = replace(lock, "        t = tools_now()\n        if t['xlate_source'].startswith(NO_RUN):",
+        "        t = tools_now()\n        absent = [k for k, v in t.items() if v in ('missing', 'unmeasured', '')]\n"
+        "        if absent: sys.exit('[RED] missing tool fingerprints: ' + ', '.join(absent))\n"
+        "        if t['xlate_source'].startswith(NO_RUN):")
+    put(p,lock)
     chain = subprocess.check_output([sys.executable, "dm/gfx/tools/dmsh_chain.py", "--header"], cwd=cwd, text=True).strip()
     if len(chain) != 12 or any(c not in "0123456789abcdef" for c in chain):
         raise RuntimeError("Invalid provisional shader chain")

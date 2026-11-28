@@ -16,6 +16,8 @@ def check(cwd, target, read, dest):
     lock=dict(l.split("\t",1) for l in get("dm/gfx/tools/dmsh_chain.lock").splitlines() if "\t" in l and not l.startswith("#"))
     assert len(source)==16 and re.fullmatch("[0-9a-f]{16}",source)
     assert lock.get("metal_iphoneos") and lock.get("spirv-cross")
+    assert lock.get("xlate_source") == source, 'Candidate source lock does not match the exported source'
+    assert all(lock.get(k) == 'unmeasured' for k in ('dmsh_xlate','spirv-cross','metal_iphoneos','metal_macosx'))
     # The committed historical lock is not a measurement of the newly
     # rebuilt Windows binary or the user's installed Metal toolchain.
     # Report stale inputs explicitly rather than forging a matching lock.
@@ -33,6 +35,7 @@ def check(cwd, target, read, dest):
            "provisional_shader_chain":chain,"canonical_source_fingerprint":source,
            "recorded_source_fingerprint":lock.get("xlate_source"),
            "shader_lock_matches_source":source==lock.get("xlate_source"),
+           "installed_tools_measured":False,
            "native_custom_paths":len(native),
            "official_audio_and_timing_core":"exact",
            "release_ready":False,
