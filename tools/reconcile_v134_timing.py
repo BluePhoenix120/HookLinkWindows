@@ -16,6 +16,7 @@ from audit_v134_incremental import BASE, TARGET
 import reconcile_v134_shaders as shaders
 import reconcile_v134_pso as pso
 import reconcile_v134_mesh as mesh
+import reconcile_v134_renderer as renderer
 
 OOT = "dm/games/0400486024DEC000/patches.py"
 FSTEP = "dm/gfx/nvn/nvn_fstep.h"
@@ -137,6 +138,7 @@ def main():
             subprocess.run(["python3", "-m", "py_compile", proc, "dm/tools/proc_group_windows.py"], cwd=cwd, check=True)
             summary["windows_process_backend"] = "Job Object; tested separately on native Windows"
             summary["mesh_reconciliation"] = mesh.reconcile(cwd, TARGET, windows, read)
+            summary["renderer_reconciliation"] = renderer.reconcile(cwd, TARGET, dest)
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
             assert not out(cwd, "ls-files", "-u")

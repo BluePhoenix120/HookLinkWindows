@@ -8,6 +8,7 @@ on:
       - 'tools/reconcile_v134_shaders.py'
       - 'tools/reconcile_v134_pso.py'
       - 'tools/reconcile_v134_mesh.py'
+      - 'tools/reconcile_v134_renderer.py'
       - 'tools/nxw_proc_group.py'
       - 'tools/test_nxw_proc_group.py'
       - '.github/workflows/v134-source-candidate.yml'
