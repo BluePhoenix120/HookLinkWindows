@@ -68,8 +68,8 @@ void dm_set_opmode(int m) {   // called by the front end (overheat downgrade etc
 // FocusState: 1 InFocus, 2 OutOfFocus, 3 Background. The front end calls dm_focus_set (iOS lifecycle / Mac window losing focus)
 static _Atomic int g_focus = 1; static _Atomic uint64_t g_focus_in_ns;   // the front end's state; time of its most recent entry into InFocus
 // Focus handling mode the game set (-1: none). The SDK's oe::SetFocusHandlingMode (SDK 18 sdk+0x3c5770) turns it into am's SetFocusHandlingMode(notify, ?, suspend) and
-// SetOutOfFocusSuspendingEnabled: 0 → (0, 0, 1), 1 → (1, 1, 0), 2 → (1, 0, 1), 3 → (0, 0, 1) + out-of-focus suspending. Only 1 and 2 ask for focus notifications; under 0 and 3
-// the system suspends the game out of focus and it never sees message 15 (the host's suspend is the guest clock freeze and the graphics gate). Super Mario Galaxy 2 sets 3, and
+// SetOutOfFocusSuspendingEnabled: 0 → (0, 0, 1), 1 → (1, 1, 0), 2 → (1, 0, 1), 3 → (0, 0, 1) + out-of-focus suspending. Only 1 and 2 ask for focus notifications.
+// Mode 3 also suspends the application during foreground library applets. Super Mario Galaxy 2 sets 3, and
 // its Wii layer's pause on focus 2 (main+0x663ba0) never finished: the main loop waits for the GX thread to pause (main+0x5ce870), which waits for work the paused CPU never sends
 static _Atomic int g_focus_mode = -1;
 static int focus_notifies(void) { int m = atomic_load(&g_focus_mode); return m != 0 && m != 3; }   // no mode set: notify, as before
@@ -79,11 +79,15 @@ static int focus_notifies(void) { int m = atomic_load(&g_focus_mode); return m !
 // after the InFocus notification (its notification thread main+0x8ea560 sets the flag main+0x87b5d0 takes each frame); with none its 2P character select never took input
 // (GitHub issue #550). The game sees the front end's state, or 2 while an applet is open over an application in focus; a change of what it sees is one notification 15
 static int g_applets; static _Atomic int g_seen = 1; static pthread_mutex_t g_seen_lock = PTHREAD_MUTEX_INITIALIZER;
+static void applet_suspend_sync(void) {   // g_seen_lock held
+    guest_clock_freeze_for(DM_CLOCK_APPLET, g_applets > 0 && atomic_load(&g_focus_mode) == 3);
+}
 static void focus_sync(int applets) {   // applets: +1 an applet opens, -1 one closes, 0 the front end's state changed
     pthread_mutex_lock(&g_seen_lock);
     g_applets += applets;
     if (g_applets < 0) die("dm_applet_leave without dm_applet_enter");
     int w = atomic_load(&g_focus), s = w == 1 && g_applets ? 2 : w, changed = atomic_exchange(&g_seen, s) != s;
+    if (applets) applet_suspend_sync();   // AlwaysSuspend: also park the guest while the native applet owns the foreground
     pthread_mutex_unlock(&g_seen_lock);
     if (!changed) return;   // pushed outside the lock: 15 only says "query the state again", so pushes from two threads need no order
     LOG("oe focus state → %d%s", s, applets > 0 ? " (library applet open)" : applets < 0 ? " (library applet closed)" : "");
@@ -183,22 +187,25 @@ HLE_FORCE("_ZN2nn2oe23GetPreviousProgramIndexEv", "previous program index: the p
 // program, with no parameters. An app of one program cannot start itself again: the front end asks the player to open the app again (front_program_handoff with no DM_EXEC_OUT), and the app ends.
 #if !TARGET_OS_IPHONE
 // cwd NULL: stay in this folder. The plan owns what it allocates (prog_plan_free): env (its entries point into environ, tsv or own), the table tsv that exe, cwd and arg point into,
-// and own, the two start keys. The host makes one plan and replaces itself with it (execve); a caller that makes another frees the first
-typedef struct { const char *exe, *cwd; char **argv, **env; char *argv2[3]; char self[4096]; char *tsv, *own[2]; } prog_plan;
-static void prog_plan_free(prog_plan *p) { free(p->env); free(p->tsv); free(p->own[0]); free(p->own[1]); memset(p, 0, sizeof *p); }
+// and own, the start keys (DM_LAUNCH_PARAM, DM_PREV_PROGRAM, optional DM_OPEN_USERS). The host makes one plan and replaces itself with it (execve); a caller that makes another frees the first
+typedef struct { const char *exe, *cwd; char **argv, **env; char *argv2[3]; char self[4096]; char *tsv, *own[3]; } prog_plan;
+static void prog_plan_free(prog_plan *p) { free(p->env); free(p->tsv); for (int i = 0; i < 3; i++) free(p->own[i]); memset(p, 0, sizeof *p); }
 static int prog_row_sets(const char *row, const char *kv) {
     size_t kl = strcspn(kv, "=");
     for (const char *f = strchr(row, '\t'); f && f[1]; f = strchr(f + 1, '\t')) if (!strncmp(f + 1, kv, kl) && f[1 + kl] == '=') return 1;
     return 0;
 }
-static int prog_start_key(const char *kv) { return !strncmp(kv, "DM_LAUNCH_PARAM=", 16) || !strncmp(kv, "DM_PREV_PROGRAM=", 16) || !strncmp(kv, "DM_RELAUNCH=", 12); }
+static int prog_start_key(const char *kv) {
+    return !strncmp(kv, "DM_LAUNCH_PARAM=", 16) || !strncmp(kv, "DM_PREV_PROGRAM=", 16) ||
+           !strncmp(kv, "DM_RELAUNCH=", 12) || !strncmp(kv, "DM_OPEN_USERS=", 14);
+}
 // The plan of the program that starts: rows[hit] of the table (hit -1: this host itself, again; the rows point into out->tsv). Its environment is this one less the keys a start sets and
-// every key a row sets, then the row's keys, then the start's own (DM_RELAUNCH=1, or DM_LAUNCH_PARAM and DM_PREV_PROGRAM with the parameters in <its folder>/launch_param.bin).
+// every key a row sets, then the row's keys, then the start's own (DM_RELAUNCH=1, or DM_LAUNCH_PARAM, DM_PREV_PROGRAM and optional DM_OPEN_USERS with the parameters in <its folder>/launch_param.bin).
 // 0: no plan (out keeps what it holds, for the caller's prog_plan_free)
-static int prog_plan_make(char **rows, int nr, int hit, prog_plan *out, const void *param, size_t n, int relaunch, const char *call) {
+static int prog_plan_make(char **rows, int nr, int hit, prog_plan *out, const void *param, size_t n, int relaunch, unsigned open_users, const char *call) {
     extern char **environ;
     size_t ne = 0; while (environ[ne]) ne++;
-    char **env = out->env = calloc(ne + 68, sizeof *env); size_t k = 0;
+    char **env = out->env = calloc(ne + 69, sizeof *env); size_t k = 0;
     if (!env) die("%s: out of memory", call);
     for (size_t i = 0; i < ne; i++) {
         int drop = prog_start_key(environ[i]);
@@ -225,12 +232,14 @@ static int prog_plan_make(char **rows, int nr, int hit, prog_plan *out, const vo
     }
     if (relaunch) env[k++] = "DM_RELAUNCH=1";
     else {
-        char *pp = NULL, *pe = NULL, *pv = NULL;
-        if (asprintf(&pp, "%s/launch_param.bin", dir) < 0 || asprintf(&pe, "DM_LAUNCH_PARAM=%s", pp) < 0 || asprintf(&pv, "DM_PREV_PROGRAM=%d", (int)(DM_GAME_PROGRAM_ID & 0xf)) < 0) die("%s: out of memory", call);
+        char *pp = NULL, *pe = NULL, *pv = NULL, *ou = NULL;
+        if (asprintf(&pp, "%s/launch_param.bin", dir) < 0 || asprintf(&pe, "DM_LAUNCH_PARAM=%s", pp) < 0 || asprintf(&pv, "DM_PREV_PROGRAM=%d", (int)(DM_GAME_PROGRAM_ID & 0xfff)) < 0) die("%s: out of memory", call);
+        if (open_users && asprintf(&ou, "DM_OPEN_USERS=%x", open_users) < 0) die("%s: out of memory", call);
         FILE *po = fopen(pp, "wb");
         if (!po || (n && fwrite(param, n, 1, po) != 1)) LOG("[RED] %s: cannot write %s", call, pp);
         if (po) fclose(po);
         free(pp); env[k++] = out->own[0] = pe; env[k++] = out->own[1] = pv;
+        if (ou) env[k++] = out->own[2] = ou;
     }
     env[k] = NULL;
     return 1;
@@ -238,11 +247,11 @@ static int prog_plan_make(char **rows, int nr, int hit, prog_plan *out, const vo
 // The Mac's plan for starting program `index` in this one's place, into P (an earlier plan there is freed first); 0: nothing can start, this program just ends (P holds nothing)
 static int oe_plan(int index, const void *param, size_t n, int relaunch, prog_plan *P, const char *call) {
     prog_plan_free(P);
-    int cur = (int)(DM_GAME_PROGRAM_ID & 0xf);   // the program index is the program ID less the application's
+    int cur = (int)(DM_GAME_PROGRAM_ID & 0xfff);   // the program index is the program ID less the application's
     const char *pf = getenv("DM_PROGRAMS");
     if (!pf || !*pf) {   // a program run by itself
         if (!relaunch && index != cur) return 0;
-        if (!prog_plan_make(NULL, 0, -1, P, param, n, relaunch, call)) { prog_plan_free(P); return 0; }
+        if (!prog_plan_make(NULL, 0, -1, P, param, n, relaunch, relaunch ? 0 : dm_account_pushed_users(), call)) { prog_plan_free(P); return 0; }
         LOG("%s: this program ends and starts again", call);
         return 1;
     }
@@ -258,11 +267,12 @@ static int oe_plan(int index, const void *param, size_t n, int relaunch, prog_pl
         if (atoi(ln) == 0) first = nr;
         rows[nr++] = ln;
     }
+    int fallback = 0;
     if (hit < 0) {
         LOG("[RED] %s: this application has no such program here; its first program starts instead", call);
-        hit = first; param = NULL; n = 0;
+        hit = first; param = NULL; n = 0; fallback = 1;
     }
-    if (hit < 0 || !prog_plan_make(rows, nr, hit, P, param, n, relaunch, call)) { prog_plan_free(P); return 0; }
+    if (hit < 0 || !prog_plan_make(rows, nr, hit, P, param, n, relaunch, (relaunch || fallback) ? 0 : dm_account_pushed_users(), call)) { prog_plan_free(P); return 0; }
     if (relaunch) LOG("%s: the application starts again from its first program, %s", call, P->exe);
     else LOG("%s: this program ends, %s starts", call, P->exe);
     return 1;
@@ -287,7 +297,7 @@ static void oe_start(int index, const void *param, size_t n, int relaunch) {
     const char *what = relaunch ? "oe::RequestToRelaunchApplication" : "oe::ExecuteProgram";
     char hex[3 * 32 + 1] = "", call[192]; for (size_t i = 0; i < n && i < 32; i++) snprintf(hex + 3 * i, 4, " %02x", ((const uint8_t *)param)[i]);
     if (relaunch) snprintf(call, sizeof call, "%s", what); else snprintf(call, sizeof call, "%s(%d, %zu bytes of parameters:%s)", what, index, n, hex);
-    int cur = (int)(DM_GAME_PROGRAM_ID & 0xf);
+    int cur = (int)(DM_GAME_PROGRAM_ID & 0xfff);
     dm_gfx_quit_begin();   // this program ends: the pipeline archive starts writing now, beside the iPhone's notice (front_program_handoff, 1.5-3 s), and the exit waits for the rest
 #if !TARGET_OS_IPHONE
     static prog_plan P;
@@ -314,6 +324,8 @@ HLE_FORCE("_ZN2nn2oe14ExecuteProgramEiPKvm", "end this program and start another
 // Super Smash Bros. Ultimate 13.0.5 calls it after Options > Language > Yes ("the software will restart"), once the new language is saved. The SDK asks the am application proxy, which the
 // host never opens: applet::RequestToLaunchApplication read through the null proxy (sdk+0x804c8, SIGSEGV at address 0)
 HLE_FORCE("_ZN2nn2oe28RequestToRelaunchApplicationEv", "end this application and start it again from its first program, no launch parameter (on the Mac an execve of the host); never returns", void, h_oe_Relaunch, void) { oe_start(0, NULL, 0, 1); }
+// The SDK 3 entry point transfers a work buffer to the am capture applet. The host has no system recorder or application proxy, so leave the caller's buffer alone.
+HLE_FORCE("_ZN2nn2oe23EnableGamePlayRecordingEPvm", "start system video recording with a work buffer; the host has no system recording", void, h_oe_EnableGameplayRec, void *work, size_t size) { (void)work; (void)size; }
 HLE_FORCE("_ZN2nn2oe16DisableRecordingEv", "video recording switch; the host has no system recording", void, h_oe_DisableRec, void) {}
 // Silence the game's sound in system video captures (through am; FINAL FANTASY RESONANCE imports both): the host records nothing
 HLE_FORCE("_ZN2nn2oe13MuteRecordingEv", "mute the sound of system video recording; the host has no system recording", void, h_oe_MuteRec, void) {}
@@ -427,7 +439,11 @@ static pthread_once_t g_oe_once = PTHREAD_ONCE_INIT;
 
 HLE_FORCE("_ZN2nn2oe20GetCurrentFocusStateEv", "foreground / background state; the front end's dm_focus_set, out of focus while a library applet is open", int, h_oe_GetFocus, void) { return atomic_load(&g_seen); }
 HLE_FORCE("_ZN2nn2oe20SetFocusHandlingModeENS0_17FocusHandlingModeE", "focus handling mode; 1 and 2 get focus notifications, 0 and 3 none (see g_focus_mode)", void, h_oe_SetFocusMode, int m) {
-    atomic_store(&g_focus_mode, m); LOG("oe::SetFocusHandlingMode %d (%s)", m, focus_notifies() ? "focus notifications" : "suspended out of focus, no focus notifications");
+    pthread_mutex_lock(&g_seen_lock);
+    atomic_store(&g_focus_mode, m);
+    if (g_applets) applet_suspend_sync();
+    pthread_mutex_unlock(&g_seen_lock);
+    LOG("oe::SetFocusHandlingMode %d (%s)", m, focus_notifies() ? "focus notifications" : "no focus notifications");
 }
 
 // Notification: returns bool (w0), the host has no system notifications

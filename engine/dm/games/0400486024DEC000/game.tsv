@@ -11,8 +11,6 @@ name	The Legend of Zelda: Ocarina of Time
 ipa	ZeldaOcarinaOfTime.ipa
 app_category	public.app-category.adventure-games
 pad_layout	full
-# The touch controls' Glass colours, on every layout (DmGamepad.m theme_init)
-pad_theme	glass
 
 # ---- Versions ----
 build	v131072	1.1.1	main=e0f3ccfaf50065ae4ea01eb5aeb13b1a	subsdk0=b0110087a7b339ef74588d3bd0b4dd5d	sdk=1643a838814f9c10c696f930ed681e7f
@@ -26,18 +24,10 @@ zip_store	.zs:.bwav:.webm:.metallib
 
 # ---- Memory ----
 # The Switch 2 leaves games 9 GB of its 12 GB (Donkey Kong Bananza's figure). The NPDM declares 48 MB of system resource, so virtual address memory is on.
-# nninitStartup asks SetHeapSize 0x18ce00000 (6.2 GB) with the 9 GB pool, as Mario Kart World. 256 MB in front + 4 GB alias region + 256 MB stack region + 8 GB heap region: a starting split, to be measured
-# HookLink: an iPhone gets an 8 GB alias region (the Mac has the Switch's 64 GB whatever this says). With 4 GB the game ran out of addresses when the Master Sword is pulled:
-# it had mapped up to +3.75 GB and the next scene's movie and files had no room, so it waited on a white screen for good (mem_map_limit on) or aborted in its loader
-# (main+0x34fc290, the limit off). On an iPhone 18 Pro Max with 8 GB it went on, mapped up to +6.00 GB and held 4.75 GB mapped, more than the 2.74 GB the limit left it
-# beside its 6.2 GB heap, so the limit is off (2026-11-10). mem_reserve grows by the same 4 GB: the heap region stays 8 GB.
-# HookLink VX1rc_6: 16 GB. After long sessions of area changes (teleporting) the game had mapped up to +7.75 GB of the 8 GB on an iPhone 18 Pro Max (VX1rc_4, rc_5: 6.5-7.25 GB
-# held), and the Master Sword's cutscene waited on its white screen again with nothing refused: the address space, not the memory, ran out. Addresses cost nothing until mapped (the
-# guest files are sparse); mem_reserve grows by the same 8 GB, so the heap region stays 8 GB
-# nxnative main (2026-11-22) uses 8 GiB and the map limit on: at 4 GiB the Chamber of Sages transition ran out of room for a 50 MiB region (#3103). HookLink keeps 16 GB and the limit off (the Master Sword, VX1rc_6)
-mem_reserve	0x620000000
-mem_alias	0x400000000
-mem_map_limit	off
+# 256 MiB in front + 8 GiB heap + 256 MiB stacks + 8 GiB alias region. At 4 GiB the Chamber of Sages transition runs out of room for a 50.03 MiB address region (#3103).
+mem_reserve	0x420000000
+mem_alias	0x200000000
+mem_map_limit	on
 mem_stack	0x10000000
 app_pool	0x240000000
 sys_resource	0x3000000
@@ -52,55 +42,16 @@ shader_note	Ocarina of Time shaders
 fps_target	60
 
 # ---- Graphics ----
-# iPhone 18 Pro Max: hybrid pipelines, so first-seen pipelines stop freezing the game; the archive is built for its GPU
-pso_mtl4	on
-pso_gpu	applegpu_g19p
 draw_barriers	game
 # As Tears of the Kingdom: the terrain's height, blend and hole maps are written by the CPU into textures after they are created. Without these keys they stay zero: holes in the ground and the wrong materials
 tex_flush_upload	on
 tex_dirty_upload	on
-# At 30 fps an iPhone lowers the GPU clock until the work fills most of the frame (iPhone 18 Pro at render scale 0.25: GPU p50 12 ms at 60 fps, 29-30 ms at 30, p95 33-38 ms;
-# log 60: 195 of 300 frames over 33.3 ms, p99 64 ms, 109 payback steps of 3 in 40 s). Three things make the 30 steady:
-# present snapshots, so the game's swapchain texture is free at once and its CPU work overlaps the GPU's instead of starting on the link's tick (log 60 had them off: frame
-# p50 35.9 ms against GPU 29.7 ms, the two back to back; A12 with them on held a p50 of 33.3 ms at the same GPU time). The launcher's Frame buffering row starts on
-# HookLink: off here, as 1.7 ran; the launcher's 30 fps modes turn it on (DM_PRESENT_SNAP)
-present_snap	off
-# the display link's frame latency 2 at the 30 fps cap: 66 ms from submission to display instead of 33, so a 34-38 ms frame is absorbed while the mean fits
-link_latency30	2
-# no payback: a late frame's lost time is let go (the game slows by it, as on the console) instead of a step of 3 vsyncs shown for 2, a half-frame jump in motion on the next frame
-# HookLink: on here, so 60 fps and Unlocked keep real speed as in 1.7; the launcher's steady 30 fps modes turn it off (DM_FPS_PAYBACK=off)
-fps_payback	on
-# The iPhone's touch gamepad starts in the full (3D) layout: the D-pad, L3 / R3 and the right stick, which turns the camera (a drag in the right third of the screen); the simple
-# layout has no right stick. A layout the player switches to in the game menu is kept
-pad_layout	native
-# Dynamic resolution reads the GPU time between the frame's timestamp reports, as on Donkey Kong Bananza and Breath of the Wild (the same EPD engine family): with one time a submission it
-# read about 0 and kept the full 1440x810 at 20-24 ms of GPU a frame on a MacBook Air M5. Each report takes its segment's GPU start / end (nvn_mtl.m rep_ticks)
-gpu_timestamps	segment
-# The game upscales through a chain: agl_ndsr_vr feature pass, network and blend at the render size, agl_ndsr_vr_light scale to 1920x1080. DM_UPSCALER=metalfx skips the chain for MetalFX (nvn_mtl.m up_chain)
-upscaler_chain	f8965bffbdf51d78,d17eefaff4f0bc23,a335c1db6270c355>aad7ea7e5c02f41d|b106afba1a18faa9|fa3033d05c0a41d6|04135bb812a0d66e|8df148d58b7cbe8e|d99fbeeb53d38847
-# Colour render targets drawn only as attachments (RGBA8 / BGRA8 / RGBA16F) kept with Metal lossy compression (rt_lossy, nvn_mtl.m rt_lossy): about 100 MB less in Link's house at 720p;
-# the scene colour (RG11B10F) and depth have no lossy form
-# HookLink 1.8.5: off again, as 1.5.1 and 1.7 ran (1.8 took it on with the steady 30 fps merge); 60 fps restarted an iPhone 18 Pro Max once on 1.8
-rt_lossy	off
-# One Render scale slider in place of the Resolution row (Normal / Potato): a fixed fraction of the game's base size (render_base: 2560x1440 docked, 1920x1080
-# handheld), from 0.25 (480x270 handheld, marked Potato) to 1.0 (1920x1080); 0.667 is the old Normal's 1280x720. The render-scale stub (patches.py) fixes every value up to 1.0
-res_presets	off
-render_base	2560x1440 1920x1080
-render_scale	0.25:1.0:0.05
-render_scale_default	0.667
-render_scale_marks	0.25=Potato
-frame_wg	off
-# The model optimizer's thread only gets idle time on the console (priority 55 under strict priorities); under the QoS map it competed with the frame's threads for the
-# iPhone's two performance cores, 700-770 ms of CPU a second through whole area visits (hle_thread.c thread_main; Hookshot PR 959 found the same on PCs)
-# Pool tables give a finalized texture's ID the dummy instead of making its texture again: about 2.5 GB at the house-to-forest change (upstream PR #1393, open; from the kid-with-sword-remake fork's FF line, HookLink 1.9 test42)
-pool_skip_retired	on
-# The launcher's Potato mode (DM_PRESET=potato; loader.c dm_preset_apply sets this list when the game starts, over the launcher's own values; kid-with-sword-remake V18's mechanism,
-# HookLink VX1's list): the 3D views at 0.25 (the Render scale's Potato mark, 480x270 handheld), frame generation's frames at half the size shown, the prewarm warm-only (no pipeline kept:
-# a kept prewarm held about 1.2 GB on an iPhone), and the idle shared textures let go from 60 % of Metal's working set down to 50 % (85 / 75 by default). kid-with-sword's other memory
-# savers (the GPU memory guard, the texture recycle bin, lazy textures, big pools in the guest files) were written on an engine whose memory code nxnative has since rewritten: main's
-# own render-target release, pool chunks, stand-ins and HookLink's idle retirement and pool_skip_retired stand for them here
-potato	DM_RENDER_SCALE=0.25,DM_FRAMEGEN_SCALE=0.5,DM_PSO_WARM_ONLY=1,DM_NVN_ALIAS_HI=60,DM_NVN_ALIAS_LO=50,DM_SHADOW_SCALE=0.25
-# kid-with-sword-remake L8: with a mod on, the game reads no input for the first 660 presented frames (about 20-25 s from start; a "Getting ready" banner on iPhone). A mod's
-# piece of Link set up before about frame 600 is never drawn that session (the Goku mod, 23 launches: every setup at frame 589 or earlier invisible, at 680 or later drawn; the
-# game's reason not found), and a save cannot be loaded before the hold ends, so the setup lands after it. Without mods there is no hold. DM_MOD_INPUT_HOLD=<frames> overrides
+
+# Independent HookLink features
+pad_theme	glass
+potato	DM_RENDER_SCALE=0.25,DM_FRAMEGEN_SCALE=0.5,DM_PSO_WARM_ONLY=1,DM_SHADOW_SCALE=0.25
 mod_input_hold	660
+
+# HookLink iPhone pipeline archive and prebuild
+pso_mtl4	on
+pso_gpu	applegpu_g19p

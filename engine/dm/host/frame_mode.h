@@ -8,6 +8,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+static const char *const dm_frame_mode_set[4][7][2] = {
+        {{0}},
+        {{"DM_FPS_TARGET", "30"}, {"DM_FPS_HOLD", "on"}, {"DM_PRESENT_SNAP", "2"}, {"DM_FRAMEGEN", "0"}, {0}},
+        {{"DM_FPS_TARGET", "30"}, {"DM_FPS_HOLD", "on"}, {"DM_PRESENT_SNAP", "3"}, {"DM_FRAMEGEN", "1"}, {0}},
+        {{"DM_FPS_TARGET", "60"}, {"DM_PRESENT_SNAP", "3"}, {"DM_FRAMEGEN", "1"}, {0}},
+    };
+static inline const char *dm_frame_mode_override(int mode, const char *key) {
+    if (mode < 1 || mode > 3) return NULL;
+    for (int i = 0; i < 7 && dm_frame_mode_set[mode][i][0]; i++)
+        if (!strcmp(key, dm_frame_mode_set[mode][i][0])) return dm_frame_mode_set[mode][i][1];
+    return NULL;
+}
 static inline void dm_frame_mode_apply(void) {
     // HookLink 1.8.5: HookLink's iPhone preset fixed DM_RT_COMP=12 (the game thread's real-time computation) since 0.1, a value for 60 fps. With 30 fps it overran
     // its declaration on most frames and iOS stalled the thread (every frame late in a 1.8 log); measured (auto) it held 30. An app older than 1.8.5 still packs
@@ -17,16 +29,11 @@ static inline void dm_frame_mode_apply(void) {
     const char *e = getenv("DM_FRAME_MODE"); int m = e ? atoi(e) : 0;
     if (m < 1 || m > 3) return;
     static const char *const names[4] = { "", "30 fps, steady", "30 fps + frame generation (shown at 60)", "60 fps + frame generation (shown at 120)" };
-    static const char *const set[4][7][2] = {
-        {{0}},
-        {{"DM_FPS_TARGET", "30"}, {"DM_FPS_HOLD", "on"}, {"DM_FPS_PAYBACK", "off"}, {"DM_FRAME_DELTA", "0"}, {"DM_PRESENT_SNAP", "2"}, {"DM_FRAMEGEN", "0"}, {0}},
-        {{"DM_FPS_TARGET", "30"}, {"DM_FPS_HOLD", "on"}, {"DM_FPS_PAYBACK", "off"}, {"DM_FRAME_DELTA", "0"}, {"DM_PRESENT_SNAP", "3"}, {"DM_FRAMEGEN", "1"}, {0}},
-        {{"DM_FPS_TARGET", "60"}, {"DM_PRESENT_SNAP", "3"}, {"DM_FRAMEGEN", "1"}, {0}},
-    };
+
     fprintf(stderr, "frame rate mode %d: %s (DM_FRAME_MODE)\n", m, names[m]);
-    for (int i = 0; i < 7 && set[m][i][0]; i++) {
-        const char *was = getenv(set[m][i][0]);
-        if (was && strcmp(was, set[m][i][1])) fprintf(stderr, "frame rate mode: %s=%s replaces %s\n", set[m][i][0], set[m][i][1], was);
-        setenv(set[m][i][0], set[m][i][1], 1);
+    for (int i = 0; i < 7 && dm_frame_mode_set[m][i][0]; i++) {
+        const char *was = getenv(dm_frame_mode_set[m][i][0]);
+        if (was && strcmp(was, dm_frame_mode_set[m][i][1])) fprintf(stderr, "frame rate mode: %s=%s replaces %s\n", dm_frame_mode_set[m][i][0], dm_frame_mode_set[m][i][1], was);
+        setenv(dm_frame_mode_set[m][i][0], dm_frame_mode_set[m][i][1], 1);
     }
 }

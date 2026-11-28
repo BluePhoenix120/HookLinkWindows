@@ -50,7 +50,7 @@ int dm_audio_input_platform_start(void) {
     double rate = hw.sampleRate; int ch = (int)hw.channelCount;
     [in installTapOnBus:0 bufferSize:1024 format:hw block:^(AVAudioPCMBuffer *buf, AVAudioTime *when) {
         (void)when;
-        if (buf.frameLength && buf.floatChannelData) dm_audio_input_process((const float *const *)buf.floatChannelData, (int)buf.format.channelCount, buf.frameLength, rate);
+        if (buf.frameLength && buf.floatChannelData) dm_audio_input_process((const float *const *)buf.floatChannelData, (int)buf.format.channelCount, buf.frameLength, buf.format.sampleRate);
     }];
     NSError *err = nil;
     [e prepare];
@@ -66,7 +66,7 @@ void dm_audio_input_platform_close(void) {
     pthread_mutex_unlock(&g_mu);
 }
 int dm_audio_input_platform_failed(void) { return atomic_load(&g_failed); }
-int dm_audio_input_platform_route_changed(void) { return 0; }   // the front end's audio session restarts the outputs; the engine follows the route itself
+int dm_audio_input_platform_route_changed(void) { return 1; }   // input layer closes and reopens on the control queue
 void dm_audio_input_platform_info(char name[0x100], char uid[0x100], double *sample_rate, int *channels) {
     if (name) snprintf(name, 0x100, "iPhone microphone"); if (uid) uid[0] = 0;
     if (sample_rate) *sample_rate = g_rate; if (channels) *channels = g_channels;

@@ -54,6 +54,7 @@ def check_tools(check_metal=True):
     now = tools_now() if check_metal else tools_now(False)
     ran = not now['xlate_source'].startswith(NO_RUN)
     bad = [f'{k}: lock {want.get(k)} / actual {v}' for k, v in now.items() if want.get(k) != v and (ran or k != 'xlate_source')]
+    bad += [f'{k}: required tool fingerprint unavailable' for k, v in now.items() if v in ('missing', 'unmeasured', '')]
     if not ran: bad.append(no_run_message(now['xlate_source']))
     elif now['xlate_source'] != xlate_source_sha(): bad.append(f'the translator was not built from the in-repo source: embedded source {now["xlate_source"]} / in repo {xlate_source_sha()} (rebuild it: dm/tools/native_tools.sh dmsh_xlate)')
     return bad
@@ -62,6 +63,8 @@ if __name__ == '__main__':
     a = sys.argv[1:]
     if a == ['--update-lock']:
         t = tools_now()
+        absent = [k for k, v in t.items() if v in ('missing', 'unmeasured', '')]
+        if absent: sys.exit('[RED] missing tool fingerprints: ' + ', '.join(absent))
         if t['xlate_source'].startswith(NO_RUN): sys.exit('[RED] ' + no_run_message(t['xlate_source']))
         if t['xlate_source'] != xlate_source_sha(): sys.exit(f'[RED] the translator was not built from the in-repo source (embedded {t["xlate_source"]} / in repo {xlate_source_sha()}): rebuild it first (dm/tools/native_tools.sh dmsh_xlate)')
         open(LOCK, 'w').write('# Translation chain tool fingerprints (written by tool_lock.py --update-lock; regenerate after changing tools and commit it)\n' + ''.join(f'{k}\t{v}\n' for k, v in t.items()))

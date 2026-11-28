@@ -14,7 +14,7 @@
 # a [RED] line per shader that built but lost something (shader_regressions.report_losses), which does not change the exit status
 import atexit, errno, inspect, multiprocessing, os, re, sys, json, mmap, struct, hashlib, shutil, subprocess, tempfile, time, collections, threading, concurrent.futures as cf
 from concurrent.futures.process import BrokenProcessPool
-import dmsh_geometry, dmsh_tess, dmsh_atomic, dmsh_wide, dmsh_meshstage, dmsh_rewrite, dmsh_reflect, dmsh_entry, dmsh_rt, dmsh_rt_build, dmsh_rt_compile, dmsh_abi as abi   # abi: the driver segment layout and the binding kinds the host shares (dm/gfx/nvn/dmsh_abi.h)
+import dmsh_geometry, dmsh_tess, dmsh_atomic, dmsh_wide, dmsh_meshstage, dmsh_rewrite, dmsh_reflect, dmsh_entry, dmsh_rt, dmsh_rt_build, dmsh_rt_compile, dmsh_metalwa, dmsh_abi as abi   # abi: the driver segment layout and the binding kinds the host shares (dm/gfx/nvn/dmsh_abi.h)
 DM_ROOT = os.environ.get('DM_ROOT') or os.path.expanduser('~/dm-work')   # Workspace root (game files, build outputs and run artifacts are all under it)
 HOME = os.path.expanduser('~')
 dm_dir, out = sys.argv[1:3]; want = set(sys.argv[3:]); cache_root = out
@@ -194,18 +194,27 @@ def publish_library(label, on_progress=None):
     without unpacking loose files back onto the full drive; otherwise the staged outputs go back into the folder, which works as it is, and a folder restore that fails too removes what it
     wrote and stops the build"""
     d = label_dir(label); image = shader_lib.image_of(d); prefix = f'{STAGE}/{label}/'
-    files = {}
+    files, share = {}, {}
     old = OLD_IMAGE.get(label)
     if old is not None:
-        for p in old.iterdir():
-            m = OUT_KEY.match(p.name)
-            if (m and owned_output(m.group(1))) or (p.name == dmsh_chain.STAMP and STAMP_BEFORE != INPUTS): continue
-            files[p.name] = str(p)
-    staged = STORE.names(prefix)
-    for n in staged: files[n[len(prefix):]] = (lambda n=n: STORE.get(n))
+        old_img = romfs.Image(old)
+        for name, k in old_img.children(0):
+            m = OUT_KEY.match(name)
+            if (m and owned_output(m.group(1))) or (name == dmsh_chain.STAMP and STAMP_BEFORE != INPUTS): continue
+            files[name] = str(old / name)
+            share[name] = ('old', *old_img.entry(k)[:2])
+    staged = STORE.blob_ids(prefix)
+    for n, blob in staged.items():
+        short = n[len(prefix):]
+        files[short] = (lambda n=n: STORE.get(n))
+        share[short] = ('blob', blob)
     for n in os.listdir(d):
-        if not n.startswith('.') and '.tmp' not in n and os.path.isfile(os.path.join(d, n)): files[n] = os.path.join(d, n)
-    try: shader_lib.write(files, image, on_progress=on_progress) if on_progress else shader_lib.write(files, image)
+        if not n.startswith('.') and '.tmp' not in n and os.path.isfile(os.path.join(d, n)):
+            files[n] = os.path.join(d, n)
+            share.pop(n, None)
+    try:
+        if on_progress: shader_lib.write(files, image, on_progress=on_progress, share=share or None)
+        else: shader_lib.write(files, image, share=share or None)
     except (OSError, ValueError) as e:
         cache_full = getattr(STORE, 'full', False)
         def stop(why, err2=None):
@@ -446,17 +455,19 @@ MAP_ROWS, MAP_CONFLICT_ROWS = {}, {}
 for raw in open(MAP, 'rb'):
     c = raw.rstrip(b'\n').split(b'\t')
     if len(c) > 4: MAP_ROWS.setdefault(c[3].decode(), raw)
-for raw in open(MAP + '.conflicts.tsv', 'rb'):
-    c = raw.rstrip(b'\n').split(b'\t')
-    if len(c) > 1 and not raw.startswith((b'#', b'dm_')): MAP_CONFLICT_ROWS.setdefault(c[0].decode(), raw)
+if os.path.isfile(MAP + '.conflicts.tsv'):
+    for raw in open(MAP + '.conflicts.tsv', 'rb'):
+        c = raw.rstrip(b'\n').split(b'\t')
+        if len(c) > 1 and not raw.startswith((b'#', b'dm_')): MAP_CONFLICT_ROWS.setdefault(c[0].decode(), raw)
 for ln in open(MAP):
     c = ln.rstrip('\n').split('\t')
     if len(c) > 4 and c[0].endswith('.bin'):
         pc_of.setdefault(c[3], c[4]); loc.setdefault(c[3], (c[0], int(c[1])))
         if c[2] in ('rt', 'raytracing'): RT_KEYS.add(c[3])
-for ln in open(MAP + '.conflicts.tsv'):
-    c = ln.rstrip('\n').split('\t')
-    if len(c) > 1 and not ln.startswith('#') and not ln.startswith('dm_') and c[0] in pc_of: pc_of[c[0]] = c[1]
+if os.path.isfile(MAP + '.conflicts.tsv'):
+    for ln in open(MAP + '.conflicts.tsv'):
+        c = ln.rstrip('\n').split('\t')
+        if len(c) > 1 and not ln.startswith('#') and not ln.startswith('dm_') and c[0] in pc_of: pc_of[c[0]] = c[1]
 
 def vertex_ab(key, code, ctl):
     """Merge Maxwell's type-0 VertexA and type-1 VertexB as Ryujinx does. Control +0x748 lists each part's SPH offset and length from the SPH.
@@ -509,7 +520,29 @@ def ps_omap(code):
     NaN above Ocarina of Time's horizon to the missing per-component mask (their commit 79c1516; Ocarina's agl_common depth pass has map 0x10f: output 0 RGBA, output 2 R only)"""
     return struct.unpack_from('<I', code, 18 * 4)[0] if len(code) >= 0x50 else None
 
-NVN2_STAGE_INDEX = {'vs': 0, 'hs': 1, 'ms': 1, 'ds': 2, 'gs': 3, 'ps': 4}   # NVN2 graphics stage indices (PRAGMATA's banks: vertex c[25], hull and mesh c[26], domain c[27], geometry c[28], pixel c[29])
+def unity_acescc_lut(code):
+    # The Unity Post Processing v1 LUT generator in Outer Wilds lost the two
+    # half-subnormal constants in ACES_to_ACEScc when compiled for Maxwell.
+    # Match the shader's bytes so other LUT variants keep their own math. The
+    # offsets are from the SPH, and only the offline translator sees this copy.
+    if len(code) != 4304 or hashlib.sha256(code).hexdigest() != '4beffc02e07565c3d9ee6e3b33d6f456f4eae4d16fbe2986417b5d9986a00b00':
+        return code
+    patched = bytearray(code)
+    # RRO.EX2 R5, R5 is already a no-op in the translator. Use its slot to
+    # load 2^-16 into the unused R254. Each low branch then computes
+    # x * 0.5 + 2^-16 and tests x < 2^-15 before selecting its logarithm.
+    for offset, word in (
+        (0x148, 0x010378000007F0FE),  # MOV32I R254, 2^-16
+        (0x248, 0x32807F3F00070402),  # FFMA R2, R4, 0.5, R254
+        (0x260, 0x36B103B800070407),  # FSETP.LT.AND P0, PT, R4, 2^-15, PT
+        (0x278, 0x32807F3F00070503),  # FFMA R3, R5, 0.5, R254
+        (0x280, 0x36B103B80007050F),  # FSETP.LT.AND P1, PT, R5, 2^-15, PT
+        (0x2F8, 0x32807F3F00070503),  # FFMA R3, R5, 0.5, R254
+        (0x348, 0x36B103B800070507),  # FSETP.LT.AND P0, PT, R5, 2^-15, PT
+    ):
+        struct.pack_into('<Q', patched, offset, word)
+    return bytes(patched)
+
 
 def job_for(key, name, rec, w):
     ci = rec.find(bytes.fromhex('34127698'), 0x38); code = rec[0x38:ci]; stage = name[:2]
@@ -524,16 +557,12 @@ def job_for(key, name, rec, w):
         c1 = dmsh_ampere.c1_segment(rec[ci:], code)
         code = code[:dmsh_ampere.inst_len(rec[ci:])]
         extra['arch'] = 'sm86'
-        # compute lays out its driver constants in c[0] per shader: the control section gives its push constants' words (+0xa9), counts its uniform buffer, storage
-        # buffer, texture, separate texture and separate sampler entries (+0xb1, +0xb2, +0xb3, +0xb4, +0xb5; images, +0xb6, come last) and gives the size (+0xba);
-        # the translator maps them to c[24] and NVN's fixed tables (InstEmitAmpere.cs AMapC0). Graphics keeps NVN's tables.
-        # +0xaa counts the words of push block 1 (NVN2's own accessor reads +0xa9 + block): what the game pushes there (PRAGMATA: {address, size} buffer entries, or 8-byte handles),
-        # laid out right after push block 0, before the uniform entries; the translator maps it to c[24] + DMSH_PUSH_SIZE (dmsh_abi.h DMSH_PUSH_BLOCKS). With it every one of
-        # PRAGMATA's 6,856 compute shaders adds up to its size (+0xba); Donkey Kong Bananza's and Star Fox's sizes add up without it, as +0xaa is 0 there
-        if stage == 'cs': extra['nvn2_cs'] = [rec[ci + 0xb1], rec[ci + 0xb2], rec[ci + 0xb3], struct.unpack_from('<H', rec, ci + 0xba)[0], rec[ci + 0xa9] * 4, rec[ci + 0xb4], rec[ci + 0xb5], rec[ci + 0xaa] * 4]
-        # a graphics stage reads the buffer entries the game pushes into its push block 1 + stage index from a bank of its own, c[25 + stage index]; the translator maps
-        # that bank onto the block in c[24] (dmsh_abi.h DMSH_NVN2_STAGE_BANK). A task shader's bank has not been seen
-        if stage in NVN2_STAGE_INDEX: extra['stage_bank'] = abi.NVN2_STAGE_BANK + NVN2_STAGE_INDEX[stage]
+        # Compute lays out c[0] per shader. The control section counts the words of all eight push blocks (+0xa9..+0xb0), then the entries in the uniform,
+        # storage and texture tables (+0xb1..+0xb6). AMapC0 maps these to c[24] and the fixed driver tables. Graphics already uses the fixed tables.
+        if stage == 'cs':
+            push = [4 * words for words in rec[ci + 0xa9:ci + 0xb1]]
+            extra['nvn2_cs'] = [*rec[ci + 0xb1:ci + 0xb4], struct.unpack_from('<H', rec, ci + 0xba)[0],
+                                push[0], *rec[ci + 0xb4:ci + 0xb6], *push[1:]]
         if stage in ('ts', 'ms'):
             # A task or mesh shader: translated as compute, its SPH taken off and its stage memory in shared memory, then wrapped as the Metal stage function (dmsh_meshstage.py).
             # Graphics stages' c[0] and c[2] tables stay: the translator reads their addresses out of the code as for a vertex shader
@@ -553,6 +582,7 @@ def job_for(key, name, rec, w):
             # Stripping only 0x30 made the translator decode from +0x30: the control word every 32 bytes is off by 0x10 and the jump tables of indirect BRX (relative to the program start) are all misplaced → particle / post-effect compute shaders loop forever and hang the GPU.
             if any(code[0x30:0x100]): sys.exit(f'[RED] {key}: compute code area +0x30..+0x100 is not all zero, so the instructions do not start at +0x100')
             code = code[0x100:]
+        if stage == 'ps': code = unity_acescc_lut(code)
         tf = tf_layout(key, rec[ci:]) if stage in ('vs', 'gs') else None
         if tf: extra['tf'] = tf
     if stage == 'ps' and early_fragment_tests(rec[ci:], code): extra['early_fragment_tests'] = True
@@ -623,7 +653,7 @@ RULES = []   # MSL rewrite rules attached by shader name (function, applicabilit
 # dmsh_side.py is in it: dmsh_entry's fs_uint writes main0's shared body (shared_body).
 # dmsh_fetch.py is not, but for screen_varyings (raster_facts), nor are the other side libraries' modules: they are made again from the restored MSL on every build (ps_libraries;
 # test_dmsh_code_fp.py checks this list).
-CODE_FP = hashlib.sha256(source_without_rule_bodies() + b''.join(b'\0' + dmsh_chain.code_form(open(m.__file__, 'r').read()) for m in (dmsh_chain, dmsh_geometry, dmsh_tess, dmsh_atomic, dmsh_wide, dmsh_meshstage, dmsh_rewrite, dmsh_reflect, dmsh_entry, dmsh_ampere, dmsh_side, dmsh_rt, dmsh_rt_build, dmsh_rt_compile, abi) + ((ios_metal,) if IOSOUT else ()))
+CODE_FP = hashlib.sha256(source_without_rule_bodies() + b''.join(b'\0' + dmsh_chain.code_form(open(m.__file__, 'r').read()) for m in (dmsh_chain, dmsh_geometry, dmsh_tess, dmsh_atomic, dmsh_wide, dmsh_meshstage, dmsh_rewrite, dmsh_reflect, dmsh_entry, dmsh_ampere, dmsh_side, dmsh_rt, dmsh_rt_build, dmsh_rt_compile, dmsh_metalwa, abi) + ((ios_metal,) if IOSOUT else ()))
                          + b'\0' + inspect.getsource(dmsh_fetch.screen_varyings).encode()
                          + b'\0abi\0' + repr(sorted(abi.VALUES.items())).encode()).hexdigest()
 TOOL_FP = tool_fingerprint().encode()
@@ -633,9 +663,9 @@ def load_pairs(game, package):
     pairs = collections.defaultdict(set)
     for table in ('shader_pairs.tsv', 'pso_pairs.tsv'):
         path = str(game.table(table))
-        if table == 'pso_pairs.tsv' and not os.path.isfile(path):
-            path = os.path.join(os.path.dirname(os.path.abspath(package)), table)   # the split's copy for profiles predating this table
-        if table == 'pso_pairs.tsv' and not os.path.isfile(path): continue
+        if not os.path.isfile(path):
+            path = os.path.join(os.path.dirname(os.path.abspath(package)), table)   # the split's copy beside the package
+        if not os.path.isfile(path): continue
         with open(path) as f:
             for ln in f:
                 if ln.strip() and not ln.startswith('#'): v, p = ln.split(); pairs[v].add(p)
@@ -794,7 +824,7 @@ def geometry_finish(key, w, j, c1):
         dmsh_geometry.flatten_sets(spv)
         r = subprocess.run([SPIRV_CROSS, *XC, spv], capture_output=True, text=True)
         if r.returncode: return 'geometry MSL failed', r.stderr.strip()[:160], None
-        try: selected = dmsh_rewrite.uniform_tests(dmsh_rewrite.select_guards(dmsh_rewrite.bit0_mask(dmsh_rewrite.precise(dmsh_atomic.check_msl(r.stdout)))))   # precise, a tested bit 0's mask (bit0_mask), bounded uniform reads as selects (dmsh_rewrite.select_guards), tested words as volatile loads (uniform_tests), as finish makes them
+        try: selected = dmsh_metalwa.apply(dmsh_rewrite.uniform_tests(dmsh_rewrite.select_guards(dmsh_rewrite.bit0_mask(dmsh_rewrite.precise(dmsh_atomic.check_msl(r.stdout))))))[0]   # precise, bit0_mask, select_guards, uniform_tests, and Metal compiler workarounds (dmsh_metalwa), as finish makes them
         except ValueError as e: return 'geometry MSL failed', str(e)[:160], None
         plain = dmsh_geometry.topology_pointer(dmsh_reflect.pool_arrays(selected))
         src = dmsh_geometry.capture_input(plain)
@@ -917,6 +947,11 @@ def finish(key, w, j, c1):
             src, tess = dmsh_tess.hull(src, os.path.join(w, key + '.spv')) if j['stage'] == 'hs' else dmsh_tess.domain(src, os.path.join(w, key + '.spv'), j.get('tess_mode'))
             open(msl, 'w').write(src)
         except ValueError as e: tess = {'unsupported': str(e)[:160]}
+    if j['stage'] not in ('vs', 'ds'):   # Metal GPU compiler workarounds (KK3 ballots behind DMSH_MWA_FC, KK9 loop breaks), before mesh wrapping, compute_loops and shared_body
+        try:
+            t = dmsh_metalwa.apply(src)[0]
+            if t != src: src = t; open(msl, 'w').write(src)
+        except ValueError as e: return 'metal workaround rewrite failed', str(e)[:160], None
     if mesh:   # the kernel as the Metal object or mesh function (dmsh_meshstage.py)
         if mesh.get('refused'): return 'mesh stage failed', mesh['refused'], None
         # outputs its paired pixel shaders read but its SPHs do not enable get (0,0,0,1), as vs_pad gives a vertex shader's (Ocarina of Time's foliage meshes); each output as wide as they read
@@ -959,8 +994,16 @@ def finish(key, w, j, c1):
         capture = dmsh_geometry.capture(src)   # and its capture entry, for a geometry shader after it (nvn_tess.inc, as a vertex shader's for nvn_geometry.inc)
         src, full = dmsh_entry.vs_depth(src); open(msl, 'w').write(full + capture)
     fu = dmsh_entry.fs_uint(src) if j['stage'] == 'ps' else None   # the typed-output entry point (see fs_uint); the analysis below uses the source with only main0
-    shared = dmsh_side.shared_body(src) if fu else None   # it calls main0's body; fs_uint gives none for a main0 whose shape it does not know
-    if shared and fu: plain = src; open(msl, 'w').write(shared + fu)
+    early = j['stage'] == 'ps' and dmsh_reflect.pool_early_variant(src)
+    shared = dmsh_side.shared_body(src) if fu or early else None
+    early_src = ''
+    if shared and early:
+        e = dmsh_side.entry(src, 'main0')
+        if e and not e['attr']:
+            early_src = dmsh_side.calling({**e, 'attr': '[[early_fragment_tests]] '}, 'main0_early', e['ret'], 'return out;')
+    if shared and (fu or early_src):
+        plain = src
+        open(msl, 'w').write(shared + (fu or '') + early_src)
     else: fu = None
     try: binds = dmsh_reflect.reflect(key, mesh['kind'] if mesh else j['stage'], src, res)   # before the compile: a pixel shader's readable-tile version needs its texture slots (ps_libraries)
     except ValueError as e: return 'reflection failed', str(e)[:160], None
@@ -973,9 +1016,9 @@ def finish(key, w, j, c1):
         return {}, set()
     try: side, cut_targets = compile_targets()
     except subprocess.CalledProcessError as e:
-        if not lay and not fu: return 'metal failed', str(e)[:160], None
-        lost = [name for name, extra in (('layer', lay), ('integer output', fu)) if extra]   # kept in the reflection, as a cache hit compiles nothing: every build reports it (shader_regressions.report_losses)
-        open(msl, 'w').write(plain); lay = fu = None   # the layer and typed-output entry points are extras: a library that does not build with them is built without
+        if not lay and not fu and not early_src: return 'metal failed', str(e)[:160], None
+        lost = [name for name, extra in (('layer', lay), ('integer output', fu), ('pool early depth', early_src)) if extra]   # every build reports lost entries, including cache hits
+        open(msl, 'w').write(plain); lay = fu = None; early_src = ''
         try: side, cut_targets = compile_targets()
         except subprocess.CalledProcessError as e: return 'metal failed', str(e)[:160], None
     clone(msl, os.path.join(out, key + '_b.metal'))
@@ -999,6 +1042,10 @@ def finish(key, w, j, c1):
             'vertex_inputs': [{'location': int(m.group(3)), 'msl_type': m.group(1)} for m in dmsh_reflect.attributes(src)],
             'raster': {**dmsh_reflect.raster_facts(j['stage'], src), **({'omap': ps_omap(open(j['code'], 'rb').read())} if j['stage'] == 'ps' else {})}, 'vs_pad': pad, **({'tess': tess} if tess else {})}
     refl.update(side)   # the alpha test and logic operation entry points and the readable-tile version (ps_libraries); the pulling and shadow-input libraries (vs_libraries)
+    if early_src:
+        refl['entry_early'] = 'main0_early'
+        if early == 'read_only':
+            refl['early_read_only'] = True
     write_refl(key, refl, cut_targets)
     return 'ok', '', refl
 

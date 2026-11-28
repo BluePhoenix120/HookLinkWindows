@@ -34,6 +34,7 @@ OUTPUTS = (
 # Keep the check strict, but also accept the explicitly imported X2 engine.
 # No branch HEAD or Git checkout is used to infer the engine version.
 _SUPPORTED_ENGINE_BASES = {
+    ('4.0', 'f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf', 'https://github.com/seedds/nxnative.git'),
     ('4.0', '5dfc86ae80c53a62262c3b3c66eab043f1fc574a', 'https://github.com/seedds/nxnative.git'),
     ('2.0', '3a28152fe7052c9f45ede460022d39be6c91e3cf',
      'https://github.com/dsi-hub/nxnative.git'),
@@ -98,6 +99,17 @@ def verify_source_identity(root: Path) -> tuple[str, str]:
              'Engine manifest does not match pinned revision; use the complete release')
         if version == '3.0':
             need(len(record['changed_paths']) == 25, 'X2 file manifest has an unexpected size')
+        elif version == '4.0' and engine_sha == 'f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf':
+            need(record.get('hooklink_engine_commit') == _HOOKLINK_X3_ENGINE
+                 and meta.get('hooklink_engine_commit') == _HOOKLINK_X3_ENGINE
+                 and len(record['changed_paths']) == 3082
+                 and len({r['path'] for r in record['changed_paths']}) == 3082
+                 and record.get('engine_integration_commit') == meta.get('engine_integration_commit')
+                 and isinstance(record.get('hooklink_tree'), list)
+                 and isinstance(record.get('hooklink_omissions'), dict)
+                 and record.get('conflict_resolution_report', {}).get('unmerged_index_entries') == 0
+                 and record.get('conflict_resolution_report', {}).get('missing_official_paths') == [],
+                 'Official-first integration manifest is incomplete')
         elif version == '4.0':
             need(record.get('hooklink_engine_commit') == _HOOKLINK_X3_ENGINE
                  and meta.get('hooklink_engine_commit') == _HOOKLINK_X3_ENGINE

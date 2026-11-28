@@ -3,6 +3,7 @@
 // is on the TV and the phone shows the pad (DmTVSceneDelegate).
 // The host runs on the big-stack thread started by main.m; front_run runs the guest directly on the calling thread.
 #import "mic_apple.h"
+#include "audio_input.h"
 #import <UIKit/UIKit.h>
 #include "frame_mode.h"
 #import <UserNotifications/UserNotifications.h>
@@ -21,6 +22,7 @@
 #import "CloudSaves.h"
 
 void dm_gamepad_active(void);
+void dm_gamepad_inactive(void);
 #import "DmLayout.h"
 #import "DmGameMenu.h"
 #import "DmRotation.h"
@@ -31,6 +33,7 @@ const char *front_ios_boot_message(void);   // main.m: why a build that keeps th
 const char *front_ios_device_check(void);   // main.m: why this device cannot run the games (its GPU has no BC textures; NULL = supported)
 bool front_ios_hud_enabled_from_saved_choice(void);   // main.m: the saved choice enabled Metal's HUD at launch
 bool dm_show_launcher(void *view_controller, void (*done)(void));   // Launcher.swift: false = no launcher (no dm/launcher.json, or DM_LAUNCHER=0)
+void dm_prewarm_upload_schedule(void);
 
 static CAMetalLayer *g_layer;
 static void front_ios_notify_setup(void);
@@ -173,13 +176,12 @@ static void launcher_done(void) { [g_root startGame]; }
             setenv("DM_SCREEN_ASPECT", v, 1); LOG("front end: picture shape auto: window %.0fx%.0f points (%.3f:1) → DM_SCREEN_ASPECT=%s", sz.width, sz.height, r, v);
         }
     }
-    {   // Wide view: the app window's own shape, for a window wider than 16:9 (a regular iPhone) or squarer (an unfolded iPhone Duo, an iPad). Before the host writes the state page
+    {   // Wide view: the app window's own shape, for a window wider than 16:9 (a regular iPhone). Before the host writes the state page
+        unsetenv("DM_WIDE_ASPECT");
         const char *wv = getenv("DM_WIDE_VIEW");
         if (wv && !strcmp(wv, "1")) {
             CGSize sz = self.view.window ? self.view.window.bounds.size : UIScreen.mainScreen.bounds.size; double r = MAX(sz.width, sz.height) / MAX(MIN(sz.width, sz.height), 1);
-            // (HookLink 1.9: a window squarer than 16:9 too, 1.25 to 1.74: an unfolded iPhone Duo at about 1.43, an iPad. The picture keeps its height and is narrower,
-            // and the cameras take its ratio, so the squarer screen is filled with a taller view instead of bars above and below; untested on a device)
-            if ((r >= 1.8 && r <= 2.6) || (r >= 1.25 && r <= 1.74)) { char v[16]; snprintf(v, sizeof v, "%.3f", r); setenv("DM_WIDE_ASPECT", v, 1); LOG("front end: wide view: window %.0fx%.0f points (%.3f:1)%s", sz.width, sz.height, r, r < 1.77 ? ", squarer than 16:9" : ""); }
+            if (r >= 1.8 && r <= 2.6) { char v[16]; snprintf(v, sizeof v, "%.3f", r); setenv("DM_WIDE_ASPECT", v, 1); LOG("front end: wide view: window %.0fx%.0f points (%.3f:1)%s", sz.width, sz.height, r, ""); }
             else LOG("front end: wide view: window %.0fx%.0f points (%.3f:1) is 16:9 or out of range, kept 16:9", sz.width, sz.height, r);
         }
     }
@@ -188,6 +190,7 @@ static void launcher_done(void) { [g_root startGame]; }
     self.view.clipsToBounds = YES;   // with Fill the game view is larger than the screen
     self.view.window.traitOverrides.preferredContentSizeCategory = UIContentSizeCategorySmall;   // UIKit draws the in-game menu (GameMenu.swift) in this window: it keeps one compact text size over the game, whatever the system's text size
     self.game = [[DmGameView alloc] initWithFrame:self.view.bounds];
+    dm_prewarm_upload_schedule();
     [self.view addSubview:self.game];
     g_layer = (CAMetalLayer *)self.game.layer;
     if (getenv("DM_METAL_HUD") && atoi(getenv("DM_METAL_HUD"))) { g_layer.developerHUDProperties = @{@"mode": @"default"}; LOG("front end: Metal performance HUD on (DM_METAL_HUD)"); }   // Apple's HUD over the game: frame rate, frame and GPU time, memory
@@ -710,7 +713,7 @@ void front_ios_audio_session(void) {
     AVAudioSession *s = AVAudioSession.sharedInstance; NSError *e = nil;
     // With the microphone offered to the game (DM_MIC, mic_apple.m) the category is PlayAndRecord, set here at boot so the game's sound does not change mid-play: the loudspeaker stays
     // the output (not the receiver), Bluetooth headphones keep their music profile (A2DP; the hands-free profile would take their quality), and the silent switch still does not mute it
-    if (dm_mic_wanted()) {
+    if (dm_mic_available()) {
         if (![s setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionAllowBluetoothA2DP error:&e])
             LOG("[RED] audio session category (play and record, for the microphone) could not be set: %s", e.localizedDescription.UTF8String);
         dm_mic_prepare();
@@ -738,6 +741,13 @@ static BOOL front_ios_same_outputs(NSArray<AVAudioSessionPortDescription *> *pre
     }
     return YES;
 }
+static void front_ios_mic_route(void) {
+    if (!dm_mic_wanted()) return;
+    static dispatch_queue_t q;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ q = dispatch_queue_create("dm.audio.input.route", DISPATCH_QUEUE_SERIAL); });
+    dispatch_async(q, ^{ dm_audio_input_route_changed(); });
+}
 static void front_ios_audio_watch(void) {
     NSNotificationCenter *nc = NSNotificationCenter.defaultCenter;
     [nc addObserverForName:AVAudioSessionInterruptionNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *n) {
@@ -756,6 +766,8 @@ static void front_ios_audio_watch(void) {
         AVAudioSessionRouteDescription *previous = n.userInfo[AVAudioSessionRouteChangePreviousRouteKey];
         BOOL moved = previous ? !front_ios_same_outputs(previous.outputs, session.currentRoute.outputs)
                               : reason != AVAudioSessionRouteChangeReasonCategoryChange;
+        BOOL inputMoved = previous && !front_ios_same_outputs(previous.inputs, session.currentRoute.inputs);
+        if (inputMoved || moved) front_ios_mic_route();
         if (!moved && reason == AVAudioSessionRouteChangeReasonCategoryChange) return;
         int old_channels = dm_audio_route();
         front_ios_audio_channels(session);
@@ -766,7 +778,7 @@ static void front_ios_audio_watch(void) {
     }];
     [nc addObserverForName:AVAudioSessionMediaServicesWereResetNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *n) {
         (void)n; LOG("audio session: the media services were reset; setting the session and the outputs up again");
-        front_ios_audio_session(); dm_audio_reset();
+        front_ios_audio_session(); dm_audio_reset(); front_ios_mic_route();
     }];
 }
 
@@ -802,7 +814,7 @@ static void arch_background(void) {
 void front_ios_focus_event(int ev) {
     if (!g_layer) return;
     switch (ev) {
-        case 0: dm_movie_active(0); dm_gamepad_reset(); dm_focus_set(2); break;
+        case 0: dm_movie_active(0); dm_gamepad_inactive(); dm_focus_set(2); break;
         case 1:
             UIApplication.sharedApplication.idleTimerDisabled = NO;
             dm_focus_set(3);
@@ -821,6 +833,8 @@ void front_ios_focus_event(int ev) {
             UIApplication.sharedApplication.idleTimerDisabled = YES;
             if (g_audio_intr) { LOG("audio session: active again with no interruption-ended notice; resuming"); g_audio_intr = 0; g_session_off = 1; }
             if (g_session_off) front_ios_audio_session();
-            front_ios_audio_apply(); dm_gamepad_active(); dm_focus_set(1); dm_movie_active(1); break;
+            front_ios_audio_apply(); dm_gamepad_active(); dm_focus_set(1); dm_movie_active(1);
+            dm_prewarm_upload_schedule();
+            break;
     }
 }

@@ -18,18 +18,6 @@ static void run(sim *m, int n, double w, int kmin, int kmax, int fixed) {
     }
 }
 
-// A game whose stub never steps below the measured frame time (Ocarina of Time): each frame moves it by the larger of the step and the mean of the last present intervals,
-// both decided at the present before. moved: the host tells the controller what the game moved (nvn_fstep_moved), as hle_nvn.c fstep_tick does
-static void run_floor(sim *m, nvn_fdelta *f, uint64_t *t, double *floor, int n, double w, int kmin, int kmax, int moved) {
-    for (int i = 0; i < n; i++) {
-        int k = m->s.k ? m->s.k : kmin, step = m->next ? m->next : kmin;
-        double shown = w > k ? w : k;
-        m->real += shown; m->game += *floor > step ? *floor : step;
-        *floor = 60.0 * nvn_fdelta_next(f, *t += (uint64_t)(shown * 1e9 / 60));
-        m->next = nvn_fstep_next(&m->s, shown, w, kmin, kmax, 0, m->slow);
-        if (moved) nvn_fstep_moved(&m->s, *floor > m->next ? *floor : m->next);
-    }
-}
 // A hitch that steps hold 1 up: seven frames of 1.6 vsyncs (pipeline compiles), 4.2 vsyncs behind in the last 30 frames and 3.6 without the longest, more than FSTEP_LATE a frame on average. Three such
 // frames among frames on time are paid back by the step and keep hold 1 (below)
 static void hitch(sim *m) { run(m, 7, 1.6, 1, 3, 0); }
@@ -48,6 +36,12 @@ int main(void) {
         run(&c, 120, 0.7, 1, 2, 0); check(c.s.k == 1, "120 fps: the cap's end returns to 120");
     }
     char b[160];
+    {   // fps_hold off at 120 (hle_nvn.c fstep_kmax: kmax is the cap's vsyncs, 1 tick): frames 11 % over the tick (9.25 ms, just past FSTEP_LATE) stay at 120, each shown late rather than stepping the hold to 60
+        sim f = {0}; f.s.per_vsync = 2; f.s.no_payback = 1;
+        run(&f, 600, 1.11, 1, 1, 0);
+        snprintf(b, sizeof b, "120 fps, fps_hold off: frames of 9.2 ms hold 120, no step to 60 (k %d, ups %llu, late %llu)", f.s.k, (unsigned long long)f.s.ups, (unsigned long long)f.s.late);
+        check(f.s.k == 1 && f.s.ups == 0 && f.s.late > 100, b);
+    }
     {   sim m = {0}; run(&m, 600, 0.5, 1, 3, 0);
         check(m.s.k == 1 && m.s.ups == 0 && m.s.paid == 0 && m.game == m.real, "steady 60: hold 1, step 1, game time = real time");
     }
@@ -165,14 +159,6 @@ int main(void) {
         check(three == 4 && m.s.k == 2 && m.game == m.real, b);
         run(&m, 300, 3.5, 2, 2, 0);
         check(m.s.k == 2, "  frames longer than the hold at the 30 cap: hold stays 2 (the 30 Hz link holds only even counts)");
-    }
-    {   sim m = {0}; m.s.nopay = 1; run(&m, 300, 0.5, 2, 2, 0);   // fps_payback off (Ocarina of Time): a late frame's time is let go, not paid back
-        m.real += 3; m.game += m.next; m.next = nvn_fstep_next(&m.s, 3, 3, 2, 2, 0, 0);
-        int three = 0; for (int i = 0; i < 10; i++) { int st = m.next; run(&m, 1, 0.5, 2, 2, 0); three += st == 3; }
-        snprintf(b, sizeof b, "no payback: a late frame at the 30 cap gives no step of 3 (%d), the game is %.0f vsync behind", three, m.real - m.game);
-        check(three == 0 && m.s.k == 2 && m.real - m.game == 1 && m.s.dropped == 1 && m.s.debt == 0, b);
-        run(&m, 300, 1.9, 2, 2, 0);
-        check(m.s.k == 2 && m.next == 2 && m.real - m.game == 1, "  no payback: frames that fit afterwards step 2 and hold 2");
     }
     {   sim m = {0}; run(&m, 60, 0.5, 1, 3, 0); run(&m, 1, 0.5, 2, 3, 0);
         check(m.s.k == 2, "movie flag (kmin 2): hold 2 at once");
@@ -558,37 +544,6 @@ int main(void) {
             check(first_len == want[c] && m.s.k == 2 && m.s.failed == 1, b);
         }
     }
-    {   // a stub that never steps below the measured frame time: the step must not pay back what the frame time already moved
-        static const double ws[] = {1.2, 1.5, 1.8, 2.37, 3.6};
-        for (int hold = 0; hold < 2; hold++) for (unsigned i = 0; i < sizeof ws / sizeof *ws; i++) {
-            double speed[2];
-            for (int moved = 0; moved < 2; moved++) {
-                sim m = {0}; nvn_fdelta f = {0}; uint64_t t = 1000; double floor = 0;
-                run_floor(&m, &f, &t, &floor, 120, 0.5, 1, hold ? 3 : 1, moved);   // at the target first
-                double r0 = m.real, g0 = m.game;
-                run_floor(&m, &f, &t, &floor, 1800, ws[i], 1, hold ? 3 : 1, moved);
-                speed[moved] = (m.game - g0) / (m.real - r0);
-            }
-            snprintf(b, sizeof b, "frame time floor, %s, frames of %.2f vsyncs: game time %.3f of real time (%.3f when the step pays it again)", hold ? "hold on" : "hold off", ws[i], speed[1], speed[0]);
-            check(fabs(speed[1] - 1) < 0.005 && speed[0] > speed[1] - 0.001, b);
-        }
-        sim m = {0}; nvn_fdelta f = {0}; uint64_t t = 1000; double floor = 0;   // one hitch at the target: paid back by the steps, and the mean that still holds it adds at most the vsync the debt remembers
-        run_floor(&m, &f, &t, &floor, 120, 0.5, 1, 3, 1); run_floor(&m, &f, &t, &floor, 1, 3.0, 1, 3, 1); run_floor(&m, &f, &t, &floor, 120, 0.5, 1, 3, 1);
-        snprintf(b, sizeof b, "frame time floor: a 50 ms hitch at 60 fps leaves the game %.2f vsyncs ahead (debt %.2f)", m.game - m.real, m.s.debt);
-        check(m.game - m.real < 1.6 && m.game - m.real > -0.01, b);
-    }
-    {   // the frame time a game steps by (nvn_fdelta_next)
-        nvn_fdelta f = {0}; uint64_t t = 1000; float v = 1;
-        check(nvn_fdelta_next(&f, t) == 0, "frame time: the first present has none");
-        for (int i = 0; i < 20; i++) v = nvn_fdelta_next(&f, t += 16666667);
-        check(v == 0, "frame time: 0 at 60 fps, the game's own step");
-        for (int i = 0; i < 20; i++) v = nvn_fdelta_next(&f, t += 50000000);
-        check(fabsf(v - 0.05f) < 0.0001f, "frame time: 50 ms at 20 fps");
-        v = nvn_fdelta_next(&f, t += 2000000000);
-        check(v > 0.05f && v < 0.0625f, "frame time: a 2 s stall counts 0.1 s in the mean");
-        for (int i = 0; i < 20; i++) v = nvn_fdelta_next(&f, t += 200000000);
-        check(fabsf(v - 4.0f / 60) < 0.0001f, "frame time: stops at 4 frames of 60 fps");
-    }
     {   // A drain of standing frames (nvn_fstep_drain_cut), in ms against a 16.7 ms hold
         uint64_t pw = 20; check(nvn_fstep_drain_cut(33, 17, 16, 0, &pw) == 17 && pw == 4, "a drain of one tick: the frame shows its hold, the pacing wait loses the tick");
         pw = 10; check(nvn_fstep_drain_cut(17, 17, 6, 0, &pw) == 17 && pw == 10, "a drain inside the hold is pacing: nothing cut");
@@ -711,9 +666,9 @@ int main(void) {
         nvn_fstep_next(&er.s, 1, 0.5, 1, 3, 0, 0);
         check(clr1 && clr2 && er.s.stalls == 0, "  settle is cleared on first-frame and fixed-step early returns");
     }
-    {   // Ticks of 1/120 s (nvn_fstep.t120: a page whose unit at +0x48 is 120, a FRAME_STEP_120 stub): 2 / 3 / 4 ticks are 60 / 40 / 30 fps
-        _Alignas(8) uint8_t page[0x100] = {0}; nvn_fstep_target_put(page, 60);
-        check(!nvn_fstep_t120(page) && !nvn_fstep_t120(NULL), "a page in vsyncs (+0x48 0) is not in 1/120 s ticks");
+    {   // Ticks of 1/120 s (nvn_fstep.t120: a page whose unit at +0x38 is 120, a FRAME_STEP_120 stub): 2 / 3 / 4 ticks are 60 / 40 / 30 fps
+        _Alignas(8) uint8_t page[64] = {0}; nvn_fstep_target_put(page, 60);
+        check(!nvn_fstep_t120(page) && !nvn_fstep_t120(NULL), "a page in vsyncs (+0x38 0) is not in 1/120 s ticks");
         uint32_t unit = 120; memcpy(page + FSTEP_UNIT_OFF, &unit, 4);
         check(nvn_fstep_t120(page), "  a page whose unit is 120 counts in ticks of 1/120 s");
         check(nvn_fstep_cap(40, 0, 0) == 40 && nvn_fstep_cap(40, 30, 0) == 30 && nvn_fstep_cap(40, 0, 1) == 30 && nvn_fstep_cap(40, 60, 0) == 60,

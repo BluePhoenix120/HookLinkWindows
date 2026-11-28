@@ -302,8 +302,10 @@ def main():
     up.derive_profile = derive_profile
 
     import love_shaders
-    def capture_shaders(repo, d, patched, work, env, logs, g, api):
+    def capture_shaders(repo, d, patched, work, env, logs, g, api, msl=None, aoc=None):
         """GL capture of a LÖVE game without the Mac host: win/love_shaders.py assembles the GLSL offline from the Lua LÖVE embeds in main (the same text the game hands to glShaderSource)"""
+        if msl is not None or aoc is not None:
+            raise BuildError('supplemental mixed NVN/GL runtime capture requires Windows device-capture integration')
         if api != 'gl': return device_capture(api, d, patched, work, env, g, up.capture_wanted(g, api), lambda c: up.capture_done(c, api))
         out, part = d / 'gl_capture', d / 'gl_capture.partial'
         up.PROG.stage('GL shader reconstruction (LÖVE)')

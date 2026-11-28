@@ -2,17 +2,13 @@
 # MATCH_FRAME_STEP as described there ("Registered patches"). Patches of Nintendo SDK module builds are in dm/tools/sdk_patches.py
 from nso_asm import ADRP, ADDI, B, BL
 
-# The game's frame ratio. Once a frame the function at main+0x6e6be0 (v131072, ModuleSystem::moduleCalc_ by the name of its job) divides its base rate (60.0, or 30.0 while
-# bit 0 of [x21+0x24f] is set) by the int frame rate at [x21+0x2c8] (fdiv s8,s1,s0 at +0xe4) and hands the result to the time object (main+0x3b4e300: ratio at +0x10, 1 / ratio
-# at +0x14, ratio / 60 at +0x18, the step in seconds, round(60 / ratio) at +0x1c), which the game steps by; the frame's own time never enters it, so a frame that takes two
-# vsyncs at rate 60 plays at half speed. The stub gives the ratio the host's step instead: step × base / 60, and counts the vsyncs stepped. Until the host has decided a step,
-# and at fps_target 0, the division runs. s0 and x16 / x17 are free there (s0 is written again on every path before it is read; the function uses neither x16 nor x17); s1 keeps
-# the base rate and x21 the framework.
-# Why × base / 60 and not the step alone (PR #1996 read base 30 as a cutscene rate and took the step, twice the speed there): the ratio's unit is 1/60 s whatever the base
-# (the time object's +0x18 is ratio × 1/60, the constant at main+0x3e4066c). Base 30 is the framework's half rate: bit 0 of its +0x24f is that mode and bit 1 flips each pass of
-# its frame function (main+0x346c680); with both set the draw and the present return at once (main+0x2cb020, main+0x40cd20) while the calc tree runs (main+0x2cabd0). So it
-# calcs twice a drawn frame, this function among them, and each calc takes half the frame's step: 30 / 30 = 1 twice a 30 fps frame on the console, step / 2 twice here. The
-# vsyncs are counted once a drawn frame, at the calc that is drawn (bit 1 clear).
+# The game's frame ratio. Once a frame the function at main+0x6e6be0 (v131072) divides its base rate (60.0, or 30.0 while bit 0 of [x21+0x24f] is set) by the int frame rate at
+# [x21+0x2c8] (fdiv s8,s1,s0 at +0xe4) and hands the result to the time object (main+0x3b4e300: ratio at +0x10, 1 / ratio at +0x14, round(60 / ratio) at +0x1c), which the game
+# steps by; the frame's own time never enters it, so a frame that takes two vsyncs at rate 60 plays at half speed. The stub gives the ratio the host's step instead: step × base / unit,
+# the unit the ticks a second the host counts the step in (state +0x38: 120, written by the loader for this stub, so 2 / 3 / 4 ticks are 60 / 40 / 30 fps; 0, a page nothing wrote
+# there, divides by 60: the division's value when the host keeps frames 60 / rate vsyncs), and counts the units stepped (+0x30). The ratio is a float, so 3 ticks (25 ms, 40 fps on a
+# 120 Hz screen) are a ratio of 1.5 at base 60 and 0.75 at base 30. Until the host has decided a step, and at fps_target 0, the division runs.
+# s0 and x16 / x17 are free there (s0 is written again on every path before it is read; the function uses neither x16 nor x17); s1 keeps the base rate.
 # Lichii (a GPL emulator; only the fact was taken) found the division (its notes: main+0x6E6CC4, 60 / [x21+0x2C8])
 frame_ratio = (   # after the ADRP of the state page into x16; the ADRP into x17 after the first 7 words (the add has read x17 then), a B back to the site + 4 after words 14 and 15
     0xb9400211,   # ldr w17,[x16]          target fps (0 = off)
@@ -30,58 +26,26 @@ frame_ratio = (   # after the ADRP of the state page into x16; the ADRP into x17
     0x1e230200,   # ucvtf s0,w16
     0x1e201908,   # fdiv s8,s8,s0          / the unit
     0x1e201828)   # orig: fdiv s8,s1,s0
-def frame_step(ctx):
+def frame_step_at(ctx, at):
     here, emit, fs_site, fs_put, FS_STATE_OFF, base = ctx.here, ctx.emit, ctx.site, ctx.put, ctx.state, ctx.base
-    site = base + 0xe4
+    site = base + at
     fs_site(site, '2818201e')   # fdiv s8,s1,s0
-    start = here()
-    ORIG, COUNTED, n = 24, 13, [0]   # the original division is word 24 of the stub, the ratio starts at word 13 (both checked below); n counts the words emitted
-    def put(w): emit(w); n[0] += 1
-    def cbz_w17_orig(): return 0x34000000 | (((ORIG - n[0]) & 0x7FFFF) << 5) | 17   # from this word to word ORIG
-    put(ADRP(16, here(), FS_STATE_OFF))
-    put(0xb9400211)             # ldr w17,[x16]          target fps (0 = off)
-    put(cbz_w17_orig())         # cbz w17,orig
-    put(0xb9402211)             # ldr w17,[x16,#0x20]    step in vsyncs
-    put(cbz_w17_orig())         # cbz w17,orig           not decided yet
-    put(0x1e230220)             # ucvtf s0,w17
-    put(0x39493eb0)             # ldrb w16,[x21,#0x24f]  the framework's half-rate bits
-    put(0x37000000 | 1 << 19 | ((COUNTED - n[0]) & 0x3FFF) << 5 | 16)   # tbnz w16,#1,ratio: the calc of a half-rate frame that is not drawn; its vsyncs are counted at the drawn one
-    put(ADRP(16, here(), FS_STATE_OFF))
-    for w in (0xf9401a10,   # ldr x16,[x16,#0x30]
-              0x8b110210):  # add x16,x16,x17
-        put(w)
-    put(ADRP(17, here(), FS_STATE_OFF))
-    put(0xf9001a30)             # str x16,[x17,#0x30]    vsyncs stepped
-    assert n[0] == COUNTED, f'frame_step: the ratio starts at word {n[0]}, the tbnz goes to word {COUNTED}'
-    for w in (0x1e210808,   # fmul s8,s0,s1          step × base rate
-              0x52a84e10,   # mov w16,#0x42700000    60.0
-              0x1e270200,   # fmov s0,w16
-              0x1e201908):  # fdiv s8,s8,s0          / 60
-        put(w)
-    # Never below the measured frame time: with the hold off (DM_FPS_HOLD off) or past the longest step, a frame that ran long still moves the game by its real time
-    # (state +0x38, seconds, the host's mean of recent present intervals; 0 at the target; +0x3c marks a main that reads it). From PR #1543, found by gunvalk (Lichii PR #216).
-    # The host takes what this adds to the step off its debt (nvn_fstep_moved), or the step paid the same time back again: 9% fast at frames of 1.8 vsyncs with the hold off.
-    # Every branch target above is computed: with these words inserted, main's fixed offsets (+13, +11) landed inside this block, and an iPhone 18 Pro Max faulted at
-    # x17 + 0x3c with x17 = 0 on the first frame, before the host had decided a step. The page is taken again into x16, PR #1543's own sequence: in rewritten code x17 does
-    # not survive a store
-    put(ADRP(16, here(), FS_STATE_OFF))
-    for w in (0x52800031,   # mov w17,#1
-              0xb9003e11,   # str w17,[x16,#0x3c]    this main reads the frame time
-              0xbd403a00,   # ldr s0,[x16,#0x38]     seconds; 0 = at the target
-              0x1e210800,   # fmul s0,s0,s1          × base rate
-              0x1e204908):  # fmax s8,s8,s0
-        put(w)
-    put(B(here(), site + 4))
-    assert n[0] == ORIG, f'frame_step: the original division is word {n[0]}, the cbz branches go to word {ORIG}'
-    emit(0x1e201828); emit(B(here(), site + 4))   # orig: fdiv s8,s1,s0; back
-    fs_put(site, [B(site, start)], 'frame ratio: the host\'s step × base rate / 60 (never below the measured frame time) instead of base rate / the game\'s frame rate (state page target fps; 0 = the game\'s ratio)')
+    start = here(); emit(ADRP(16, here(), FS_STATE_OFF))
+    for w in frame_ratio[:7]: emit(w)
+    emit(ADRP(17, here(), FS_STATE_OFF))
+    for w in frame_ratio[7:14]: emit(w)
+    emit(B(here(), site + 4))
+    emit(frame_ratio[14]); emit(B(here(), site + 4))   # orig: fdiv s8,s1,s0; back
+    fs_put(site, [B(site, start)], 'frame ratio: the host\'s step × base rate / its unit (state +0x38: 120 = ticks of 1/120 s, else 60) instead of base rate / the game\'s frame rate (state page target fps; 0 = the game\'s ratio)')
+    ctx.capabilities.add('FRAME_STEP_120')   # takes its step in ticks of 1/120 s: the loader writes 120 at +0x38, and 40 fps (3 ticks) is offered
     dynamic_resolution(ctx)
-    if ctx.base == 0x6e6be0: render_scale(ctx)   # v131072 only (fixed addresses verified on that build): the launcher's Render scale (state +0x10)
-    wide_view(ctx)
-    half_rate(ctx)
+    render_scale(ctx)
+    screen_shape_with_wide(ctx)
     heap_retry(ctx)
-    # HookLink X3: nxnative main's screen_shape (the Picture shape row) is not called: it patches the cameras, panes and movie draw HookLink's wide_view / wide_hud
-    # patch (and covers screens squarer than 16:9 only, which wide_view already takes). Its movie cuts (MATCH_CUTS) apply
+# The division's place in each build's function: +0xe4 on v131072; +0x108 on v0 (1.0.0, main+0x6b5900, 0x9a8 bytes), whose function loads three more globals into x21, x23 and x24
+# before it and saves x23 to x25 for them. The rest is the same: s1 the base rate, s0 written again on every path before it is read, neither x16 nor x17 used
+def frame_step(ctx): frame_step_at(ctx, 0xe4)
+def frame_step_v0(ctx): frame_step_at(ctx, 0x108)
 
 # The game's dynamic resolution (game__gfx__DynamicResolutionParam: LoadThreshold, ReduceCounterMax, IncreaseCounterMax and a list of levels, each a ResolutionReduceScale and a
 # Priority; on v131072 levels 0..9 at 0.75..0.333 of 2048x1152, 1536x864 to 683x384). Its update (main+0x805aa0) reads the frame's GPU load (about 0.2 ms a unit) into +0x8, subtracts
@@ -422,70 +386,81 @@ def dynamic_resolution(ctx):
     fs_put(site, [B(site, start)], why)
     ctx.capabilities.add('DYNAMIC_RESOLUTION')
 
-# Render scale (DM_RENDER_SCALE, state +0x10, dm/host/loader.c; from kid-with-sword-remake's FF line, HookLink VX1: the launcher's Render scale and Resolution dial, Cool mode and Potato mode). The 3D views' sizes come from the scale the engine stores at main+0x31d3f48 (str s0,[x20,#0xe5c], found by
-# upstream PR #1497), but that store and the size loop after it (main+0x31d3fd8, which clears the "scale changed" bit 3 of [x20+0xe2c] at main+0x31d40b4) run only in a frame
-# where the dynamic-resolution controller (bl main+0x805aa0) answers status 0, a new scale: at a steady 60 fps it never does, so a stub at the store alone changed nothing until
-# the game came under load. Two stubs: at the controller's answer (main+0x31d3ee4, ubfx of its status byte) a host scale below 1.0 that is not the stored one makes the status 0, so
-# that frame recomputes the sizes; at the store the host scale replaces the game's (seedds' fixed form of #1497's ceiling). The scale is then fixed and the dynamic resolution off;
-# 0, unset or over 1.0 run the game's own code; 1.0 itself is fixed at the full base (this game's slider, game.tsv render_scale). Registers and flags are kept but x8 (the status, as the game reads it next) and s0 (dead after the store: main+0x31d3f84 reloads it).
-# The scale is a fraction of the output (the size loop's cap at main+0x31d3fe8 is skipped on this path, bit 0x13 of +0xe20): docked, 0.75 is the game's usual 1920x1080 and 0.5
-# draws 1280x720, 0.9 2328x1310. The game picks its NDSR network by the ratio, and nvn_mtl.m's DM_NDSR replacement takes whichever follows the chain's third dispatch
-_scale_status, _scale_store = 0x31d3ee4, 0x31d3f48
 
+# Render scale (DM_RENDER_SCALE, state +0x10, dm/host/loader.c): the 3D views at that fraction of the game's own size, the dynamic resolution held at its top level (as Tears of the
+# Kingdom's and Breath of the Wild's). The views' sizes come from the scale the engine stores at +0xd48 of its view-size update (str s0,[x20,#0xe5c]; v131072 main+0x31d3200, found by
+# its fingerprint; the only float store to #0xe5c in main): the level's ResolutionReduceScale (0.75 at the top level) normalized by [x20+0xe58]/[x20+0xe50]. That store and the size
+# loop after it (+0xdd8, which clears the "scale changed" bit 3 of [x20+0xe2c]) run only in a frame where the dynamic-resolution update (main+0x805aa0, which always returns the
+# level's float scale in w0) answers status 0, a new scale: at a steady frame rate it answers status 2, so a stub at the store alone changes nothing until the game comes under load.
+# Two stubs: at the update's answer (+0xce4, ubfx of its status byte) a host scale in (0.0, 1.0) whose last stored value (state +0x290, private area after drs_controller) does not
+# match [x20+0xe5c] makes any non-1 status 0 so that frame recomputes the sizes (and re-applies if [x20+0xe5c] is ever reset); at the store (+0xd48) the freshly computed s0 is
+# multiplied by the host's scale and recorded at state +0x290. The level stub above returns level 0 under such a scale, so the size is fixed; 1.0 (the loader's default) runs the
+# game's own code. Registers and flags are preserved except x8 (the status read next) and s0 (stored, dead after +0xd48: reloaded at +0xd84)
 def _bcond(frm, to, cond): return 0x54000000 | (((to - frm) >> 2) & 0x7ffff) << 5 | cond
 def _cbz_w(frm, to, rt): return 0x34000000 | (((to - frm) >> 2) & 0x7ffff) << 5 | rt
 
+
+def render_scale_status_body(state_adrp):   # 19 words; state_adrp is word 4 (ADRP x16, state) or MOV x16, x1 in unit tests
+    at = lambda k: 4 * k
+    return (
+        0xd3609c08,                       # ubfx x8,x0,#32,#8      the original
+        0xa9be47f0,                       # stp x16,x17,[sp,#-32]!
+        0xd53b4210,                       # mrs x16,nzcv
+        0xf9000bf0,                       # str x16,[sp,#16]
+        state_adrp,                       # x16 = state page
+        0xb9401211,                       # ldr w17,[x16,#0x10]    the host scale's bits
+        _cbz_w(at(6), at(16), 17),        # cbz w17,done           unset
+        0x53177e31,                       # lsr w17,w17,#23        sign + exponent (< 0x7f iff positive finite < 1.0)
+        0x7101fe3f,                       # cmp w17,#0x7f
+        _bcond(at(9), at(16), 0x2),       # b.hs done              1.0 or more, negative or NaN: the game's own
+        0xb9429210,                       # ldr w16,[x16,#0x290]   last scaled value stored to [x20,#0xe5c]
+        0xb94e5e91,                       # ldr w17,[x20,#0xe5c]   current view scale
+        0x6b11021f,                       # cmp w16,w17
+        _bcond(at(13), at(16), 0x0),      # b.eq done              already applied and intact
+        0x7100051f,                       # cmp w8,#1
+        0x1a9f0108,                       # csel w8,w8,wzr,eq      keep status 1; any other status -> 0 (recompute sizes)
+        0xf9400bf0,                       # done: ldr x16,[sp,#16]
+        0xd51b4210,                       # msr nzcv,x16
+        0xa8c247f0)                       # ldp x16,x17,[sp],#32
+
+
+def render_scale_store_body(state_adrp):   # 16 words; state_adrp is word 2 (ADRP x16, state) or MOV x16, x1 in unit tests
+    at = lambda k: 4 * k
+    return (
+        0xadbf7ffe,                       # stp q30,q31,[sp,#-32]!
+        0xa9bf47f0,                       # stp x16,x17,[sp,#-16]!
+        state_adrp,                       # x16 = state page
+        0xd53b4211,                       # mrs x17,nzcv
+        0xbd40121e,                       # ldr s30,[x16,#0x10]    the host scale
+        0x1e2023c8,                       # fcmp s30,#0.0
+        _bcond(at(6), at(12), 0xd),       # b.le original          unset, negative or NaN
+        0x1e2e101f,                       # fmov s31,#1.0
+        0x1e3f23c0,                       # fcmp s30,s31
+        _bcond(at(9), at(12), 0xa),       # b.ge original          1.0 or more
+        0x1e3e0800,                       # fmul s0,s0,s30         the game's scale x the host's
+        0xbd029200,                       # str s0,[x16,#0x290]    applied value (checked by the status stub)
+        0xbd0e5e80,                       # original: str s0,[x20,#0xe5c]
+        0xd51b4211,                       # msr nzcv,x17
+        0xa8c147f0,                       # ldp x16,x17,[sp],#16
+        0xacc17ffe)                       # ldp q30,q31,[sp],#32
+
+
 def render_scale(ctx):
     here, emit = ctx.here, ctx.emit
-    ctx.site(_scale_status, '089c60d3')   # ubfx x8,x0,#32,#8: the controller's status byte
-    s = here(); at = lambda k: s + 4 * k   # the stub's k-th word; done is word 16
-    for k, w in enumerate((
-            0xd3609c08,                       # ubfx x8,x0,#32,#8     the original
-            0xa9be47f0,                       # stp x16,x17,[sp,#-32]!
-            0xd53b4210,                       # mrs x16,nzcv
-            0xf9000bf0,                       # str x16,[sp,#16]
-            ADRP(16, at(4), ctx.state),
-            0xb9401211,                       # ldr w17,[x16,#0x10]  the host scale's bits
-            _cbz_w(at(6), at(16), 17),        # cbz w17,done         unset
-            0x52a7f010,                       # mov w16,#0x3f800000
-            0x6b10023f,                       # cmp w17,w16
-            _bcond(at(9), at(16), 0x8),       # b.hi done            over 1.0, negative or NaN: the game's own
-            0x7100051f,                       # cmp w8,#1
-            _bcond(at(11), at(16), 0x0),      # b.eq done            status 1, the game's other request (main+0x31d3f4c), is left alone
-            0xb94e5e90,                       # ldr w16,[x20,#0xe5c] the stored scale
-            0x6b11021f,                       # cmp w16,w17
-            _bcond(at(14), at(16), 0x0),      # b.eq done            already the host's
-            0x52800008,                       # mov w8,#0            status 0: a new scale, so the sizes are recomputed
-            0xf9400bf0,                       # done: ldr x16,[sp,#16]
-            0xd51b4210,                       # msr nzcv,x16
-            0xa8c247f0)):                     # ldp x16,x17,[sp],#32
-        assert here() == at(k); emit(w)
-    emit(B(here(), _scale_status + 4))
-    ctx.put(_scale_status, [B(_scale_status, s)], 'dynamic-resolution status: a host render scale not yet stored asks for new 3D sizes (state +0x10)')
-
-    ctx.site(_scale_store, '805e0ebd')    # str s0,[x20,#0xe5c]
-    s = here()   # original is word 11
-    for k, w in enumerate((
-            0xadbf7ffe,                       # stp q30,q31,[sp,#-32]!
-            0xa9bf47f0,                       # stp x16,x17,[sp,#-16]!
-            ADRP(16, at(2), ctx.state),
-            0xd53b4211,                       # mrs x17,nzcv
-            0xbd40121e,                       # ldr s30,[x16,#0x10]  the host scale
-            0x1e2023c8,                       # fcmp s30,#0.0
-            _bcond(at(6), at(11), 0xd),       # b.le original        unset, negative or NaN
-            0x1e2e101f,                       # fmov s31,#1.0
-            0x1e3f23c0,                       # fcmp s30,s31
-            _bcond(at(9), at(11), 0xc),       # b.gt original        over 1.0
-            0x1e2043c0,                       # fmov s0,s30          the host's fixed scale
-            0xbd0e5e80,                       # original: str s0,[x20,#0xe5c]
-            0xd51b4211,                       # msr nzcv,x17
-            0xa8c147f0,                       # ldp x16,x17,[sp],#16
-            0xacc17ffe)):                     # ldp q30,q31,[sp],#32
-        assert here() == at(k); emit(w)
-    emit(B(here(), _scale_store + 4))
-    ctx.put(_scale_store, [B(_scale_store, s)], 'final 3D view scale: the host render scale fixes it, up to 1.0 (over 1.0 = the game\'s own)')
-
-    ctx.render_scale = 1   # the loader takes DM_RENDER_SCALE up to 1.0 and the launcher offers the row (patch_nso.py RENDER_SCALE)
+    fn = ctx.others.get('render scale')
+    if fn is None: return   # not found in this build (a red line from the locator): the game's own sizes
+    status, store = fn + 0xce4, fn + 0xd48
+    ctx.site(status, '089c60d3')   # ubfx x8,x0,#32,#8: the update's status byte
+    s = here()
+    for w in render_scale_status_body(ADRP(16, s + 4 * 4, ctx.state)): emit(w)
+    emit(B(here(), status + 4))
+    ctx.put(status, [B(status, s)], 'dynamic-resolution status: a host render scale not yet stored asks for new 3D sizes (state +0x10)')
+    ctx.site(store, '805e0ebd')    # str s0,[x20,#0xe5c]
+    s = here()
+    for w in render_scale_store_body(ADRP(16, s + 4 * 2, ctx.state)): emit(w)
+    emit(B(here(), store + 4))
+    ctx.put(store, [B(store, s)], 'final 3D view scale x the host render scale below 1.0 (1.0 = the game\'s own)')
+    ctx.render_scale = 1
 
 # Wide view (DM_WIDE_VIEW, a launcher setting): the game sizes its output from fixed constants, so a screen wider than 16:9 shows bars. These stubs take the widths from the state page,
 # written at each start from the screen's shape (loader.c), so the view widens and nothing stretches, and 0 there (16:9, or the setting off) runs the game's own constant. Sites from
@@ -612,6 +587,46 @@ def wide_hud(ctx):
         emit(w)
     fs_put(site, [B(site, start)], 'wide view: movies in the middle 16:9 (Ivan0xFF\'s site, via NX2navi)')
 
+
+_wide_layout = {'graphics init': 18885856, 'scene app init': 52377744, 'base scene defaults': 17347328, 'display mgr defaults': 57355200, 'base res read': 15216432, 'display target a': 13985184, 'display target b': 15463280, 'display target c': 16343824, 'layout ortho': 22154368, 'layout view ortho': 7814032, 'perspective proj': 55073984, 'camera update': 3385536, 'device proj': 2341136, 'layout calc matrix': 21928320, 'pane global matrix': 22203040, 'layout pane array': 22175072, 'pane constructor': 22189600, 'movie draw': 62244624}
+
+def screen_shape_with_wide(ctx):
+    # Official behavior is unchanged on all other builds and match layouts.
+    if ctx.base != 0x6e6be0 or any(ctx.others.get(k) != v for k, v in _wide_layout.items()):
+        screen_shape(ctx)
+        return
+    shared = 0x3485cc0
+    branches = []
+    put = ctx.put
+    def defer_shared(off, words, why):
+        if off == shared:
+            if len(words) != 1 or words[0] >> 26 != 5:
+                raise RuntimeError("Unexpected shared projection branch")
+            branches.append(words[0])
+        else:
+            put(off, words, why)
+    ctx.put = defer_shared
+    try:
+        screen_shape(ctx)
+        wide_view(ctx)
+    finally:
+        ctx.put = put
+    if len(branches) != 2 or 'SCREEN_ASPECT' not in ctx.capabilities:
+        raise RuntimeError("Incomplete official/ultrawide projection hooks")
+    def destination(word):
+        imm = word & 0x3ffffff
+        return shared + ((imm - (1 << 26) if imm & (1 << 25) else imm) << 2)
+    start = ctx.here()
+    # x16/x17 are free at this site in both implementations. CB(N)Z and
+    # direct B preserve flags. Wide width at +0x100 is nonzero only in wide mode.
+    ctx.emit(ADRP(16, ctx.here(), ctx.state))
+    ctx.emit(0xb9410211)  # ldr w17,[x16,#0x100]
+    ctx.emit(0x35000051)  # cbnz w17,+8 (wide branch)
+    ctx.emit(B(ctx.here(), destination(branches[0])))
+    ctx.emit(B(ctx.here(), destination(branches[1])))
+    put(shared, [B(shared, start)], 'official/wide projection dispatch (one cut)')
+    ctx.capabilities.add('HOOKLINK_WIDE')
+
 # A full model heap (DM_HEAP_RETRY, on by default). The game's OptimizeChangeBank thread rebuilds a model's material block (main+0x4366e0) with memory from small
 # heaps of the model's own ("Model/....bfres", tens of KB), children of a large one, and checks none of these allocations: two CPU buffers made with the heap's
 # tryAlloc (vtable +0x30; lr main+0x436910 and main+0x436da4, sized in x21 and x22) and two blocks of GPU memory (main+0x502050 with a descriptor at sp+0x40 whose
@@ -650,36 +665,19 @@ def heap_retry(ctx):
         start = stub(heap_gpu_words, site, 0x37000040, {8: obj}, site + 8, fail)
         fs_put(site, [B(site, start)], 'full model heap: GPU memory the heap had no room for is made in its parents or the default heap (Hookshot issue 1697)')
 
-# The framework's half rate, asked for by the host. Some of this game counts calcs, not time: the timeline that fires its subtitles (PlaySubtitleWithVoice trigger events) and
-# its movie player, which takes one picture a calc (the limit at the player's +0x20 is 1 for the creation argument the game passes, main+0x3b5c55c). The frame ratio above
-# moves what reads the time object by real time, so below 60 fps the two fall apart: on an iPhone at 33 fps with the player let take two pictures a calc, the opening's
-# picture kept time and "However, there was one particular boy..." came up 98 s into it, over the nightmare's castle gate; at 53 fps the narration was over by 61 s, over
-# Link asleep. The game's own answer to a frame of two vsyncs is its half rate: two calcs a drawn frame (bit 0 of the framework's +0x24f; frame_step's note), 60 calcs a second
-# at 30 fps. It asks for it once a calc from bit 0 of [ModuleSystem+0xa30]: 2 (enter) or 1 (leave) into the framework's +0x24e (main+0x650ea4..0x650eb4, v131072; the frame
-# function main+0x346c680 acts on it at the end of a pass, and while the mode is on the request is written only at the calc that is drawn). The stub ORs the host's ask into that
-# bit: state +0x44, 1 while the host holds 2 vsyncs or more under DM_FPS_HALF_RATE=1 (hle_nvn.c fstep_tick). x16 and x17 are free there (the function uses x16 only as a
-# local temporary far from the site, x17 nowhere).
-def half_rate(ctx):
-    here, emit, fs_site, fs_put, FS_STATE_OFF = ctx.here, ctx.emit, ctx.site, ctx.put, ctx.state
-    f = ctx.others.get('half rate request')
-    if f is None: return   # not found in this build (a red line from the locator): the game's own choice
-    site = f + 0x1a4
-    fs_site(site, '68324ab9')   # ldr w8,[x19,#0xa30]
-    start = here()
-    emit(0xb94a3268)                        # ldr w8,[x19,#0xa30]   the game's own flags
-    emit(ADRP(16, here(), FS_STATE_OFF))
-    emit(0xb9404610)                        # ldr w16,[x16,#0x44]   the host's ask, 0 or 1
-    emit(0x2a100108)                        # orr w8,w8,w16
-    emit(B(here(), site + 4))
-    fs_put(site, [B(site, start)], 'half rate request: the game\'s own flag or the host\'s ask (state +0x44, DM_FPS_HALF_RATE)')
-    ctx.capabilities.add('HALF_RATE')
 
 MATCH_FRAME_STEP = {'main': [
     {'name': 'frame ratio from the host\'s step', 'size': 0x9b4, 'fingerprints': ['6ae2aff5344d14568e4dbaf93455e2d8278384bf892ed6c6eca87fef98fbcd1d'], 'stub': frame_step,   # v131072 main+0x6e6be0
      'others': {'dynamic resolution': {'size': 0x294, 'fingerprints': ['7af6ceb0aedf8e0c17dc08ce17fcd6a7cba6d394a0d09e3b504c6d668dc418e7']},   # v131072 main+0x8065e0
                 'dynamic resolution update': {'size': 0xb24, 'fingerprints': ['5a423697838976baf286cffa5e2ceef0d4e037abbcd9d371e90e9e702d61b3d4']},   # main+0x805aa0
-                'half rate request': {'size': 0x938, 'fingerprints': ['cf27987b41456695ce0447d7b711f9a4f2d6424d4f3c04744252ca2cfb47dc2c']},   # main+0x650d00
+                'render scale': {'size': 0xfc8, 'fingerprints': ['2c1804f08798ceee012ae30a1ba6b177a6b6a61ce732185bad28e9989d05e165']},   # main+0x31d3200, the 3D view size update
                 **screen_shape_functions}},
+    # v0 (1.0.0): the same frame ratio and dynamic resolution, their data addresses moved (the level function's blocks laid out differently, the same fields and constants, a leaf,
+    # called twice from the update; the update stores the load at +0x8 and keeps the level at +0x174). Its view-size update and display setup differ from v131072's, so there is
+    # no render scale or screen shape on it. Without this the game's own dynamic resolution runs and drops the 3D views toward its floor (game note, Dynamic resolution)
+    {'name': 'frame ratio from the host\'s step', 'size': 0x9a8, 'fingerprints': ['777177e79e876b03bb01e602619c9fbde6b80741d9a256fca0dddb3cabb760d8'], 'stub': frame_step_v0,   # v0 main+0x6b5900
+     'others': {'dynamic resolution': {'size': 0x2a8, 'fingerprints': ['92b72f56e192953782067be61941ecccc148cdc86b5775cc568c3f999877d478']},   # v0 main+0x7e8920
+                'dynamic resolution update': {'size': 0xb30, 'fingerprints': ['07ef7eb8ba36414cd381174d378c640288e3b82b81fe58ca230f5889556f933b']}}},   # v0 main+0x7e7de0
 ]}
 
 # The movie player's pictures per frame. Once a frame the player's update (main+0x3b5ca60 on v131072) adds the frame's time (the time object's +0x18, the frame ratio / 60 s, times
@@ -722,17 +720,7 @@ MATCH_CUTS = {'main': [
     ]},
 ]}
 
-# HookLink X3: nxnative main's movie cuts above (MATCH_CUTS: up to 2-3 pictures a frame, the frame counted in pictures) now apply beside the half rate. Before them:
-# Movie pictures: no cut. The movies are AV1 at 60 pictures a second (Event/Movie/*.webm, no sound track: the opening's Dm_Kokiri_0000 is 9,254 pictures, 154.2 s), and the
-# player takes one picture a calc (main+0x3b5ca60 clamps to its limit at +0x20, 1 + (the creation argument >= 2) at main+0x3b5d084; the game passes 1). A cut that made the
-# limit 2 (cinc w8,w28,ge → add w8,w28,#1) kept the picture's time at 33 fps on an iPhone (9,254 pictures in about 156 s, against 262 s) and left the subtitles behind it, which
-# count calcs as the player did: worse to watch than a movie that is slow as a whole. The half rate above keeps both in step
 BINDING = [
-    {'what': 'wide view: output and render widths from the state page', 'now': 'build', 'goal': 'game', 'purpose': 'rendering',
-     'why': "the game's own size constants, at fixed addresses of v131072; a function-matched rule could carry them over the game's updates"},
-    {'what': 'half rate request: the game\'s own flag or the host\'s ask', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
-     'why': "the game's own half-rate request, found by its function's fingerprint on any build that keeps the function; switchable (DM_FPS_HALF_RATE)",
-     'checked': 'v131072 main: one function with this fingerprint, the site, the request byte and the frame function that acts on it read by disassembly (2026-11-09)'},
     {'what': 'movie pictures a frame: up to 2', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
      'why': "the game's own movie player constructor, found by its function's fingerprint on any build that keeps the function; no other game has it: the fingerprint matches no function in the mains of Donkey Kong Bananza, Splatoon Raiders, Pokopia, Mario Tennis Fever, Switch Sports, Yoshi and the Mysterious Book, Mario Golf, Xenoblade Chronicles 2 or Super Mario 3D All-Stars, and Breath of the Wild's and Tears of the Kingdom's movies go through subsdk0's movie::Decoder, not a player in main",
      'checked': 'v131072 main: one function with this fingerprint, the constructor, its one caller, the update and the advance read by disassembly; the limit and the count read in play with DM_PROBE, the opening movie timed at a 30 fps frame step without and with the cut (2026-11-12)'},
@@ -744,10 +732,10 @@ BINDING = [
      'checked': 'v131072 main: one function with each fingerprint, each with one caller, the event update that reads the frame (vtable +0x78), the timeline and sound syncs and the player\'s +0xc read by disassembly; the opening timed with frames forced to two vsyncs (2026-11-16)'},
     {'what': 'frame ratio from the host\'s step', 'now': 'game', 'goal': 'game', 'purpose': 'frame rate',
      'why': "the game's own frame-ratio division, found by its function's fingerprint on any build that keeps the function",
-     'checked': 'v131072 main: one function with this fingerprint, the site and its free registers read by disassembly (2026-11-08); the stub in ticks of 1/120 s (state +0x38) run natively at 2 / 3 / 4 ticks and without a unit (test_frame_ratio_stub.py) and disassembled in the rewritten main (2026-11-14)'},
+     'checked': 'v131072 and v0 mains: one function with each fingerprint, the sites (+0xe4, +0x108) and free registers read by disassembly (2026-11-08, v0 2026-11-27); the stub in ticks of 1/120 s (state +0x38) run natively at 2 / 3 / 4 ticks and without a unit (test_frame_ratio_stub.py) and disassembled in the rewritten main (2026-11-14)'},
     {'what': 'dynamic resolution: full size, or a climb on the load measured at each level', 'now': 'game', 'goal': 'game', 'purpose': 'rendering',
      'why': "the game's own dynamic-resolution level function and update, found by their functions' fingerprints on any build that keeps both; switchable (DM_DYNAMIC_RESOLUTION)",
-     'checked': 'v131072 main: one function with each fingerprint (the level function a leaf, x2..x11 / x16 / x17 / s0..s2 free), its callers, the update and the controller fields read by disassembly, the fields read in play (2026-11-08); the climb run natively against a model of the update and in play to full size (2026-11-09); 30 fps threshold scaling checked in test_ocarina_drs.py and in play at 30 fps on an M2 Air (PR #1954, 2026-11-16)'},
+     'checked': 'v131072 and v0 mains: one function with each fingerprint (the level function a leaf, x2..x11 / x16 / x17 / s0..s2 free), its callers, the update and the controller fields (+0x8, +0x10, +0x174, +0x1a0) read by disassembly, the fields read in play (2026-11-08, v0 2026-11-27); the climb run natively against a model of the update and in play to full size (2026-11-09); 30 fps threshold scaling checked in test_ocarina_drs.py and in play at 30 fps on an M2 Air (PR #1954, 2026-11-16)'},
     {'what': 'render scale: the 3D views at a fraction of the game\'s own size (DM_RENDER_SCALE)', 'now': 'game', 'goal': 'game', 'purpose': 'rendering',
      'why': "the game's own view-size update (its test of the dynamic-resolution status and its scale store), found by its function's fingerprint on any build that keeps it; the level function's stub above holds level 0 under a scale",
      'checked': 'v131072 main: one function with this fingerprint (main+0x31d3200, 0xfc8 bytes, one caller main+0x31c00cc); the status ubfx at +0xce4, the store at +0xd48 (the only float store to #0xe5c in main; s0 computed from the update\'s w0 at +0xd34, never reread from +0xe5c) and the size loop clearing bit 3 of +0xe2c read by disassembly (2026-11-09, 2026-11-23); guard, status and store stubs executed natively on ARM64 in test_ocarina_drs.py'},

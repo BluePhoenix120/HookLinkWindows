@@ -1,6 +1,7 @@
-# Translation chain tool fingerprints (written by tool_lock.py --update-lock; regenerate after changing tools and commit it)
-dmsh_xlate	bd6a17e1b3ebbcf9
-xlate_source	c75f3cb403920cde
-spirv-cross	6702f1d74b2aaff0
-metal_macosx	Apple metal version 32023.850 (metalfe-custom-windows)
-metal_iphoneos	Apple metal version 32023.850 (metalfe-custom-windows)
+# Unmeasured Windows tools; run the Windows GUI shader setup/preflight.
+# Previous Windows compiler: metalfe-custom-windows (not a candidate measurement).
+dmsh_xlate	unmeasured
+xlate_source	6b75c9215815af0c
+spirv-cross	unmeasured
+metal_macosx	unmeasured
+metal_iphoneos	unmeasured

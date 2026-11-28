@@ -17,6 +17,7 @@ ORIGINAL = ('https://github.com/seedds/nxnative'
             if FORK == 'https://github.com/dsi-hub/nxnative'
             else 'https://github.com/dsi-hub/nxnative')
 _ALLOWED_PINS = {
+    'f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf',
     '7ba845ab8b7e8f04639f179ee2adc6aad17ddfdf',
     '0b5fd6020093407af8bb5ad166e78e00bd2b7242',
     'd2fd78b402f92d5a83b78987e49aba22e8626719',

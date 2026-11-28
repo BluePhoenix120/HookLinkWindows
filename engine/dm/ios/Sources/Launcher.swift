@@ -15,9 +15,10 @@ private func info(_ key: String) -> Any? { Bundle.main.object(forInfoDictionaryK
 /// sends it there after each save (dm/host/save_sync.h); the folder is a bookmark (CloudSaves.m).
 private struct CloudSavesSection: View {
     let checking: Bool
-    @State private var folder: String = ""
-    @State private var note: String = ""
-    @State private var picking = false
+    let folder: String
+    let note: String
+    let choose: () -> Void
+    let clear: () -> Void
 
     var body: some View {
         Section {
@@ -27,71 +28,17 @@ private struct CloudSavesSection: View {
                 Text(folder.isEmpty ? "Off" : (folder as NSString).lastPathComponent)
                     .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             }
-            Button(folder.isEmpty ? "Choose a folder in iCloud Drive…" : "Choose a different folder…") { picking = true }
+            Button(folder.isEmpty ? "Choose a folder in iCloud Drive…" : "Choose a different folder…", action: choose)
                 .disabled(checking)
-                // The sheet sits on the button, not on the Section: SwiftUI hands a Section's modifiers to every row, so one tap presented a picker per row and they invalidated each other (LNPANDY/NX2Apple#315).
-                .sheet(isPresented: $picking) {
-                    DocumentPicker(types: [.folder]) { url in
-                        picking = false
-                        if dm_store_cloud_saves(url) {
-                            note = "Saved. The game uses this folder when you press Play."
-                            refresh()
-                        } else {
-                            note = "That folder could not be remembered — try a different one."
-                        }
-                    } onCancel: { picking = false }
-                }
             if !folder.isEmpty {
-                Button("Turn off cloud saves", role: .destructive) {
-                    dm_clear_cloud_saves(); refresh(); note = ""
-                }
-                .disabled(checking)
+                Button("Turn off cloud saves", role: .destructive, action: clear)
+                    .disabled(checking)
             }
         } footer: {
             Text(note.isEmpty
                  ? "Choose a folder in iCloud Drive, and the same one in the Mac app's Cloud saves. The save comes in when the game starts and goes out after each save; a save that is replaced is kept in save-backups."
                  : note)
         }
-        .onAppear(perform: refresh)
-    }
-
-    private func refresh() {
-        var stale: ObjCBool = false
-        folder = dm_cloud_saves_path(&stale) ?? ""
-        if stale.boolValue && folder.isEmpty {
-            note = "The folder you chose before is no longer readable. Please choose it again."
-        }
-    }
-}
-
-/// UIDocumentPickerViewController for a folder, in the two callbacks a SwiftUI sheet wants.
-private struct DocumentPicker: UIViewControllerRepresentable {
-    var types: [UTType] = [.folder]
-    let onPick: (URL) -> Void
-    let onCancel: () -> Void
-
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        // .open (not .import): the folder stays where it is and the bookmark keeps pointing at it.
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: false)
-        picker.allowsMultipleSelection = false
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ vc: UIDocumentPickerViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick, onCancel: onCancel) }
-
-    final class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let onPick: (URL) -> Void
-        let onCancel: () -> Void
-        init(onPick: @escaping (URL) -> Void, onCancel: @escaping () -> Void) {
-            self.onPick = onPick; self.onCancel = onCancel
-        }
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            if let url = urls.first { onPick(url) } else { onCancel() }
-        }
-        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) { onCancel() }
     }
 }
 
@@ -306,7 +253,9 @@ private struct LauncherView: View {
     @State private var check = 0   // which Play the running cloud check is for: one the player went on from without it is dropped
     @State private var report: SaveSyncReport?
     @State private var asking: SaveSyncReport.Step?
-    @State private var cheatsOn: Set<String> = Set((UserDefaults.standard.string(forKey: "hooklink.cheats") ?? "").split(separator: "\n").map(String.init))
+    @State private var pickingCloudFolder = false
+    @State private var cloudFolder = ""
+    @State private var cloudNote = ""
 
     private var docs: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0] }
     private var version: String { (info("HookLinkVersion") as? String) ?? "X3" }   // no build sets HookLinkVersion: this is the version shown (HookLink X3, the VX3 line); raise it with each HookLink release
@@ -344,30 +293,23 @@ private struct LauncherView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $bgOpen) { HLBackgroundPicker(bg: bgs) { bgOpen = false } }
-        .sheet(isPresented: $resOpen) {
-            VStack(spacing: 14) {
-                HStack { Text("Resolution").font(HLX.serif(22)).foregroundStyle(.white); Spacer(); Button("Done") { resOpen = false }.font(HLX.body(15, .semibold)).foregroundStyle(HLX.gold) }
-                if let rs = m.settings.first(where: { $0.env == "DM_RENDER_SCALE" }) { HLResolutionDial(m: m, scale: rs) }
-                Spacer(minLength: 0)
-            }
-            .padding(20).background(HLX.glass.ignoresSafeArea()).preferredColorScheme(.dark).presentationDetents([.height(260)])
-        }
-        .sheet(item: $share) { ShareSheet(items: $0.urls) }
-        .sheet(item: $detail) { d in
-            VStack(spacing: 12) {
-                HStack {
-                    Text(d.title).font(HL.serif(22)).foregroundStyle(.white)
-                    Spacer()
-                    Button("Done") { detail = nil }.font(HL.body(15, .heavy)).foregroundStyle(HL.gold)
+        // Native fileImporter above the landscape/portrait split: presents UIDocumentPickerViewController directly (not embedded as a child of a SwiftUI sheet host), avoids per-row Section modifiers (LNPANDY/NX2Apple#315), and keeps picker identity across orientation changes (seedds/nxnative#3278).
+        .fileImporter(isPresented: $pickingCloudFolder, allowedContentTypes: [.folder]) { result in
+            switch result {
+            case .success(let url):
+                if dm_store_cloud_saves(url) {
+                    cloudNote = "Saved. The game uses this folder when you press Play."
+                    refreshCloudSaves()
+                } else {
+                    cloudNote = "That folder could not be remembered — try a different one."
                 }
-                Divider2()
-                ScrollView { extraDetail }
+            case .failure(let error):
+                let ns = error as NSError
+                if error is CancellationError || (ns.domain == NSCocoaErrorDomain && ns.code == NSUserCancelledError) { return }
+                fputs("launcher: cloud-save folder picker failed: \(error.localizedDescription)\n", stderr)
+                cloudNote = "That folder could not be opened — try a different one."
             }
-            .padding(20).background(HL.ground.ignoresSafeArea()).preferredColorScheme(.dark)
         }
-        .fullScreenCover(isPresented: $editing) { InventoryManagerView { editing = false } }
-        .sheet(isPresented: $modsOpen) { ModsDrawer(store: mods, close: { modsOpen = false }).preferredColorScheme(.dark) }
         .confirmationDialog(SaveSyncReport.chooseTitle, isPresented: isAsking(.choose), titleVisibility: .visible, presenting: report) { r in
             Button(r.localLabel(here: "iPhone")) { go(r.localChoice) }
             Button(r.cloudLabel) { go(r.cloudChoice) }
@@ -395,8 +337,19 @@ private struct LauncherView: View {
             while !Task.isCancelled { memory = os_proc_available_memory(); try? await Task.sleep(for: .seconds(2)) }
         }
         // Rotation turns the screen as soon as it is picked, before Play (front_ios.m dm_rotation_set); the saved pick at once when the screen shows
-        .onAppear { if let v = m.values["DM_ROTATION"] { dm_rotation_set(v) } }
+        .onAppear {
+            refreshCloudSaves()
+            if let v = m.values["DM_ROTATION"] { dm_rotation_set(v) }
+        }
         .onChange(of: m.values["DM_ROTATION"]) { _, v in if let v { dm_rotation_set(v) } }
+    }
+
+    private func refreshCloudSaves() {
+        var stale: ObjCBool = false
+        cloudFolder = dm_cloud_saves_path(&stale) ?? ""
+        if stale.boolValue && cloudFolder.isEmpty {
+            cloudNote = "The folder you chose before is no longer readable. Please choose it again."
+        }
     }
 
     private func header(icon size: CGFloat) -> some View {
@@ -431,7 +384,16 @@ private struct LauncherView: View {
                 Text("Brings back all settings this game was tested with.")
             }
             // The background save check reads the selected folder until it returns.
-            CloudSavesSection(checking: checking)
+            CloudSavesSection(
+                checking: checking,
+                folder: cloudFolder,
+                note: cloudNote,
+                choose: { pickingCloudFolder = true },
+                clear: { dm_clear_cloud_saves(); refreshCloudSaves(); cloudNote = "" }
+            )
+            if PrewarmUpload.available {
+                Section { PrewarmUploadSetting() }
+            }
             Section {
                 HStack {
                     Text("Memory available")
@@ -444,22 +406,37 @@ private struct LauncherView: View {
         .contentMargins(.horizontal, 12, for: .scrollContent)
     }
 
-    private static let clusterWidth: CGFloat = 132   // the free memory and the background button, top right
-    private func panelWidth(_ size: CGFloat) -> CGFloat { min(252, max(220, size * 0.29)) }
-    // The floating top row: on Play, the switcher centres over the picture right of the side panel; elsewhere over the page. The right cluster has a fixed width and the
-    // switcher sits between two flexible spaces, so the two never meet on a narrow phone
-    private func chrome(_ size: CGSize) -> some View {
-        HStack(spacing: 0) {
-            Color.clear.frame(width: tab == .play ? panelWidth(size.width) : Self.clusterWidth, height: 1)
-            Spacer(minLength: 10)
-            HStack(spacing: 2) {
-                ForEach(HLTab.allCases, id: \.rawValue) { t in
-                    Button { tab = t } label: {
-                        Text(t.title).font(HLX.body(13, tab == t ? .semibold : .regular)).foregroundStyle(tab == t ? HLX.onGold : Color.white.opacity(0.8))
-                            .padding(.horizontal, tab == t ? 18 : 14).frame(height: 28)
-                            .background(tab == t ? AnyShapeStyle(HLX.gold) : AnyShapeStyle(Color.clear), in: Capsule())
-                            .contentShape(Capsule())
-                    }.buttonStyle(.plain).accessibilityAddTraits(tab == t ? .isSelected : [])
+    @ViewBuilder var playButton: some View {
+        let button = Button(action: start) { Text("Play").font(.title3.weight(.semibold)).frame(maxWidth: 220) }.controlSize(.large).disabled(checking)
+        if #available(iOS 26.0, *) { button.buttonStyle(.glassProminent) } else { button.buttonStyle(.borderedProminent) }
+        if checking {
+            VStack(spacing: 6) {
+                HStack(spacing: 6) { ProgressView(); Text("Checking the cloud save…").font(.callout).foregroundStyle(.secondary) }
+                Button("Play Without It") { check += 1; go("offline") }.font(.callout)
+            }
+        }
+    }
+
+    private func isAsking(_ step: SaveSyncReport.Step) -> Binding<Bool> {
+        Binding(get: { asking == step }, set: { if !$0 && asking == step { asking = nil } })
+    }
+
+    /// Play, once the cloud's save is compared with this iPhone's (save_sync_report, SaveSyncReport): a save that changed on both sides is the player's pick, not the
+    /// newer file's, and a cloud save that did not come is said so before the game starts without it.
+    private func start() {
+        dm_cloud_saves_env()   // DM_SAVE_SYNC from the picked folder, as the game's mount will read it (front_ios.m calls it again at the start)
+        let folder = getenv("DM_SAVE_SYNC").map { String(cString: $0) }
+        guard let folder, SaveSyncReport.syncEnabled(folder) else { go(nil); return }
+        check += 1; checking = true; asking = nil
+        let mine = check
+        DispatchQueue.global(qos: .userInitiated).async {
+            let r = Self.compare(folder: folder)
+            DispatchQueue.main.async {
+                guard checking, check == mine else { return }   // the player played without it
+                checking = false
+                switch SaveSyncReport.step(r) {
+                case .play(let choice): go(choice)
+                case let step: report = r; asking = step
                 }
             }
             .padding(3).hlGlass(18)
@@ -813,94 +790,15 @@ private struct LauncherView: View {
         }
     }
 
-    // Extras: cards that say what each does. Inventory manager, Import and the game log act at once; the others open their page
-    private var extrasTab: some View {
-        let cheats = cheatNames()
-        let saves: [(String, String, String, String)] = [("editor", "Inventory manager", "Rupees, hearts, items, bottles and more, by OOT SW2SE. A backup is made first.", ""),
-                                                         ("saves", "Export saves", "Share your save folder, and back saves up at each start.", autoBackupOn ? "Backups on" : ""),
-                                                         ("import", "Import a save", "Replace the saves with a folder. Yours move to save-backups first.", ""),
-                                                         ("cloud", "Cloud saves", "Keep the save in step with the Mac app through iCloud Drive.", "")]
-        let more: [(String, String, String, String)] = [("log", "Export game log", "The last session's log, to share when reporting a problem.", ""),
-                                                        ("cheats", "Cheats", "Turn on cheats from the files in the cheats folder.", cheats.isEmpty ? "No file" : "\(cheatsOn.intersection(cheats).count) on"),
-                                                        ("background", "Background", "The picture behind the launcher: HookLink's or your own photos.", ""),
-                                                        ("mods", "Mods", "Import mod .zip files or folders, turn them on and off, set their order.", mods.mods.isEmpty ? "" : "\(mods.enabledCount) on"),
-                                                        ("reset", "Reset to defaults", "Every setting back to how HookLink \(version) was tested.", m.changed ? "" : "No changes"),
-                                                        ("credits", "Credits", "Everyone whose work is in this build.", "")]
-        func card(_ c: (String, String, String, String)) -> some View {
-            Button { openExtra(c.0, c.1) } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline) { Text(c.1).font(HL.body(13.5, .heavy)).foregroundStyle(HL.cream).lineLimit(1).minimumScaleFactor(0.8).layoutPriority(1); Spacer(minLength: 4); Text(c.3).font(HL.body(10.5, .heavy)).foregroundStyle(HL.faint).lineLimit(1).minimumScaleFactor(0.7) }
-                    Text(c.2).font(HL.body(11, .medium)).foregroundStyle(HL.soft).lineLimit(3).fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 12).padding(.vertical, 10).frame(maxWidth: .infinity, minHeight: 88, maxHeight: 96, alignment: .topLeading)
-                .background(c.0 == "editor" ? AnyShapeStyle(LinearGradient(colors: [HL.tabOn, Color(red: 0.173, green: 0.133, blue: 0.078)], startPoint: .top, endPoint: .bottom)) : AnyShapeStyle(HL.panel.opacity(0.72)), in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(c.0 == "editor" ? HL.gold : HL.edge, lineWidth: c.0 == "editor" ? 1.5 : 1))
-                .contentShape(RoundedRectangle(cornerRadius: 12))
-            }.buttonStyle(.plain)
-        }
-        let cols = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
-        return VStack(alignment: .leading, spacing: 10) {
-            label("SAVES")
-            LazyVGrid(columns: cols, spacing: 8) { ForEach(saves, id: \.0) { card($0) } }
-            label("MORE").padding(.top, 4)
-            LazyVGrid(columns: cols, spacing: 8) { ForEach(more, id: \.0) { card($0) } }
-            if !note.isEmpty { Text(note).font(HL.body(13, .bold)).foregroundStyle(HL.gold) }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .padding(.vertical, 10)
-    }
-    private func openExtra(_ id: String, _ title: String) {
-        note = ""; extra = id
-        switch id {
-        case "editor": editing = true
-        case "import": picking = true
-        case "log": exportLog()
-        case "mods": modsOpen = true
-        case "background": bgOpen = true
-        default: detail = ExtraSheet(id: id, title: title)
-        }
-    }
-    private func words(_ t: String) -> some View { Text(t).font(HL.body(13, .medium)).foregroundStyle(HL.text).multilineTextAlignment(.center).frame(maxWidth: .infinity) }
-    @ViewBuilder private var extraDetail: some View {
-        VStack(spacing: 8) {
-            switch extra {
-            case "saves":
-                words("Sends a copy of your save folder to Files, AirDrop or another app. Your saves stay on the phone.")
-                HLRow(title: "Export saves", value: "", chosen: true) { exportSaves() }
-                words("HookLink can also copy your saves to save-backups each time you press Play, when they changed. The five newest copies are kept.")
-                HLRow(title: "Back up saves at each start", value: autoBackupOn ? "On" : "Off", chosen: autoBackupOn) { autoBackupOn.toggle(); UserDefaults.standard.set(autoBackupOn, forKey: "hooklink.autobackup") }
-            case "import":
-                words("Replaces the game's saves with a save folder you choose (one with account.sav and slot folders, or a folder holding a \"save\" folder). The saves you have now are copied to save-backups first.")
-                HLRow(title: "Choose a save folder", value: "", chosen: true) { picking = true }
-            case "log":
-                words("Sends the log of your last game session (HookLink-last-game-session.txt), and of this launch. Share both when something looked or ran wrong in the game.")
-                HLRow(title: "Export game log", value: "", chosen: true) { exportLog() }
-            case "cloud":
-                List { CloudSavesSection(checking: checking) }.listStyle(.insetGrouped).scrollContentBackground(.hidden).frame(height: 230)
-            case "editor":
-                words("Change rupees, hearts, magic, ammo, bag sizes, small keys, bottles and items in your saves. Your saves are copied to save-backups before every change. The save rules are OOT SW2SE's, by Traiver.")
-                HLRow(title: "Open the inventory manager", value: "", chosen: true) { editing = true }
-            case "cheats":
-                let names = cheatNames()
-                if names.isEmpty {
-                    words("No cheat file found. Put an Atmosphère cheat file for this game (a .txt of [Name] entries) in the app's cheats folder in Files, then come back. HookLink ships none.")
-                } else {
-                    words("Cheats from your file. They change the running game and can break a save: export your saves first.")
-                    ForEach(names, id: \.self) { n in
-                        HLRow(title: n, value: cheatsOn.contains(n) ? "On" : "Off", chosen: cheatsOn.contains(n)) {
-                            if cheatsOn.contains(n) { cheatsOn.remove(n) } else { cheatsOn.insert(n) }
-                            UserDefaults.standard.set(cheatsOn.sorted().joined(separator: "\n"), forKey: "hooklink.cheats")
-                        }
-                    }
-                }
-            case "reset":
-                words("Brings back all settings this game was tested with.")
-                HLRow(title: "Reset to tested defaults", value: "", chosen: m.changed) { m.reset(); note = "Settings are back to the tested defaults." }.disabled(!m.changed)
-            default:
-                Text(hlCredits).font(HL.body(13, .medium)).foregroundStyle(HL.text).frame(maxWidth: .infinity, alignment: .leading)
-            }
-            if !note.isEmpty { Text(note).font(HL.body(13, .bold)).foregroundStyle(HL.gold).multilineTextAlignment(.center) }
+    /// Blocks while the cloud's file downloads (SaveSyncReport.waitMs at most). nil: no report (the host then decides as it always did)
+    private static func compare(folder: String) -> SaveSyncReport? {
+        // getenv, not ProcessInfo.environment: main.m sets DM_SAVE and applies env.txt after that snapshot
+        guard let save = getenv("DM_SAVE") else { fputs("launcher: save sync: no DM_SAVE\n", stderr); return nil }
+        var buf = [CChar](repeating: 0, count: 1024)
+        let r = folder.withCString { save_sync_report(save, dm_save_title(), $0, SaveSyncReport.waitMs, &buf, buf.count) }
+        guard r == 0 else {
+            fputs("launcher: save sync: no report on \(String(cString: save))\n", stderr)
+            return nil
         }
     }
 
@@ -1060,7 +958,7 @@ public func dmShowLauncher(_ viewController: UnsafeMutableRawPointer, _ done: @c
     guard let file = try? JSONDecoder().decode(SettingsFile.self, from: data), !file.settings.isEmpty else { fputs("[RED] launcher: dm/launcher.json cannot be read; starting the game\n", stderr); return false }
     let model = LauncherModel(deviceAdjusted(file.settings))
     gameMenuModel = model   // the in-game menu shows and saves the same choices (GameMenu.swift)
-    if ProcessInfo.processInfo.environment["DM_LAUNCHER"] == "0" { fputs("launcher: off (DM_LAUNCHER=0)\n", stderr); model.applySaved(); ModStore.applyEnv(); return false }
+    if ProcessInfo.processInfo.environment["DM_LAUNCHER"] == "0" { fputs("launcher: off (DM_LAUNCHER=0)\n", stderr); model.apply(persist: false); return false }
     let parent = Unmanaged<UIViewController>.fromOpaque(viewController).takeUnretainedValue()
     var host: UIViewController?
     let view = LauncherView(m: model) {
