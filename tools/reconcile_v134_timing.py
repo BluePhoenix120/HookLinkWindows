@@ -18,6 +18,7 @@ import reconcile_v134_pso as pso
 import reconcile_v134_mesh as mesh
 import reconcile_v134_renderer as renderer
 import reconcile_v134_settings as settings
+import reconcile_v134_provenance as provenance
 
 OOT = "dm/games/0400486024DEC000/patches.py"
 FSTEP = "dm/gfx/nvn/nvn_fstep.h"
@@ -180,6 +181,7 @@ def main():
             # Export the exact staged source tree, never the old engine on main.
             subprocess.run(["git", "archive", "--format=tar.gz", "--output=" + str(dest/"candidate-engine.tar.gz"), summary["candidate_tree"]], cwd=cwd, check=True)
             summary["native_compile_archive"] = "candidate-engine.tar.gz"
+            provenance.materialize(cwd, local, BASE, TARGET, dest, summary)
             report.extend(["", "## Remaining semantic review", "", *summary["remaining"]])
     finally:
         (dest/"report.md").write_text("\n".join(report) + "\n")

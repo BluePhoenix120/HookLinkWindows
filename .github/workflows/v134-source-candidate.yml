@@ -10,6 +10,7 @@ on:
       - 'tools/reconcile_v134_mesh.py'
       - 'tools/reconcile_v134_renderer.py'
       - 'tools/reconcile_v134_settings.py'
+      - 'tools/reconcile_v134_provenance.py'
       - 'tools/nxw_proc_group.py'
       - 'tools/test_nxw_proc_group.py'
       - '.github/workflows/v134-source-candidate.yml'
@@ -111,3 +112,54 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Windows parallel rewriter regression failed' }
           python -B -m unittest discover -s tests -p 'test_windows_sdk_match_cuts.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Windows SDK cut regression failed' }
+  full-windows-candidate:
+    needs: candidate
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: v134-source-candidate
+          path: ${{ runner.temp }}/v134
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Checkout exact unpublished candidate
+        id: checkout-candidate
+        shell: pwsh
+        run: |
+          git fetch "$env:RUNNER_TEMP/v134/candidate.bundle" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate fetch failed' }
+          git checkout --detach FETCH_HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate checkout failed' }
+          $candidate = Get-Content "$env:RUNNER_TEMP/v134/candidate.json" -Raw | ConvertFrom-Json
+          if ((git rev-parse HEAD) -ne $candidate.commit) { throw 'Candidate commit mismatch' }
+          if ((git rev-parse 'HEAD:engine') -ne $candidate.engine_tree) { throw 'Candidate engine tree mismatch' }
+          python -m pip install backports.zstd
+          if ($LASTEXITCODE -ne 0) { throw 'Codec installation failed' }
+          python -B tools/release_audit.py .
+          if ($LASTEXITCODE -ne 0) { throw 'Source-only audit failed' }
+      - name: Run complete Windows regression suite without suppressing historical failures
+        shell: pwsh
+        run: |
+          python -B -m unittest discover -s tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Complete candidate regression suite failed' }
+      - uses: actions/setup-dotnet@v4
+        if: always() && steps.checkout-candidate.outcome == 'success'
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and verify real managed shader translator
+        if: always() && steps.checkout-candidate.outcome == 'success'
+        shell: pwsh
+        run: |
+          python -B tools/check_windows_translator.py
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate translator smoke test failed' }
+      - name: Build candidate GUI executable (not a release)
+        if: always() && steps.checkout-candidate.outcome == 'success'
+        shell: pwsh
+        run: ./tools/build_windows_gui_exe.ps1
