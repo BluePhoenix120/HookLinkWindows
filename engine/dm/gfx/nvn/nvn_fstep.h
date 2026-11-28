@@ -49,20 +49,6 @@
 #include <stdint.h>
 #include <string.h>
 
-// Frame time for a game that steps by it (Ocarina of Time's patches.py): the mean of the last NVN_FDELTA_N present intervals in seconds, or 0 at the target rate. A stall counts at most
-// 0.1 s, so a load does not jump the game forward, and the result stops at 4 frames of 60 fps; under 1.1 frames the game's own fixed step is smoother than a noisy measured one
-#define NVN_FDELTA_N 8
-typedef struct { uint64_t last; double t[NVN_FDELTA_N]; int n, i; } nvn_fdelta;
-static inline float nvn_fdelta_next(nvn_fdelta *f, uint64_t now_ns) {
-    uint64_t was = f->last; f->last = now_ns;
-    if (!was) return 0;
-    double s = (double)(now_ns - was) / 1e9, sum = 0;
-    f->t[f->i] = s > 0.1 ? 0.1 : s; f->i = (f->i + 1) % NVN_FDELTA_N; if (f->n < NVN_FDELTA_N) f->n++;
-    for (int i = 0; i < f->n; i++) sum += f->t[i];
-    double mean = sum / f->n;
-    return mean * 60 < 1.1 ? 0.0f : (float)fmin(mean, 4.0 / 60);
-}
-
 #define FSTEP_MAX 3           // the largest step: both games' own interval logic uses 1–3 (BotW clamps to [2, 3], TOTK picks 2 or 3), so their integer readers never see 4
 #define FSTEP_LATE 0.1        // a frame is late when it or its GPU work took this many vsyncs (1.7 ms) more than k: 53 fps is not 60 (start-to-start jitter on time is well below)
 #define FSTEP_SHORT_MAX 2.0  // a frame counts at most this many vsyncs past its hold toward the average (a load's stall is one long frame, not a rate)
@@ -101,9 +87,6 @@ typedef struct {
     int late_run, fit_run, trial;   // late frames in a row; frames in a row whose cost fits k − 1; frames left of a trial at k − 1 (0 = none)
     int sgrace;               // frames left of the grace after a stall (FSTEP_STALL or settle), whose lateness does not count toward a step up, fine mode, or trial completion
     int probe, grace;         // 1: the trial in progress is a probe; 2: a probe held and its run at kmin has not ended yet; frames left of the probe's grace
-    int nopay;                // set by the caller (kept): 1 = real time a late frame lost is not paid back (profile fps_payback off, DM_FPS_PAYBACK=off): the step stays k and the
-                              // game runs that much behind, counted as dropped. A payback step hands the game k + 1 vsyncs of time for a frame shown k, so motion jumps by half
-                              // a frame at a 30 fps cap: Ocarina of Time (log 60, iPhone 18 Pro) paid back 109 times in 40 s, about three judders a second
     int ramp;                 // set by the caller (kept): 1 = a probe's grace is renewed while its frames keep getting cheaper (FSTEP_RAMP; the host's DM_FSTEP_PROBE_RAMP)
     double pa, pb; int plate, ptotal;   // the current grace window: the cost of its first and second halves (sums), its late frames; grace frames this probe has taken in all
     double hold, since;       // vsyncs a trial waits for after a step up; vsyncs since the last step up
@@ -261,20 +244,9 @@ static inline int nvn_fstep_next(nvn_fstep *s, double shown, double cost, int km
         s->uprobe = !slow && !nvn_fstep_same(s);
         s->k = kmin; s->downs++; s->probes++; s->trial = FSTEP_RUN; s->probe = 1; s->grace = FSTEP_GRACE; s->fit_run = s->late_run = s->ilate_run = 0; s->pa = s->pb = 0; s->plate = s->ptotal = 0;   // urun ends with the next frame at kmin (kept for the caller's log)
     }
-    if (s->nopay && s->debt > 0) { s->dropped += s->debt; s->debt = 0; }   // no payback: the time lost is let go at once, as a console game slows down
     s->step = s->k + (s->debt >= 1 && s->k < smax);
     s->paid += s->step > s->k;
     return s->step;
-}
-
-// A game whose stub never steps below the measured frame time (Ocarina of Time's patches.py: the larger of the step and nvn_fdelta's mean) moved `moved` vsyncs where the
-// host handed it s->step. What it moved beyond the step is real time already made up, so the debt gives it back: left in, the next steps paid the same time again. With the hold
-// at 1 (DM_FPS_HOLD off) and frames of 1.8 vsyncs the steps went 1, 2, 2, 2, 2 under a floor of 1.8, 1.96 a frame for 1.8 of real time: 9% fast, and 17% at frames of 1.5
-// (an iPhone at 26-31 ms a frame, 2026-11-09). Once per frame, after nvn_fstep_next
-static inline void nvn_fstep_moved(nvn_fstep *s, double moved) {
-    if (moved <= s->step) return;
-    s->debt -= moved - s->step;
-    if (s->debt < -1) s->debt = -1;   // as nvn_fstep_next: ahead, at most one vsync is remembered
 }
 
 // The GPU clock follows the hold too: Breath of the Wild on an iPhone went from 14.4 to about 25 ms of GPU time a frame at hold 2 with the same 4,900 draws, the CPU still on its
@@ -349,7 +321,7 @@ static inline int nvn_fstep_gpu_slowed(nvn_fgpu *g, double gpu, const nvn_fstep 
 
 // The frame step state page's target (+0 float fps, 0 = every stub runs the game's own instructions) and step unit (+0x38 u32: 120 = ticks of 1/120 s for FRAME_STEP_120 stubs,
 // 0 = vsyncs of 1/60 s; written by loader.c dm_fps_state_apply and fixed for the run)
-#define FSTEP_UNIT_OFF 0x48
+#define FSTEP_UNIT_OFF 0x38
 static inline float nvn_fstep_target(const uint8_t *page) { uint32_t b = __atomic_load_n((const uint32_t *)page, __ATOMIC_RELAXED); float t; memcpy(&t, &b, sizeof t); return t; }
 static inline void nvn_fstep_target_put(uint8_t *page, float t) { uint32_t b; memcpy(&b, &t, sizeof b); __atomic_store_n((uint32_t *)page, b, __ATOMIC_RELAXED); }
 static inline int nvn_fstep_t120(const uint8_t *page) { return page && __atomic_load_n((const uint32_t *)(page + FSTEP_UNIT_OFF), __ATOMIC_RELAXED) == 120; }

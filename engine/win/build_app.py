@@ -176,6 +176,8 @@ def info_plist(bundle_id, name, version, category, show_fps, lang, sdk_ver, sdk_
         'UISupportedInterfaceOrientations~ipad': ['UIInterfaceOrientationLandscapeRight', 'UIInterfaceOrientationLandscapeLeft'],
         'UIRequiresFullScreen': True, 'UIStatusBarHidden': True, 'UIViewControllerBasedStatusBarAppearance': False, 'LSApplicationCategoryType': category,
         'DMShowFPS': show_fps, 'DMLanguage': lang, 'LSSupportsGameMode': True, 'GCSupportsControllerUserInteraction': True,
+        'NSBluetoothAlwaysUsageDescription': 'Plays Nintendo Switch 2 controllers over Bluetooth while you hold Sync on one.',
+        'NSMicrophoneUsageDescription': 'Lets the game hear your microphone when enabled.',
         'GCSupportedGameControllers': [{'ProfileName': 'ExtendedGamepad'}], 'CADisableMinimumFrameDurationOnPhone': True,
         'UIApplicationSceneManifest': {'UIApplicationSupportsMultipleScenes': False, 'UISceneConfigurations': {'UIWindowSceneSessionRoleApplication': [
             {'UISceneConfigurationName': 'Default', 'UISceneDelegateClassName': 'SceneDelegate'}]}},
@@ -364,9 +366,13 @@ def main():
     for pat in ('*.fixups.tsv', '*.gates.tsv', '*.cuts.tsv', '*.obs.tsv'):
         for f in patched.glob(pat): shutil.copy2(f, dmres)
     if (patched / 'nro.tsv').exists(): shutil.copy2(patched / 'nro.tsv', dmres)
-    for f in ('shader_map.tsv', 'pso_manifest.tsv') + (() if gfx in ('vulkan', 'gl') else ('c1_full.tsv',)):
-        if capture and not (gd / f).exists(): continue   # a capture IPA has no shader build: the tables it would stamp may not exist yet
-        shutil.copy2(gd / f, dmres)
+    # Match official packaging: NVN's map and C1 stamp are required for
+    # a compiled NVN build, but other APIs and capture IPAs need not have
+    # those files. Pipeline seeds are optional for every profile.
+    for f in ('shader_map.tsv', 'c1_full.tsv'):
+        if (gd / f).is_file(): shutil.copy2(gd / f, dmres)
+        elif gfx == 'nvn' and not capture: die(f'missing generated shader table {gd / f}')
+    if (gd / 'pso_manifest.tsv').is_file(): shutil.copy2(gd / 'pso_manifest.tsv', dmres)
     if gfx == 'nvn':
         if (gd / 'cb_extent.tsv').exists(): shutil.copy2(gd / 'cb_extent.tsv', dmres)
         else: t(f'no {gd}/cb_extent.tsv: the host copies whole uniform bindings')
@@ -376,7 +382,7 @@ def main():
     # The pipeline archive made offline (dm/gfx/tools/pso_offline.py, as build_ipa.sh): the base of every shader pair compiled by metal-tt (Metal Developer Tools for Windows has it)
     # for each GPU architecture in DM_PSO_GPUS (comma-separated; none = no archive). Default: g18p for a game whose profile sets pso_mtl4 on (only the Metal 4 path reads it), else none
     pso = None
-    gpus = env['DM_PSO_GPUS'] if 'DM_PSO_GPUS' in env else ('g18p' if prof.get('pso_mtl4', 'off') == 'on' else 'none')
+    gpus = env['DM_PSO_GPUS'] if 'DM_PSO_GPUS' in env else (','.join(prof.get('pso_gpu', 'g18p').split()) if prof.get('pso_mtl4', 'off') == 'on' else 'none')
     if gfx == 'nvn' and not capture and gpus and gpus != 'none' and (gd / 'shader_pairs.tsv').exists():
         pso = w / 'build/ios/pso/bundle'
         t(f'pipeline archive for {gpus} (metal-tt; minutes when its inputs changed)')

@@ -13,9 +13,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "frame_mode.h"
 
 @interface DmSetting : NSObject
-@property (copy) NSString *env, *kind, *label, *note, *def, *section, *on, *off;
+@property (copy) NSString *env, *kind, *label, *note, *def, *section, *on, *off, *needs;
+@property (copy) NSArray<NSString *> *sets;
 @property (copy) NSArray<NSArray<NSString *> *> *options;   // choice: [value, label]
 @property double min, max, step; @property BOOL hasMin, hasMax, hasStep;
 @property BOOL disabled;
@@ -49,7 +51,8 @@ static NSArray<DmSetting *> *load_settings(NSData *data) {   // nil when the fil
         if (![d isKindOfClass:NSDictionary.class]) return nil;
         DmSetting *s = [DmSetting new];
         s.env = str(d, @"env"); s.kind = str(d, @"kind"); s.label = str(d, @"label"); s.note = str(d, @"note"); s.def = str(d, @"default");
-        s.section = str(d, @"section"); s.on = str(d, @"on"); s.off = str(d, @"off");
+        s.section = str(d, @"section"); s.on = str(d, @"on"); s.off = str(d, @"off"); s.needs = str(d, @"needs");
+        if ([d[@"sets"] isKindOfClass:NSArray.class]) s.sets = d[@"sets"];
         if (!s.env || !s.kind || !s.label || !s.note || !s.def) return nil;
         if ([d[@"options"] isKindOfClass:NSArray.class]) {
             NSMutableArray *opts = [NSMutableArray array];
@@ -84,7 +87,9 @@ static int increased_memory_limit(void);
     NSMutableArray *secs = [NSMutableArray array];
     for (DmSetting *s in settings) if (![secs containsObject:s.sectionTitle]) [secs addObject:s.sectionTitle];
     _sections = secs;
-    NSString *keys = NSProcessInfo.processInfo.environment[@"DM_ENV_FILE_KEYS"] ?: @"";
+    NSDictionary *environment = NSProcessInfo.processInfo.environment;
+    NSString *keys = [NSString stringWithFormat:@"%@ %@", environment[@"DM_ENV_FILE_KEYS"] ?: @"", environment[@"DM_ENV_LAUNCH_KEYS"] ?: @""];
+    BOOL ignoreSaved = [environment[@"DM_SAVED_CHOICES"] isEqualToString:@"0"];
     NSMutableSet *ff = [NSMutableSet set];
     for (NSString *k in [keys componentsSeparatedByString:@" "]) if (k.length) [ff addObject:k];
     _fromFile = ff;
@@ -116,17 +121,41 @@ static int increased_memory_limit(void);
     for (DmSetting *s in settings) {
         NSString *envv = NSProcessInfo.processInfo.environment[s.env];
         if ([ff containsObject:s.env] && envv) { _values[s.env] = envv; continue; }
-        NSString *saved = [ud stringForKey:[@"launcher." stringByAppendingString:s.env]];
+        id raw = ignoreSaved ? nil : [ud objectForKey:[@"launcher." stringByAppendingString:s.env]];
+        NSString *saved = [raw isKindOfClass:NSString.class] ? raw : nil;
         _values[s.env] = (saved && [s accepts:saved]) ? saved : s.def;   // a saved choice the game no longer offers: its default
     }
     return self;
 }
 - (NSArray<DmSetting *> *)inSection:(NSString *)sec {
-    return [self.settings filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(DmSetting *s, NSDictionary *b) { return [s.sectionTitle isEqualToString:sec]; }]];
+    return [self.settings filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(DmSetting *s, NSDictionary *b) { return [s.sectionTitle isEqualToString:sec] && [self visible:s]; }]];
 }
 - (NSString *)value:(DmSetting *)s { return self.values[s.env] ?: s.def; }
-- (BOOL)locked:(DmSetting *)s { return s.disabled || [self.fromFile containsObject:s.env]; }
+- (NSString *)effectiveValueForEnv:(NSString *)env {
+    const char *v = dm_frame_mode_override(self.values[@"DM_FRAME_MODE"].intValue, env.UTF8String);
+    return v ? @(v) : self.values[env];
+}
+- (BOOL)visible:(DmSetting *)s {
+    NSArray *parts = [s.needs componentsSeparatedByString:@"="];
+    if (parts.count == 2) {
+        NSString *effective = [self effectiveValueForEnv:parts[0]];
+        if (effective && ![effective isEqualToString:parts[1]]) return NO;
+    }
+    // A non-custom mode owns these values; do not offer a contradictory row.
+    NSString *mode = self.values[@"DM_FRAME_MODE"];
+    if (mode && [@[@"1", @"2", @"3"] containsObject:mode] &&
+        [@[@"DM_FPS_TARGET", @"DM_FRAMEGEN", @"DM_PRESENT_SNAP", @"DM_FPS_HOLD"] containsObject:s.env] &&
+        ![self.fromFile containsObject:s.env]) return NO;
+    return YES;
+}
+- (BOOL)presetLocked:(DmSetting *)s {
+    for (DmSetting *p in self.settings)
+        if ([p.env isEqualToString:@"DM_PRESET"] && [[self value:p] isEqualToString:p.onValue] && [p.sets containsObject:s.env]) return YES;
+    return NO;
+}
+- (BOOL)locked:(DmSetting *)s { return s.disabled || [self.fromFile containsObject:s.env] || [self presetLocked:s]; }
 - (NSString *)note:(DmSetting *)s {
+    if ([self presetLocked:s]) return [NSString stringWithFormat:@"%@ Set by Potato mode.", s.note ?: @""];
     if (s.disabled || ![self.fromFile containsObject:s.env]) return s.note;
     return [NSString stringWithFormat:@"%@Set by an env file", s.note.length ? [s.note stringByAppendingString:@" · "] : @""];
 }
@@ -147,21 +176,21 @@ static int increased_memory_limit(void);
 - (void)reset {   // every launcher choice back to the game's defaults; an env file's values stay
     NSUserDefaults *ud = NSUserDefaults.standardUserDefaults;
     for (DmSetting *s in self.settings) {
-        [ud removeObjectForKey:[@"launcher." stringByAppendingString:s.env]];
         if (![self.fromFile containsObject:s.env]) self.values[s.env] = s.def;
     }
     fprintf(stderr, "launcher: settings reset to the game's defaults\n");
 }
 // Before the game starts: every setting not set by an env file goes into the environment (DM_LANG replaces the packed language main.m set as a default). Only a choice that
 // differs from the game's default is stored: a setting the player left at its default follows the defaults of a later build (the settings it was tested with)
-- (void)apply {
+- (void)applyPersist:(BOOL)persist {
     NSUserDefaults *ud = NSUserDefaults.standardUserDefaults;
+    BOOL ignoreSaved = [NSProcessInfo.processInfo.environment[@"DM_SAVED_CHOICES"] isEqualToString:@"0"];
     for (DmSetting *s in self.settings) {
         NSString *v = [self value:s], *key = [@"launcher." stringByAppendingString:s.env];
         if (s.disabled) continue;   // nothing in this game reads it
         if ([self.fromFile containsObject:s.env]) { fprintf(stderr, "launcher: %s kept at %s (env file)\n", s.env.UTF8String, v.UTF8String); continue; }
         BOOL def = [s isDefault:v];
-        if (def) [ud removeObjectForKey:key]; else [ud setObject:v forKey:key];
+        if (persist && !ignoreSaved) { if (def) [ud removeObjectForKey:key]; else [ud setObject:v forKey:key]; }
         setenv(s.env.UTF8String, v.UTF8String, 1); fprintf(stderr, "launcher: %s=%s%s\n", s.env.UTF8String, v.UTF8String, def ? "" : " (changed)");
     }
 }
@@ -321,7 +350,7 @@ static int increased_memory_limit(void) {
             me.m.values[s.env] = o[0];
             UIButtonConfiguration *cfg = wb.configuration; cfg.title = o[1]; wb.configuration = cfg;
             wb.menu = [me menuFor:s button:wb];
-            [me refreshReset];
+            [me.tableView reloadData];
         }];
         a.state = [o[0] isEqualToString:cur] ? UIMenuElementStateOn : UIMenuElementStateOff;
         [items addObject:a];
@@ -339,7 +368,7 @@ static int increased_memory_limit(void) {
     pct.text = [self.m percentage:s]; sl.accessibilityValue = pct.text;
 }
 - (void)slidEnd:(UISlider *)sl { [self refreshReset]; }
-- (void)toggled:(UISwitch *)sw { DmSetting *s = self.m.settings[sw.tag]; self.m.values[s.env] = sw.on ? s.onValue : s.offValue; [self refreshReset]; }
+- (void)toggled:(UISwitch *)sw { DmSetting *s = self.m.settings[sw.tag]; self.m.values[s.env] = sw.on ? s.onValue : s.offValue; [self.tableView reloadData]; }
 @end
 
 // ---- the screen: game card on the left third, settings on the right two thirds ----
@@ -489,7 +518,7 @@ static void make_capture_folders(void) {
 bool dm_show_launcher(void *view_controller, void (*done)(void)) {
     make_capture_folders();
     const char *off = getenv("DM_LAUNCHER");
-    if (off && !strcmp(off, "0")) { fprintf(stderr, "launcher: off (DM_LAUNCHER=0)\n"); return false; }
+    BOOL skipLauncher = off && !strcmp(off, "0");
     NSString *path = [[NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"dm"] stringByAppendingPathComponent:@"launcher.json"];
     NSData *data = [NSData dataWithContentsOfFile:path];
     if (!data) return false;
@@ -497,12 +526,16 @@ bool dm_show_launcher(void *view_controller, void (*done)(void)) {
     if (!settings.count) { fprintf(stderr, "[RED] launcher: dm/launcher.json cannot be read; starting the game\n"); return false; }
     UIViewController *parent = (__bridge UIViewController *)view_controller;
     DmLauncherModel *model = [[DmLauncherModel alloc] initWith:settings];
+    if (skipLauncher) {
+        if (![NSProcessInfo.processInfo.environment[@"DM_SAVED_CHOICES"] isEqualToString:@"0"]) [model applyPersist:NO];
+        return false;
+    }
     DmLauncherVC *vc = [DmLauncherVC new]; vc.m = model; vc.modalPresentationStyle = UIModalPresentationFullScreen;
     __weak DmLauncherVC *wvc = vc; __block BOOL started = NO;
     vc.play = ^{
         if (started || !wvc) return;
         started = YES;
-        [model apply];
+        [model applyPersist:YES];
         [wvc dismissViewControllerAnimated:NO completion:^{ done(); }];
     };
     [parent presentViewController:vc animated:NO completion:nil];

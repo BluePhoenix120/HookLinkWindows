@@ -192,7 +192,7 @@ int main(int argc, char **argv) { @autoreleasepool {
     pthread_mutex_lock(&g_pq_mu); g_link_owns_layer = 1; pthread_mutex_unlock(&g_pq_mu);
     g_dm_present_link = 1; g_link_started = 1;   // no link object: the ticks below are the link's
     for (int i = 0; i < 4; i++) tick();
-    CHECK("the link's tick interval is known", fabs(g_fg_tick - 1 / 60.0) < 1e-4);
+    CHECK("the link's tick interval is known", fabs(atomic_load(&g_fg_tick) - 1 / 60.0) < 1e-4);
     int order = 1, paused = 1;
     for (int i = 10; i < 16; i++) {   // (10 to 15: a lone drop's pause, FG_AGAIN presents before the late case below)
         tex_t t = frame(i); present_enqueue(&t, 1 / 30.0, NULL, 0, NULL); copied();

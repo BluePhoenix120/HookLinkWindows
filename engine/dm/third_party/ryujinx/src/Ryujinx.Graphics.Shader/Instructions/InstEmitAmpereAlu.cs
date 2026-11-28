@@ -1091,10 +1091,10 @@ namespace Ryujinx.Graphics.Shader.Instructions
             }
         }
 
-        // An indexed constant read's bank and immediate offset: an NVN2 graphics stage's buffer bank moves to c[24] by its push block's base (AMapC0, AStageBlock)
+        // An indexed constant read's bank and immediate offset: a push block's bank moves to c[24] by the block's base (AMapC0, APushBlock)
         private static (int Bank, int Offset) AIndexedBank(EmitterContext context, int bank, int offset)
         {
-            return bank > 24 ? (24, AStageBlock(context, bank) * 0x100 + offset) : (bank, offset);
+            return bank > 24 ? (24, APushBlock(bank) * 0x100 + offset) : (bank, offset);
         }
 
         private static void ALoadConstant(EmitterContext context, AmpereOp x, int bank, Operand index, int offset, bool uniform)
@@ -1452,8 +1452,9 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 lo = sum;
             }
 
-            // The carry out of the 64-bit addition, to the predicate at 81..84: the 64-bit division in Fire Emblem Fortune's Weave's Lighting compute shaders chains it into its next addition
-            ASetPred(context, x.Bits(81, 84), context.ICompareNotEqual(carryOut, Const(0)));
+            // The carry out of the 64-bit addition, to the predicate at 81..84: the 64-bit division in Fire Emblem Fortune's Weave's Lighting compute shaders chains it into its next addition.
+            // UIMAD.WIDE (0x0a5) writes it to the uniform predicate UPd, as it reads its carry in from one (AImadCarryIn): written to the lane predicate, UPd stayed unwritten (false)
+            ASetPred(context, x.Bits(81, 84), context.ICompareNotEqual(carryOut, Const(0)), u);
 
             int rd = ARd(x, u);
             int zero = u ? RegisterConsts.UniformZeroIndex : RegisterConsts.RegisterZeroIndex;

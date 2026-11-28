@@ -422,10 +422,12 @@ static void read_layout(module_t *m, const char *dir) {
         else if (!strcmp(key, "MOVIE_NATIVE_COLOR_KEYS")) m->movie_native_color_keys = v == 1;
         else if (!strcmp(key, "STEP_MAX")) m->step_max = (uint32_t)v;
         else if (!strcmp(key, "FRAME_STEP_120")) m->fstep_t120 = v != 0;
+        else if (!strcmp(key, "HOOKLINK_WIDE")) m->hooklink_wide = v != 0;
         else if (!strcmp(key, "UE_MALLOC_VT")) m->ue_malloc_vt = v;
         else if (!strcmp(key, "UE_MALLOC_SLOT")) m->ue_malloc_slot = (unsigned)v;
         else if (!strcmp(key, "FPS_TARGET_PTR")) m->fps_target_ptr = v;
         else if (!strcmp(key, "FPS_TARGET_FIELD")) m->fps_target_field = (uint32_t)v;
+        else if (!strcmp(key, "FPS_TARGET_F32")) m->fps_target_f32 = v == 1;
         else if (!strcmp(key, "MONOLITH_INTERVAL")) m->monolith_interval = v;
         else if (!strcmp(key, "ALIAS_CUT")) {
             char ob[40], nb[40]; size_t n;
@@ -479,12 +481,14 @@ uint8_t *dm_fps_state;
 int dm_fps_step_max;   // the largest step the stubs give the game (STEP_MAX in its fixups table; 0 = FSTEP_MAX): the frame step holds frames and pays back within it (hle_nvn.c)
 static const char *g_fps_mod;   // the module holding the state page (for the log)
 static float g_render_scale_max = 1.0f;   // the render-scale stub's largest scale (RENDER_SCALE in its fixups table; 1 for a stub that only lowers the game's size)
-static int g_fstep_t120;                  // the frame step stub takes ticks of 1/120 s (the FRAME_STEP_120 capability): the page's unit (+0x48) is 120, and 40 fps is taken
+static int g_fstep_t120;                  // the frame step stub takes ticks of 1/120 s (the FRAME_STEP_120 capability): the page's unit (+0x38) is 120, and 40 fps is taken
+static int g_hooklink_wide;
 static void install_fps_state(module_t *m) {
     if (m->fps_state_off + 0x40 > m->size || m->fps_state_off < m->key_page_off + m->key_page_size) die("%s: frame step state page out of range", m->name);
     dm_fps_state = m->base + m->fps_state_off; g_fps_mod = m->name; dm_fps_step_max = (int)m->step_max;
     if (m->render_scale_max > 1) g_render_scale_max = (float)m->render_scale_max;
     g_fstep_t120 = m->fstep_t120;
+    g_hooklink_wide = m->hooklink_wide;
 }
 // The settings in the state page, written when the game starts (main.c, after host loading): on iOS the loading runs at app launch, before the launcher has set DM_FPS_TARGET and
 // DM_RENDER_SCALE (Launcher.swift), and nothing reads the page before the game runs
@@ -526,10 +530,6 @@ void dm_fps_state_apply(void) {
     const char *rs = getenv("DM_RENDER_SCALE"); float sc = 1.0f, hi = g_render_scale_max;
     if (rs) { char *end; sc = strtof(rs, &end); if (end != rs && !*end && sc >= 10.0f && sc <= 100.0f) sc /= 100.0f;   /* a percentage (75 = 0.75): a Mac player's env.txt had DM_RENDER_SCALE=75 */
       if (end == rs || *end || !(sc >= 0.25f && sc <= hi)) { LOG("[RED] DM_RENDER_SCALE=%s: must be 0.25 to %.1f; keeping the game's size", rs, hi); sc = 1.0f; } else LOG("%s: 3D views rendered at %.2f of the game's size (DM_RENDER_SCALE)", g_fps_mod, sc); }
-    // HookLink VX1: with the game's dynamic resolution on (DM_DYNAMIC_RESOLUTION=1) the size is left to it (0 at +0x10: Ocarina of Time's render-scale stub runs the game's own
-    // code, which the dynamic resolution stub drives), unless Cool mode or Potato mode fixed a smaller one (g_scale_forced): the launcher always passes its Render scale, so a fixed
-    // scale would otherwise turn dynamic resolution off for every player who left it on
-    { const char *d = getenv("DM_DYNAMIC_RESOLUTION"); if (d && !strcmp(d, "1") && !g_scale_forced && rs) { sc = 0.0f; LOG("%s: render scale left to the dynamic resolution (DM_DYNAMIC_RESOLUTION=1)", g_fps_mod); } }
     memcpy(dm_fps_state + 0x10, &sc, sizeof sc);
     // The game's own dynamic resolution, for builds whose stubs read it (the DYNAMIC_RESOLUTION capability of a frame step stub: Ocarina of Time's level function): 1 lets it
     // run, 0 (the default) holds full resolution. Builds without such a stub ignore the field
@@ -541,7 +541,10 @@ void dm_fps_state_apply(void) {
     // Wide view (Ocarina of Time's patches.py wide_view): DM_WIDE_VIEW=1 with DM_WIDE_ASPECT, the screen's width / height from 1.8 to 2.6 (set by the iOS front end), makes the game's
     // output and render widths follow the screen, multiples of 16: +0x100 u32 the 1440-high width, +0x104 the 1080-high width, +0x108 the former as a float, +0x10c the ratio in 16.16. 0 = 16:9
     { const char *wv = getenv("DM_WIDE_VIEW"), *wa = getenv("DM_WIDE_ASPECT"); char *wend = NULL; float wr = wa ? strtof(wa, &wend) : 0;
-      if (wv && !strcmp(wv, "1") && wa && wend != wa && !*wend && ((wr >= 1.8f && wr <= 2.6f) || (wr >= 1.25f && wr <= 1.74f))) {   // (squarer than 16:9 too: an unfolded iPhone Duo, 1.43)
+      const char *shape = getenv("DM_SCREEN_ASPECT"); char *shape_end = NULL;
+      float ratio = shape ? strtof(shape, &shape_end) : 0;
+      int official_tall = shape && shape_end != shape && !*shape_end && ratio >= 1.3f && ratio < 1.77f;
+      if (g_hooklink_wide && !official_tall && wv && !strcmp(wv, "1") && wa && wend != wa && !*wend && (wr >= 1.8f && wr <= 2.6f)) {
           uint32_t w1 = (uint32_t)(1440.0f * wr / 16.0f + 0.5f) * 16, w2 = (uint32_t)(1080.0f * wr / 16.0f + 0.5f) * 16, q = (uint32_t)(wr * 65536.0f + 0.5f); float wf = (float)w1;
           memcpy(dm_fps_state + 0x100, &w1, 4); memcpy(dm_fps_state + 0x104, &w2, 4); memcpy(dm_fps_state + 0x108, &wf, 4); memcpy(dm_fps_state + 0x10c, &q, 4);
           extern void mtl_present_screen(uint32_t w, uint32_t h); mtl_present_screen(w1, 1440);   // the picture's shape for a texture that follows it (nvn_mtl.m present_shape); without it the view is laid out 16:9
@@ -554,12 +557,9 @@ void dm_fps_state_apply(void) {
           float one = 1.0f, zero = 0.0f; memcpy(dm_fps_state + 0x180, &one, 4); memcpy(dm_fps_state + 0x184, &zero, 4);
           if (hud && wcam > 16.0f / 9.0f) { float sq = (16.0f / 9.0f) / wcam, mg = (1.0f - sq) / 2.0f; memcpy(dm_fps_state + 0x160, &sq, 4); memcpy(dm_fps_state + 0x164, &mg, 4);
                      LOG("%s: wide view: HUD, menus and movies in the middle %.1f%% (DM_WIDE_HUD)", g_fps_mod, sq * 100.0f); }
-          else if (hud && wcam < 16.0f / 9.0f - 0.01f) { float sy = wcam / (16.0f / 9.0f), my = (1.0f - sy) / 2.0f; memcpy(dm_fps_state + 0x160, &one, 4); memcpy(dm_fps_state + 0x180, &sy, 4);
-                     memcpy(dm_fps_state + 0x184, &my, 4);
-                     LOG("%s: wide view: HUD, menus and movies in the middle %.1f%% of the height (DM_WIDE_HUD, a squarer picture)", g_fps_mod, sy * 100.0f); }
           // The view size the game lays its screen out by (1.8's way to the HUD): with the squeeze above it would no longer be the 3840x2160 grid the HUD site matches, so it
           // stays the game's own unless DM_WIDE_VIEW_SIZE=1 asks for it
-          { const char *vs = getenv("DM_WIDE_VIEW_SIZE"); float vw = vs ? (strcmp(vs, "0") ? (float)w2 : 0) : (hud || wcam < 16.0f / 9.0f ? 0 : (float)w2); memcpy(dm_fps_state + 0x118, &vw, 4);   // +0x118: the view size's width, the handheld render width (patches.py wide_sites: the HUD and menus are laid out by it); DM_WIDE_VIEW_SIZE=0: the game's own 1920
+          { const char *vs = getenv("DM_WIDE_VIEW_SIZE"); float vw = vs ? (strcmp(vs, "0") ? (float)w2 : 0) : (hud ? 0 : (float)w2); memcpy(dm_fps_state + 0x118, &vw, 4);   // +0x118: the view size's width, the handheld render width (patches.py wide_sites: the HUD and menus are laid out by it); DM_WIDE_VIEW_SIZE=0: the game's own 1920
             LOG("%s: wide view: view size width %.0f (DM_WIDE_VIEW_SIZE)", g_fps_mod, vw); }
           LOG("%s: wide view: %.3f:1, output %ux1440, handheld %ux1080, camera ratio %.4f (DM_WIDE_VIEW)", g_fps_mod, wr, w1, w2, wcam); } }
     // Screen shape: DM_SCREEN_ASPECT, the screen's width / height between 1.3 and 1.77, makes the builds with screen-shape stubs

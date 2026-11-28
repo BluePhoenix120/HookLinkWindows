@@ -45,6 +45,7 @@ uint64_t now_ns(void);
 // A blocking native HLE wait releases the guest core. With the condition mutex
 // held, enter with 1 before waiting and balance with 0 after reacquiring it.
 void dm_thread_native_wait(int entering);
+int dm_native_window_offscreen(const void *native);   // hle_misc.c: a native window no display shows (GameChat's virtual camera); hle_nvn.c drops the frames of its NVN windows
 void dm_host_lock(pthread_mutex_t *m);  // contention on a host mutex releases the guest core
 void dm_thread_service_connect(void);   // an HLE call that stands for connecting to a service on Horizon: threads started so far get to run (hle_thread.c)
 void dm_thread_service_request(void);   // an HLE call that is a blocking service request on Horizon: the caller gives up its core (hle_thread.c)
@@ -53,8 +54,6 @@ int dm_detclock_enabled(void);
 uint64_t dm_guest_frame(void);        // Incremented each time the host presents a frame; unaffected by machine load
 void guest_clock_freeze(int on);
 void dm_movie_active(int active);   // iOS movie decoder recovery waits for activation
-void guest_clock_freeze_for(int reason, int on);   // Freeze by reason (0 tick hold, 1 background, 2 system keyboard, 3 NVN prepare, 4 NVN archive init); see hle_os.c
-void guest_clock_read_wait(void);     // A guest read of the system counter: counts it in dm_clock_reads and waits while backgrounded or preparing (hle_os.c)
 extern __thread uint64_t dm_clock_reads;   // the calling thread's guest reads of the system counter (hle_os.c; thr_yield tells clock waits by them)
 
 // Forced takeover: even if the SDK module has a definition, all references to that symbol at load time (JUMP_SLOT/GLOB_DAT/ABS64) are resolved to the host implementation.
@@ -134,6 +133,7 @@ void dm_focus_set(int st);
 // report the applet could not start (RES_FAIL cuts): those never had an applet open
 void dm_applet_enter(const char *name);
 void dm_applet_leave(void);
+unsigned dm_account_pushed_users(void);   // hle_account.c: bitmask snapshotted by account::PushOpenUsers for oe::ExecuteProgram
 static inline void dm_applet_leave_(const char *const *name) { (void)name; dm_applet_leave(); }
 #define DM_APPLET(name) const char *const dm_applet_ __attribute__((cleanup(dm_applet_leave_))) = (name); dm_applet_enter(dm_applet_)
 // Audio pause / resume following the lifecycle (called by the front end on going to background / returning to foreground)
