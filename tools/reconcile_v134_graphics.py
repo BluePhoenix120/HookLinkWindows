@@ -134,6 +134,37 @@ static void fg_cancel_debt_locked(void) { g_fg_owed = 0; g_fg_epoch++; }''')
     s=once(s,'static double fg_size(void) {\n    static double v = -1; if (v >= 0) return v;',
            'static double g_fg_size = 1; static pthread_once_t g_fg_size_once = PTHREAD_ONCE_INIT;\nstatic void fg_size_init(void) {\n    double v;')
     s=once(s,'    return v;\n}\nstatic int fg_shown_size(', '    g_fg_size = v;\n}\nstatic double fg_size(void) { pthread_once(&g_fg_size_once, fg_size_init); return g_fg_size; }\nstatic int fg_shown_size(')
+    # The official discard flag was originally declared below the link
+    # callback. Declare it alongside the suspension flag before using it.
+    s=once(s,'static _Atomic int g_present_suspended;', 'static _Atomic int g_present_suspended;\nstatic _Atomic int g_present_discard;')
+    s=once(s,'static _Atomic int g_present_discard;\nvoid mtl_link_pause(int on);','void mtl_link_pause(int on);')
+    # A suspend may begin between taking the generated frame and publishing
+    # the debt. Invalidate the epoch even if suspend/resume finishes first.
+    s=once(s,'void mtl_set_present_suspended(int on) { atomic_store(&g_present_suspended, on != 0); }',
+           '''void mtl_set_present_suspended(int on) {
+    pthread_mutex_lock(&g_pq_mu);
+    atomic_store(&g_present_suspended, on != 0);
+    if (on) fg_cancel_debt_locked();
+    pthread_cond_broadcast(&g_pq_cv);
+    pthread_mutex_unlock(&g_pq_mu);
+}''')
+    # present_suspend_wait waits on both inflight GPU work and the callback
+    # counter. The GPU completion may signal before the counter is lowered.
+    s=once(s,'            atomic_fetch_sub(&g_link_presenting, 1);\n            link_slow_note',
+           '            pthread_mutex_lock(&g_pq_mu);\n            atomic_fetch_sub(&g_link_presenting, 1);\n            pthread_cond_broadcast(&g_pq_cv);\n            pthread_mutex_unlock(&g_pq_mu);\n            link_slow_note')
+    s=once(s,'''    atomic_fetch_sub(&g_link_presenting, 1);
+    if (!submitted || atomic_load(&g_present_suspended)) {
+        pthread_mutex_lock(&g_pq_mu);
+        if (!submitted && ticket > g_pq_done) g_pq_done = ticket;
+        pthread_cond_broadcast(&g_pq_cv);
+        pthread_mutex_unlock(&g_pq_mu);
+    }''','''    pthread_mutex_lock(&g_pq_mu);
+    atomic_fetch_sub(&g_link_presenting, 1);
+    if (!submitted && ticket > g_pq_done) g_pq_done = ticket;
+    pthread_cond_broadcast(&g_pq_cv);
+    pthread_mutex_unlock(&g_pq_mu);''')
+    s=once(s,'if (!newer && g_dm_present_link && !g_rescue_mode && !atomic_load(&g_covered) && !atomic_load(&g_present_suspended)) {',
+           'if (!newer && g_dm_present_link && !g_rescue_mode && !atomic_load(&g_covered) && !atomic_load(&g_present_suspended) && !atomic_load(&g_present_discard)) {')
     # Preserve upstream's residency safety at the actual presentation edge.
     # HookLink snapshots have their own committed residency set; normal game
     # textures must still pass through the original res_commit path.

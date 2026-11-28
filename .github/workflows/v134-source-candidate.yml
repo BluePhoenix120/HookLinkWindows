@@ -13,6 +13,7 @@ on:
       - 'tools/reconcile_v134_ultrawide.py'
       - 'tools/reconcile_v134_semantics.py'
       - 'tools/reconcile_v134_graphics.py'
+      - 'tools/reconcile_v134_final_audit.py'
       - 'tools/reconcile_v134_provenance.py'
       - 'tools/nxw_proc_group.py'
       - 'tools/test_nxw_proc_group.py'

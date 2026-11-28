@@ -21,6 +21,7 @@ import reconcile_v134_settings as settings
 import reconcile_v134_ultrawide as ultrawide
 import reconcile_v134_semantics as semantics
 import reconcile_v134_graphics as graphics
+import reconcile_v134_final_audit as final_audit
 import reconcile_v134_provenance as provenance
 
 OOT = "dm/games/0400486024DEC000/patches.py"
@@ -152,6 +153,7 @@ def main():
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
             semantics.inventory(cwd, TARGET, dest)
+            summary["final_source_audit"] = final_audit.check(cwd, TARGET, read, dest)
             assert not out(cwd, "ls-files", "-u")
             summary["candidate_tree"] = out(cwd, "write-tree")
             summary["timing_paths_reconciled"] = [OOT, FSTEP, FRAME_TEST, NVN, LOADER, PATCHER]
