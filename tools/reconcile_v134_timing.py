@@ -129,6 +129,12 @@ def main():
             assert get(PATCHER).index("if BUILD_ID not in PATCHES['CUTS']:") < get(PATCHER).index("if os.environ.get('NXW_MOD_CUTS'):")
             summary["provisional_shader_chain"] = shaders.reconcile(cwd, TARGET, windows, read)
             summary["pso_reconciliation"] = pso.reconcile(cwd, dest, BASE, TARGET, windows, read)
+            import shutil
+            shutil.copyfile(ROOT/"tools/nxw_proc_group.py", cwd/"dm/tools/proc_group_windows.py")
+            proc = "dm/tools/proc_group.py"
+            put(proc, read(TARGET, proc) + "\n\nif os.name == 'nt':\n    from proc_group_windows import Group, stop_all\n")
+            subprocess.run(["python3", "-m", "py_compile", proc, "dm/tools/proc_group_windows.py"], cwd=cwd, check=True)
+            summary["windows_process_backend"] = "Job Object; tested separately on native Windows"
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
             assert not out(cwd, "ls-files", "-u")

@@ -7,6 +7,8 @@ on:
       - 'tools/reconcile_v134_timing.py'
       - 'tools/reconcile_v134_shaders.py'
       - 'tools/reconcile_v134_pso.py'
+      - 'tools/nxw_proc_group.py'
+      - 'tools/test_nxw_proc_group.py'
       - '.github/workflows/v134-source-candidate.yml'
 permissions:
   contents: read
@@ -33,3 +35,13 @@ jobs:
           name: v134-source-candidate
           path: ${{ runner.temp }}/v134-candidate
           if-no-files-found: error
+  windows-process-supervision:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test Windows worker-tree cleanup
+        run: python -B tools/test_nxw_proc_group.py -v
