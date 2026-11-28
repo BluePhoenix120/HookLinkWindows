@@ -85,7 +85,22 @@ def main():
             nvn = get(NVN)
             nvn = replace_once(nvn, section(nvn, start, end), section(read(TARGET, NVN), start, end))
             if "static nvn_fdelta fd;" in nvn:
-                old = section(nvn, "    if (dm_fps_state && __atomic_load_n((uint32_t *)(dm_fps_state + 0x3c)", "    int c = fps_step_cap();")
+                # fps_step_cap() occurs in several unrelated functions. Scope
+                # both anchors to the unique present function and use the
+                # exact old measured-duration block from the tested baseline.
+                present = "NVN(nvnQueuePresentTexture, void, NVNqueue *q, NVNwindow *w, int idx) {"
+                begin = "    if (dm_fps_state && __atomic_load_n((uint32_t *)(dm_fps_state + 0x3c)"
+                end = "    int c = fps_step_cap();"
+                prior = read(windows, NVN)
+                if prior.count(present) != 1 or nvn.count(present) != 1:
+                    raise RuntimeError("Nonunique present function")
+                prior = prior[prior.index(present):]
+                a = prior.index(begin)
+                b = prior.index(end, a)
+                old = prior[a:b]
+                if "static nvn_fdelta fd;" not in old:
+                    raise RuntimeError("Unexpected measured-duration block")
+                # Only remove a byte-for-byte matching block in the candidate.
                 nvn = replace_once(nvn, old, "")
             put(NVN, nvn)
             loader = get(LOADER).replace("page's unit (+0x48)", "page's unit (+0x38)")
