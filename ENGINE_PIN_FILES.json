@@ -12938,7 +12938,7 @@
         "engine/docs/reference/memory.md",
         "engine/docs/settings.md"
     ],
-    "notes": "Unpublished candidate: full semantic review and release gates remain outstanding.",
+    "notes": "Published Alpha at user direction after validation #17. Physical device, MetalFX GPU and game-specific shader/PSO testing remain outstanding; semantic_review_complete remains false.",
     "incremental_upstream_from": "5dfc86ae80c53a62262c3b3c66eab043f1fc574a",
     "incremental_upstream_to": "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf",
     "incremental_merge_conflicts": [
@@ -27576,8 +27576,10 @@
             "docs/env_switches.tsv",
             "docs/settings.md"
         ],
-        "candidate_only": true,
-        "source_tree": "323f186fd1468390bc3836abce9eae9b6d2a8bce"
+        "candidate_only": false,
+        "source_tree": "323f186fd1468390bc3836abce9eae9b6d2a8bce",
+        "validation_run": 46097606804,
+        "device_validation_complete": false
     },
     "clean_official_deletions": [
         "dm/games/0100000000010000/bf_want.tsv",
