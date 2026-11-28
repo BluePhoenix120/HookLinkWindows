@@ -24,7 +24,7 @@ Clear the Mods folder field and rebuild to disable build-time mods. Back up
 your save data before replacing an app or testing modified game resources.
 
 The converter's patch and modified resources are supplied by the user, not
-distributed with HookLinkWindows. The Windows integration is experimental:
-the actual lens effect, shader compatibility and iPhone runtime stability
-need device testing. Mods that replace shader inputs, introduce extra NSO
+distributed with HookLinkWindows. The Windows integration is experimental, but BodiesOfTruth was confirmed
+working by the project maintainer on V1.3.3. Future engine updates still
+require device retesting. Mods that replace shader inputs, introduce extra NSO
 modules, or overlap other patches/files are not supported by this workflow.

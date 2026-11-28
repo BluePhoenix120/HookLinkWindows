@@ -1,0 +1,28 @@
+name: V1.3.4 complete upstream audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/audit_v134_incremental.py'
+      - '.github/workflows/v134-upstream-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Audit all upstream changes against the tested baseline
+        run: python3 -B tools/audit_v134_incremental.py --output "$RUNNER_TEMP/v134-audit"
+      - name: Upload complete conflict and compatibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v134-complete-upstream-audit
+          path: ${{ runner.temp }}/v134-audit
+          if-no-files-found: error
