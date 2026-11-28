@@ -20,6 +20,7 @@ import reconcile_v134_renderer as renderer
 import reconcile_v134_settings as settings
 import reconcile_v134_ultrawide as ultrawide
 import reconcile_v134_semantics as semantics
+import reconcile_v134_graphics as graphics
 import reconcile_v134_provenance as provenance
 
 OOT = "dm/games/0400486024DEC000/patches.py"
@@ -147,6 +148,7 @@ def main():
             summary["profile_reconciliation"] = settings.reconcile(cwd, TARGET, windows, read)
             summary["ultrawide_reconciliation"] = ultrawide.reconcile(cwd, TARGET, windows, read, dest)
             summary["semantic_reconciliation"] = semantics.reconcile(cwd, TARGET, windows, read, dest)
+            summary["graphics_reconciliation"] = graphics.reconcile(cwd, TARGET, windows, read, dest)
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
             semantics.inventory(cwd, TARGET, dest)
@@ -186,6 +188,8 @@ def main():
             ultrawide.check(cwd, dest)
             summary["ultrawide_tests"] = "passed"
             semantics.check(cwd, dest)
+            graphics.check(cwd, dest)
+            summary["graphics_contract_tests"] = "passed"
             summary["semantic_contract_tests"] = "passed"
             summary["profile_settings_tests"] = "passed"
             # Export the exact staged source tree, never the old engine on main.

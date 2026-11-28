@@ -12,6 +12,7 @@ on:
       - 'tools/reconcile_v134_settings.py'
       - 'tools/reconcile_v134_ultrawide.py'
       - 'tools/reconcile_v134_semantics.py'
+      - 'tools/reconcile_v134_graphics.py'
       - 'tools/reconcile_v134_provenance.py'
       - 'tools/nxw_proc_group.py'
       - 'tools/test_nxw_proc_group.py'
@@ -91,6 +92,33 @@ jobs:
           make -C dm/host/tests GAME="$GAME" build/t_audio build/t_audio_spsc build/t_audio_stats build/t_output_stream build/t_audio_input
           cd dm/host/tests
           for test in t_audio t_audio_spsc t_audio_stats t_output_stream t_audio_input; do "./build/$test"; done
+      - name: Run exact candidate graphics pacing contracts and compile native frame-generation test
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/candidate-engine"
+          make -C dm/gfx/tests GAME="$GAME" t_fg_pacing t_link_drain t_link_latch t_present_history t_framegen
+          cd dm/gfx/tests
+          for test in t_fg_pacing t_link_drain t_link_latch t_present_history; do "./$test"; done
+          cat > "$RUNNER_TEMP/fg-capability.m" <<'EOF'
+          #import <Foundation/Foundation.h>
+          #import <Metal/Metal.h>
+          #import <MetalFX/MetalFX.h>
+          int main(void) { @autoreleasepool {
+              id<MTLDevice> d = MTLCreateSystemDefaultDevice();
+              return d && [MTLFXFrameInterpolatorDescriptor supportsMetal4FX:d] && [MTLFXSpatialScalerDescriptor supportsMetal4FX:d] ? 0 : 77;
+          } }
+          EOF
+          xcrun clang -fobjc-arc "$RUNNER_TEMP/fg-capability.m" -framework Foundation -framework Metal -framework MetalFX -o "$RUNNER_TEMP/fg-capability"
+          rc=0
+          "$RUNNER_TEMP/fg-capability" || rc=$?
+          if [ "$rc" -eq 0 ]; then
+            MTL_DEBUG_LAYER=1 ./t_framegen
+            MTL_DEBUG_LAYER=1 ./t_framegen size
+          elif [ "$rc" -eq 77 ]; then
+            echo "::notice::Native GPU interpolation execution not available on this runner; frame-generation test compiled, device test remains required."
+          else
+            exit "$rc"
+          fi
   windows-candidate-regressions:
     needs: candidate
     runs-on: windows-latest
