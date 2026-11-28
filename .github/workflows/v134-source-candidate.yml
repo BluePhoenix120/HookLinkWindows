@@ -1,0 +1,28 @@
+name: V1.3.4 official-first source candidate
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/reconcile_v134_timing.py'
+      - '.github/workflows/v134-source-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Reconcile official timing ABI and check candidate source
+        run: python3 -B tools/reconcile_v134_timing.py --output "$RUNNER_TEMP/v134-candidate"
+      - name: Upload candidate patch and check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v134-source-candidate
+          path: ${{ runner.temp }}/v134-candidate
+          if-no-files-found: error
