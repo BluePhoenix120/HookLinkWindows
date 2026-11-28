@@ -18,6 +18,7 @@ import reconcile_v134_pso as pso
 import reconcile_v134_mesh as mesh
 import reconcile_v134_renderer as renderer
 import reconcile_v134_settings as settings
+import reconcile_v134_ultrawide as ultrawide
 import reconcile_v134_provenance as provenance
 
 OOT = "dm/games/0400486024DEC000/patches.py"
@@ -143,6 +144,7 @@ def main():
             summary["renderer_reconciliation"] = renderer.reconcile(cwd, TARGET, dest)
             summary["frame_generation_reconciliation"] = renderer.restore_frame_generation(cwd, TARGET, windows, dest)
             summary["profile_reconciliation"] = settings.reconcile(cwd, TARGET, windows, read)
+            summary["ultrawide_reconciliation"] = ultrawide.reconcile(cwd, TARGET, windows, read, dest)
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
             assert not out(cwd, "ls-files", "-u")
@@ -151,7 +153,7 @@ def main():
             summary["shader_paths_reconciled"] = list(shaders.PATHS)
             summary["semantic_review_complete"] = False
             summary["remaining"] = [
-                "Wide-view ultrawide-only hooks need disjoint site and capability review against official screen shape.",
+                "Ultrawide and official tall shape are separated; real game rewrite and iPhone validation remain required.",
                 "Review remaining HookLink custom graphics, MetalFX, launcher and audio behavior.",
                 "Reconcile Windows shader tooling, generated profile paths, PSO manifest, stale settings and historical tests.",
                 "Recompute shader chain and provenance; run complete Windows/native/iOS validation.",
@@ -178,6 +180,8 @@ def main():
             subprocess.run(["python3", "-m", "unittest", "-v", "dm.tools.tests.test_merge_prewarm_seeds"], cwd=cwd, check=True)
             summary["prewarm_import_tests"] = "passed"
             settings.check(cwd, dest)
+            ultrawide.check(cwd, dest)
+            summary["ultrawide_tests"] = "passed"
             summary["profile_settings_tests"] = "passed"
             # Export the exact staged source tree, never the old engine on main.
             subprocess.run(["git", "archive", "--format=tar.gz", "--output=" + str(dest/"candidate-engine.tar.gz"), summary["candidate_tree"]], cwd=cwd, check=True)

@@ -91,7 +91,7 @@ with tempfile.TemporaryDirectory() as td:
     assert by['DM_RENDER_SCALE']['default']=='1.0'
     assert by['DM_SW2']['default']=='0'
     assert 'DM_FRAMEGEN' in by and 'DM_MIC' in by
-    assert 'DM_WIDE_VIEW' not in by and 'DM_WIDE_HUD' not in by
+    assert 'DM_WIDE_VIEW' not in by and 'DM_WIDE_HUD' not in by  # no HOOKLINK_WIDE capability in this fixture
     assert by['DM_PRESET']['sets']
 print('Official-first launcher and profile checks passed')
 """

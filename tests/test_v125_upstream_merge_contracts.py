@@ -35,7 +35,8 @@ class V125UpstreamMergeContracts(unittest.TestCase):
             patches = self.read("engine/dm/games/0400486024DEC000/patches.py")
             for marker in ("def screen_shape(ctx)", "**screen_shape_functions", "def frame_step_v0(ctx)", "heap_retry(ctx)", "MATCH_CUTS"):
                 self.assertIn(marker, patches)
-            self.assertNotIn("    wide_view(ctx)", patches)
+            self.assertIn("screen_shape_with_wide(ctx)", patches)
+            self.assertIn("HOOKLINK_WIDE", patches)
             return
         self.assertIn("mem_alias\t0x400000000", settings)
         self.assertIn("mem_reserve\t0x620000000", settings)
@@ -73,8 +74,9 @@ class V125UpstreamMergeContracts(unittest.TestCase):
             for env in ("DM_SCREEN_ASPECT\t", "DM_FRAMEGEN\t", "DM_MIC\t", "DM_NVN_RC_STALE\t"):
                 self.assertIn(env, settings)
             self.assertTrue(any(row.startswith("DM_MIC\t") and "\tplatform:ios\t" in row for row in settings.splitlines()))
-            self.assertNotIn("DM_WIDE_VIEW\t", settings)
-            self.assertNotIn("DM_WIDE_HUD\t", settings)
+            for env in ("DM_WIDE_VIEW", "DM_WIDE_HUD"):
+                row = next(l for l in settings.splitlines() if l.startswith(env + "\t"))
+                self.assertIn("platform:ios&fixups:HOOKLINK_WIDE", row)
             return
         for env in ("DM_WIDE_VIEW\t", "DM_WIDE_HUD\t", "DM_MIC\t",
                     "DM_NVN_RC_STALE\t"):
