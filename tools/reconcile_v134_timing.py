@@ -19,6 +19,7 @@ import reconcile_v134_mesh as mesh
 import reconcile_v134_renderer as renderer
 import reconcile_v134_settings as settings
 import reconcile_v134_ultrawide as ultrawide
+import reconcile_v134_semantics as semantics
 import reconcile_v134_provenance as provenance
 
 OOT = "dm/games/0400486024DEC000/patches.py"
@@ -145,8 +146,10 @@ def main():
             summary["frame_generation_reconciliation"] = renderer.restore_frame_generation(cwd, TARGET, windows, dest)
             summary["profile_reconciliation"] = settings.reconcile(cwd, TARGET, windows, read)
             summary["ultrawide_reconciliation"] = ultrawide.reconcile(cwd, TARGET, windows, read, dest)
+            summary["semantic_reconciliation"] = semantics.reconcile(cwd, TARGET, windows, read, dest)
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
+            semantics.inventory(cwd, TARGET, dest)
             assert not out(cwd, "ls-files", "-u")
             summary["candidate_tree"] = out(cwd, "write-tree")
             summary["timing_paths_reconciled"] = [OOT, FSTEP, FRAME_TEST, NVN, LOADER, PATCHER]
@@ -182,6 +185,8 @@ def main():
             settings.check(cwd, dest)
             ultrawide.check(cwd, dest)
             summary["ultrawide_tests"] = "passed"
+            semantics.check(cwd, dest)
+            summary["semantic_contract_tests"] = "passed"
             summary["profile_settings_tests"] = "passed"
             # Export the exact staged source tree, never the old engine on main.
             subprocess.run(["git", "archive", "--format=tar.gz", "--output=" + str(dest/"candidate-engine.tar.gz"), summary["candidate_tree"]], cwd=cwd, check=True)
