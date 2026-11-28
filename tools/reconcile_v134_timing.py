@@ -14,6 +14,7 @@ import tempfile
 from audit_v128_integration import ROOT, git, out, commit_tree, audit_merge
 from audit_v134_incremental import BASE, TARGET
 import reconcile_v134_shaders as shaders
+import reconcile_v134_pso as pso
 
 OOT = "dm/games/0400486024DEC000/patches.py"
 FSTEP = "dm/gfx/nvn/nvn_fstep.h"
@@ -127,7 +128,9 @@ def main():
             assert "dm_fps_state + 0x38" not in get(NVN)
             assert get(PATCHER).index("if BUILD_ID not in PATCHES['CUTS']:") < get(PATCHER).index("if os.environ.get('NXW_MOD_CUTS'):")
             summary["provisional_shader_chain"] = shaders.reconcile(cwd, TARGET, windows, read)
+            summary["pso_reconciliation"] = pso.reconcile(cwd, dest, BASE, TARGET, windows, read)
             git(cwd, "add", "-A")
+            pso.inventory(cwd, dest, TARGET)
             assert not out(cwd, "ls-files", "-u")
             summary["candidate_tree"] = out(cwd, "write-tree")
             summary["timing_paths_reconciled"] = [OOT, FSTEP, FRAME_TEST, NVN, LOADER, PATCHER]
@@ -158,6 +161,8 @@ def main():
             subprocess.run(["python3", "-m", "py_compile", *[p for p in shaders.PATHS if p.endswith(".py")]], cwd=cwd, check=True)
             shaders.check(cwd, dest)
             summary["shader_pipeline_tests"] = "passed"
+            subprocess.run(["python3", "-m", "unittest", "-v", "dm.tools.tests.test_merge_prewarm_seeds"], cwd=cwd, check=True)
+            summary["prewarm_import_tests"] = "passed"
             report.extend(["", "## Remaining semantic review", "", *summary["remaining"]])
     finally:
         (dest/"report.md").write_text("\n".join(report) + "\n")

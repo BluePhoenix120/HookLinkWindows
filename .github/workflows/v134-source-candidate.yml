@@ -6,6 +6,7 @@ on:
     paths:
       - 'tools/reconcile_v134_timing.py'
       - 'tools/reconcile_v134_shaders.py'
+      - 'tools/reconcile_v134_pso.py'
       - '.github/workflows/v134-source-candidate.yml'
 permissions:
   contents: read
