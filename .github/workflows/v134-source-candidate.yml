@@ -9,6 +9,7 @@ on:
       - 'tools/reconcile_v134_pso.py'
       - 'tools/reconcile_v134_mesh.py'
       - 'tools/reconcile_v134_renderer.py'
+      - 'tools/reconcile_v134_settings.py'
       - 'tools/nxw_proc_group.py'
       - 'tools/test_nxw_proc_group.py'
       - '.github/workflows/v134-source-candidate.yml'
@@ -78,3 +79,35 @@ jobs:
           p.write_text(s)
           PY
           python3 dm/ios/tools/compile_check.py
+  windows-candidate-regressions:
+    needs: candidate
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: v134-source-candidate
+          path: ${{ runner.temp }}/v134
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install cache codec
+        run: python -m pip install backports.zstd
+      - name: Replace engine with exact candidate and run behavioral tests
+        shell: pwsh
+        run: |
+          Remove-Item -LiteralPath engine -Recurse -Force
+          New-Item -ItemType Directory -Path engine | Out-Null
+          tar -xzf "$env:RUNNER_TEMP/v134/candidate-engine.tar.gz" -C engine
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate extraction failed' }
+          python -B -m unittest discover -s tests -p 'test_windows_mods.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Windows mod regression failed' }
+          python -B -m unittest discover -s tests -p 'test_windows_c1_table_stamp.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'C1 stamp regression failed' }
+          python -B -m unittest discover -s tests -p 'test_shader_cache_windows.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Windows cache regression failed' }
+          python -B -m unittest discover -s tests -p 'test_rewrite_windows_parallel.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Windows parallel rewriter regression failed' }
+          python -B -m unittest discover -s tests -p 'test_windows_sdk_match_cuts.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Windows SDK cut regression failed' }

@@ -17,6 +17,7 @@ import reconcile_v134_shaders as shaders
 import reconcile_v134_pso as pso
 import reconcile_v134_mesh as mesh
 import reconcile_v134_renderer as renderer
+import reconcile_v134_settings as settings
 
 OOT = "dm/games/0400486024DEC000/patches.py"
 FSTEP = "dm/gfx/nvn/nvn_fstep.h"
@@ -139,6 +140,7 @@ def main():
             summary["windows_process_backend"] = "Job Object; tested separately on native Windows"
             summary["mesh_reconciliation"] = mesh.reconcile(cwd, TARGET, windows, read)
             summary["renderer_reconciliation"] = renderer.reconcile(cwd, TARGET, dest)
+            summary["profile_reconciliation"] = settings.reconcile(cwd, TARGET, windows, read)
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
             assert not out(cwd, "ls-files", "-u")
@@ -173,6 +175,8 @@ def main():
             summary["shader_pipeline_tests"] = "passed"
             subprocess.run(["python3", "-m", "unittest", "-v", "dm.tools.tests.test_merge_prewarm_seeds"], cwd=cwd, check=True)
             summary["prewarm_import_tests"] = "passed"
+            settings.check(cwd, dest)
+            summary["profile_settings_tests"] = "passed"
             # Export the exact staged source tree, never the old engine on main.
             subprocess.run(["git", "archive", "--format=tar.gz", "--output=" + str(dest/"candidate-engine.tar.gz"), summary["candidate_tree"]], cwd=cwd, check=True)
             summary["native_compile_archive"] = "candidate-engine.tar.gz"
