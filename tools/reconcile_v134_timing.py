@@ -13,6 +13,7 @@ import tempfile
 
 from audit_v128_integration import ROOT, git, out, commit_tree, audit_merge
 from audit_v134_incremental import BASE, TARGET
+import reconcile_v134_shaders as shaders
 
 OOT = "dm/games/0400486024DEC000/patches.py"
 FSTEP = "dm/gfx/nvn/nvn_fstep.h"
@@ -125,10 +126,12 @@ def main():
             assert "static nvn_fdelta fd;" not in get(NVN)
             assert "dm_fps_state + 0x38" not in get(NVN)
             assert get(PATCHER).index("if BUILD_ID not in PATCHES['CUTS']:") < get(PATCHER).index("if os.environ.get('NXW_MOD_CUTS'):")
+            summary["provisional_shader_chain"] = shaders.reconcile(cwd, TARGET, windows, read)
             git(cwd, "add", "-A")
             assert not out(cwd, "ls-files", "-u")
             summary["candidate_tree"] = out(cwd, "write-tree")
             summary["timing_paths_reconciled"] = [OOT, FSTEP, FRAME_TEST, NVN, LOADER, PATCHER]
+            summary["shader_paths_reconciled"] = list(shaders.PATHS)
             summary["semantic_review_complete"] = False
             summary["remaining"] = [
                 "Wide-view ultrawide-only hooks need disjoint site and capability review against official screen shape.",
@@ -150,6 +153,11 @@ def main():
             test.check_returncode()
             exe.unlink()
             summary["frame_step_controller_tests"] = "passed"
+            with (dest/"shader-reconciliation.patch").open("wb") as stream:
+                subprocess.run(["git", "diff", "--cached", preview, "--", *shaders.PATHS], cwd=cwd, stdout=stream, check=True)
+            subprocess.run(["python3", "-m", "py_compile", *[p for p in shaders.PATHS if p.endswith(".py")]], cwd=cwd, check=True)
+            shaders.check(cwd, dest)
+            summary["shader_pipeline_tests"] = "passed"
             report.extend(["", "## Remaining semantic review", "", *summary["remaining"]])
     finally:
         (dest/"report.md").write_text("\n".join(report) + "\n")

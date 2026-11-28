@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'tools/reconcile_v134_timing.py'
+      - 'tools/reconcile_v134_shaders.py'
       - '.github/workflows/v134-source-candidate.yml'
 permissions:
   contents: read
@@ -17,7 +18,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Reconcile official timing ABI and check candidate source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install upstream compression dependency
+        run: python -m pip install backports.zstd
+      - name: Reconcile official timing and shader pipeline and check candidate source
         run: python3 -B tools/reconcile_v134_timing.py --output "$RUNNER_TEMP/v134-candidate"
       - name: Upload candidate patch and check results
         if: always()
