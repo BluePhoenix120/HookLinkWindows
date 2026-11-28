@@ -1,0 +1,198 @@
+name: Publish validated V1.3.4 and remove obsolete branches
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v134-publish.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v134-publish
+  cancel-in-progress: false
+jobs:
+  clean-branches:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete every remote branch except main
+        run: |
+          set -euo pipefail
+          git ls-remote --heads origin > "$RUNNER_TEMP/branches-before.txt"
+          while read -r sha ref; do
+            [ "$ref" = refs/heads/main ] && continue
+            printf 'Deleting %s at %s\n' "$ref" "$sha"
+            git push --force-with-lease="$ref:$sha" origin ":$ref"
+          done < "$RUNNER_TEMP/branches-before.txt"
+          git ls-remote --heads origin | tee "$RUNNER_TEMP/branches-after.txt"
+          test "$(awk '{print $2}' "$RUNNER_TEMP/branches-after.txt")" = refs/heads/main
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify completed validation #17
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46097606804" > "$RUNNER_TEMP/run.json"
+          jq -e '.status=="completed" and .conclusion=="success" and .head_sha=="1458665ea5c969394c845313606165a9d51c4739"' "$RUNNER_TEMP/run.json"
+      - uses: actions/download-artifact@v4
+        with:
+          name: v134-source-candidate
+          run-id: 46097606804
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/validated
+      - name: Prepare publication commit without altering validated engine
+        run: |
+          set -euo pipefail
+          v="$RUNNER_TEMP/validated"
+          candidate=f61a7b4b7bc1f3f376bc4960e51028b6ebc7bbcb
+          tree=323f186fd1468390bc3836abce9eae9b6d2a8bce
+          jq -e --arg c "$candidate" --arg t "$tree" '.base=="1458665ea5c969394c845313606165a9d51c4739" and .commit==$c and .engine_tree==$t' "$v/candidate.json"
+          jq -e '.final_source_audit.source_integrity=="passed" and .final_source_audit.shader_lock_matches_source==true and .provenance.missing_official_paths==[]' "$v/summary.json"
+          git fetch "$v/candidate.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$candidate"
+          test "$(git rev-parse "$candidate:engine")" = "$tree"
+          git merge-base --is-ancestor 1458665ea5c969394c845313606165a9d51c4739 "$GITHUB_SHA"
+          git config user.name "HookLinkWindows release"
+          git config user.email "integration@users.noreply.github.com"
+          git checkout --detach "$GITHUB_SHA"
+          git merge --no-ff --no-edit "$candidate"
+          test "$(git rev-parse HEAD:engine)" = "$tree"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("ENGINE_PIN_FILES.json")
+          m=json.loads(p.read_text())
+          r=m["conflict_resolution_report"]
+          assert r["unmerged_index_entries"]==0 and not r["missing_official_paths"]
+          assert r["source_tree"]=="323f186fd1468390bc3836abce9eae9b6d2a8bce"
+          r["candidate_only"]=False
+          r["validation_run"]=46097606804
+          r["device_validation_complete"]=False
+          m["notes"]="Published Alpha at user direction after validation #17. Physical device, MetalFX GPU and game-specific shader/PSO testing remain outstanding; semantic_review_complete remains false."
+          p.write_text(json.dumps(m,indent=4)+"\n",encoding="utf-8")
+          assert json.loads(Path("ENGINE_PIN.json").read_text())["release"]=="Alpha V1.3.4"
+          PY
+          git add ENGINE_PIN_FILES.json
+          git commit -m "Record validated V1.3.4 Alpha publication and remaining device gates"
+          test "$(git rev-parse HEAD:engine)" = "$tree"
+          python3 -B tools/release_audit.py .
+          mkdir -p "$RUNNER_TEMP/publication"
+          git bundle create "$RUNNER_TEMP/publication/release.bundle" HEAD "^$GITHUB_SHA"
+          jq -n --arg base "$GITHUB_SHA" --arg commit "$(git rev-parse HEAD)" --arg engine "$tree" '{base:$base,commit:$commit,engine_tree:$engine}' > "$RUNNER_TEMP/publication/release.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v134-publication-source
+          path: ${{ runner.temp }}/publication
+          if-no-files-found: error
+  package:
+    needs: prepare
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: v134-publication-source
+          path: ${{ runner.temp }}/publication
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Check out exact publication source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $m = Get-Content "$env:RUNNER_TEMP/publication/release.json" -Raw | ConvertFrom-Json
+          git fetch "$env:RUNNER_TEMP/publication/release.bundle" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Bundle fetch failed' }
+          git checkout --detach FETCH_HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Checkout failed' }
+          if ((git rev-parse HEAD) -ne $m.commit -or (git rev-parse 'HEAD:engine') -ne $m.engine_tree) { throw 'Publication source differs from validated engine' }
+          python -B tools/release_audit.py .
+          if ($LASTEXITCODE -ne 0) { throw 'Source audit failed' }
+          python -m pip install backports.zstd
+          if ($LASTEXITCODE -ne 0) { throw 'Cache codec install failed' }
+          python -B -m unittest discover -s tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Publication regression failed' }
+      - name: Build standalone GUI
+        shell: pwsh
+        run: ./tools/build_windows_gui_exe.ps1
+      - name: Package exact source and GUI
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = 'dist/HookLinkWindows-Windows-x64.zip'
+          git archive --format=zip "--output=$zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Git archive failed' }
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::Open((Join-Path $PWD $zip),[IO.Compression.ZipArchiveMode]::Update)
+          try { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,(Join-Path $PWD 'dist/HookLinkWindows.exe'),'HookLinkWindows.exe',[IO.Compression.CompressionLevel]::Optimal) | Out-Null } finally { $archive.Dispose() }
+          $verify = [IO.Compression.ZipFile]::OpenRead((Join-Path $PWD $zip))
+          try { foreach ($entry in @('HookLinkWindows.exe','ENGINE_PIN.json','ENGINE_PIN_FILES.json','engine/dm/host/Makefile','win/hooklink_gui.pyw','LICENSE','engine/LICENSE')) { if (!$verify.GetEntry($entry)) { throw "Missing $entry" } } } finally { $verify.Dispose() }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v134-release-assets
+          path: |
+            dist/HookLinkWindows-Windows-x64.zip
+            dist/HookLinkWindows.exe
+          if-no-files-found: error
+  publish:
+    needs: [prepare, package, clean-branches]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: v134-publication-source
+          path: ${{ runner.temp }}/publication
+      - uses: actions/download-artifact@v4
+        with:
+          name: v134-release-assets
+          path: ${{ runner.temp }}/assets
+      - name: Fast-forward main and publish regular Alpha release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          v="$RUNNER_TEMP/publication"
+          base=$(jq -r .base "$v/release.json")
+          commit=$(jq -r .commit "$v/release.json")
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$base"
+          git fetch "$v/release.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$commit"
+          test "$(git rev-parse "$commit:engine")" = 323f186fd1468390bc3836abce9eae9b6d2a8bce
+          git merge-base --is-ancestor "$base" "$commit"
+          git checkout --detach "$commit"
+          test -s "$RUNNER_TEMP/assets/HookLinkWindows-Windows-x64.zip"
+          test -s "$RUNNER_TEMP/assets/HookLinkWindows.exe"
+          if gh release view v1.3.4-alpha.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo 'Release already exists; refusing to overwrite'; exit 1; fi
+          if git ls-remote --exit-code --tags origin refs/tags/v1.3.4-alpha.1 >/dev/null; then echo 'Tag already exists; refusing to overwrite'; exit 1; fi
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path("CHANGELOG.md").read_text()
+          notes=s.split("## HookLinkWindows Alpha V1.3.4",1)[1].split("## HookLinkWindows ",1)[0]
+          Path("/tmp/v134-notes.md").write_text(notes.split("\n",1)[1].strip()+"\n")
+          PY
+          git push origin "$commit:refs/heads/main"
+          gh release create v1.3.4-alpha.1 "$RUNNER_TEMP/assets/HookLinkWindows-Windows-x64.zip" "$RUNNER_TEMP/assets/HookLinkWindows.exe" --repo "$GITHUB_REPOSITORY" --target "$commit" --title "HookLinkWindows Alpha V1.3.4" --notes-file /tmp/v134-notes.md --latest
+          gh release view v1.3.4-alpha.1 --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,assets,url
+          test "$(git ls-remote --heads origin | awk '{print $2}')" = refs/heads/main

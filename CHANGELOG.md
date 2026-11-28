@@ -1,5 +1,14 @@
 # Changelog
 
+## HookLinkWindows Alpha V1.3.4 (2026-11-27)
+
+- Updates the embedded NXnative engine to official commit `f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf`. Official implementations take priority for overlapping functionality; independent HookLink and Windows adaptations are retained where reconciled.
+- Integrates official frame timing, dynamic resolution, shader translation, cache compression, graphics and audio updates; retains independent HookLink ultrawide, frame-generation, microphone and Windows mod support. Windows launcher settings and display-clock synchronization are reconciled with the official engine.
+- Corrects Windows source line endings and translator fingerprints; validates the real managed .NET translator and the pinned patched SPIRV-Cross build. The GUI must measure the locally installed tools and regenerate the shader chain before building; old shader archives may need recompilation.
+- Validation #17 passed all five jobs, 263 Windows regression tests and compilation of 274 iOS source files. Native CPU audio/timing tests passed. MetalFX GPU interpolation, game-specific PSO validation and actual iPhone gameplay have not been verified. Historical HookLink omissions are recorded in the integration manifest; not every omission has a demonstrated semantic equivalent.
+
+This is a regular Alpha release, authorized for publication before device testing. The complete Windows ZIP contains engine source and a standalone GUI; external build tools and user-provided game files remain required. Keep existing game inputs and shader archives; use the GUI's graphics setup and build preflight.
+
 ## HookLinkWindows Alpha V1.3.3 (2026-11-26)
 
 - Adds opt-in build-time mods via the Windows GUI's Advanced settings, including the two-folder output of BodiesOfTruth's Recomp conversion mode. ExeFS IPS/IPS32 patches are applied to matching game modules before rewriting; conflicting and malformed patches are rejected without suppressing official function-matched fixes.
