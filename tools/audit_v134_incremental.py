@@ -28,9 +28,12 @@ def main():
     if pin["nxnative_commit"] != BASE or pin["release"] != "Alpha V1.3.3":
         raise RuntimeError("Working baseline changed; review new inputs before integration")
     local = out(ROOT, "rev-parse", "HEAD")
-    report = ["# V1.3.4 complete upstream audit", "", "Provisional only; no changes published.",
+    report = ["# V1.3.4 official-first upstream audit", "", "Provisional only; no engine changes published.",
+              "Policy: prefer official NXnative for identical, similar or overlapping functionality; retain only independent HookLink features and required Windows/mod compatibility.",
               "", f"Official: {BASE} -> {TARGET}", f"Windows: {local}", ""]
-    summary = {"base": BASE, "target": TARGET, "windows": local}
+    summary = {"base": BASE, "target": TARGET, "windows": local,
+               "policy": "official-first; retain unique HookLink features and Windows compatibility",
+               "semantic_review_complete": False}
     try:
         with tempfile.TemporaryDirectory(prefix="hlw-v134-") as tmp:
             cwd = Path(tmp)
@@ -47,9 +50,29 @@ def main():
             summary["official_commits"] = int(out(cwd, "rev-list", "--count", BASE + ".." + TARGET))
             summary["upstream_paths"] = len(paths)
             (dest / "upstream-paths.txt").write_text("\n".join(paths) + "\n", encoding="utf-8")
-            # Original latest is first, and the verified local tree is second.
-            # The helper records every conflict before previewing local priority.
-            result = audit_merge(cwd, TARGET, windows, "incremental", report, summary)
+            # Official latest is first. Textual conflicts prefer official source,
+            # but the resulting tree still needs a separate semantic review.
+            result = audit_merge(cwd, TARGET, windows, "incremental", report, summary, prefer="ours")
+            # A Mac-only prebuilt translator must never enter the Windows distribution.
+            # Leave the actual compiler lock/header reconciliation to integration.
+            for p in ("dm/gfx/tools/dmsh_xlate_bin/dmsh_xlate", "dm/gfx/tools/spirv_cross_bin/spirv-cross"):
+                git(cwd, "rm", "--ignore-unmatch", "-f", "--", p)
+            result = commit_tree(cwd, out(cwd, "write-tree"), result, "Exclude foreign prebuilt tools from preview")
+            git(cwd, "reset", "--hard", result)
+            # Review ALL differences from official source, including clean merges,
+            # because redundant behavior can survive without a Git conflict.
+            custom = out(cwd, "diff", "--name-status", "--no-renames", TARGET, result)
+            (dest / "remaining-custom-paths.txt").write_text(custom + "\n", encoding="utf-8")
+            summary["remaining_custom_paths"] = len(custom.splitlines())
+            for name, first, second in (("previous-custom-delta.patch", BASE, windows),
+                                         ("remaining-custom-delta.patch", TARGET, result),
+                                         ("official-delta.patch", BASE, TARGET)):
+                with (dest / name).open("wb") as stream:
+                    subprocess.run(["git", "diff", "--no-ext-diff", "--no-renames", first, second],
+                                   cwd=cwd, stdout=stream, check=True)
+            report.extend(["## Semantic review inventory", "",
+                           "Review every remaining custom path, not just conflicts. Full textual deltas are attached.", "",
+                           "~~~text", custom, "~~~", ""])
             summary["provisional_tree"] = out(cwd, "rev-parse", result + "^{tree}")
             summary["provisional_changed_paths"] = len(diffpaths(cwd, windows, result))
             (dest / "candidate-paths.txt").write_text(out(cwd, "diff", "--name-status", windows, result) + "\n", encoding="utf-8")
@@ -65,9 +88,11 @@ def main():
             # Preserve the complete text conflict report, with no truncation.
             # Never execute the provisional engine or automatically approve it.
             report.extend(["## Follow-up", "",
-                           "Review conflict hunks, upstream shader-table deletion contracts, mod rewrite ordering,",
-                           "packed RomFS, C1 validation, Windows shader toolchain, and cross-file native ABI.",
-                           "Only a reviewed integration may update the pin and release."])
+                           "Restore the official frame-step ABI end to end (+0x38 tick unit, native patches for both game versions, host writer and reader, tests); remove competing HookLink timing writes and stale relocated offsets.",
+                           "Review official MetalFX, texture lifetime, render-pass and memory optimizations against ALL remaining custom hunks; remove equivalent implementations even when Git merged them cleanly.",
+                           "Retain distinct HookLink launcher customization, mod features, independent audio work only where not superseded, and all Windows-specific functionality including BodiesOfTruth code cuts and packed RomFS.",
+                           "Reconcile PSO manifests by pipeline key, drop obsolete standalone S rows and follow official workspace-generated shader tables; preserve compatible unique observations.",
+                           "Review C1 validation, Windows shader toolchain, native ABI, progress and cache paths. Only a reviewed integration may update the pin and release."])
     finally:
         (dest / "report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
         (dest / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")

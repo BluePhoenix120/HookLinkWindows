@@ -1,4 +1,4 @@
-name: V1.3.4 complete upstream audit
+name: V1.3.4 official-first upstream audit
 on:
   workflow_dispatch:
   push:
@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Audit all upstream changes against the tested baseline
+      - name: Audit official-first changes and every surviving customization
         run: python3 -B tools/audit_v134_incremental.py --output "$RUNNER_TEMP/v134-audit"
       - name: Upload complete conflict and compatibility report
         if: always()

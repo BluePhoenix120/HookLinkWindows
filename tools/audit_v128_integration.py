@@ -53,7 +53,9 @@ def commit_tree(cwd, tree, parent, label):
     return out(cwd, *args, "-m", label)
 
 
-def audit_merge(cwd, left, right, label, report, summary):
+def audit_merge(cwd, left, right, label, report, summary, prefer="theirs"):
+    if prefer not in ("ours", "theirs"):
+        raise ValueError("Invalid preview preference")
     ancestor = out(cwd, "merge-base", left, right)
     git(cwd, "checkout", "--quiet", "--detach", left)
     p = git(cwd, "-c", "merge.conflictStyle=diff3", "merge", "--no-commit", "--no-ff", right, check=False)
@@ -85,18 +87,19 @@ def audit_merge(cwd, left, right, label, report, summary):
                     report.extend(["~~~diff", *hunks, "~~~", ""])
                 else:
                     report.append("No textual conflict markers (rename, deletion, mode or binary conflict).")
-    # A clean merge is exact. Otherwise prefer the right-hand side ONLY in
+    # A clean merge is exact. Otherwise prefer the requested side ONLY in
     # overlapping hunks for the next diagnostic stage, never for publication.
     if conflict_paths:
         git(cwd, "merge", "--abort")
-        p = git(cwd, "merge", "--no-commit", "--no-ff", "-X", "theirs", right, check=False)
+        p = git(cwd, "merge", "--no-commit", "--no-ff", "-X", prefer, right, check=False)
         remaining = out(cwd, "diff", "--name-only", "--diff-filter=U").splitlines()
         for path in remaining:
             # Use stage 3 when present, else a provisional removal. These
             # choices are explicitly recorded and are not merge approval.
-            stage3 = git(cwd, "show", ":3:" + path, check=False)
-            if stage3.returncode == 0:
-                git(cwd, "checkout", "--theirs", "--", path)
+            stage = "2" if prefer == "ours" else "3"
+            selected = git(cwd, "show", ":" + stage + ":" + path, check=False)
+            if selected.returncode == 0:
+                git(cwd, "checkout", "--" + prefer, "--", path)
                 git(cwd, "add", "--", path)
             else:
                 git(cwd, "rm", "-f", "--", path)
@@ -105,6 +108,7 @@ def audit_merge(cwd, left, right, label, report, summary):
             # its preference; require an actually writable index below.
             pass
         summary[label]["provisional_only"] = True
+        summary[label]["preview_preference"] = prefer
         summary[label]["provisional_file_level_choices"] = remaining
     tree = out(cwd, "write-tree")
     result = commit_tree(cwd, tree, left, "Temporary audit result: " + label)
