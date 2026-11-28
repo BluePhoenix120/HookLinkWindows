@@ -7,6 +7,7 @@ on:
       - 'tools/reconcile_v134_timing.py'
       - 'tools/reconcile_v134_shaders.py'
       - 'tools/reconcile_v134_pso.py'
+      - 'tools/reconcile_v134_mesh.py'
       - 'tools/nxw_proc_group.py'
       - 'tools/test_nxw_proc_group.py'
       - '.github/workflows/v134-source-candidate.yml'
@@ -45,3 +46,34 @@ jobs:
           python-version: '3.12'
       - name: Test Windows worker-tree cleanup
         run: python -B tools/test_nxw_proc_group.py -v
+  native-ios:
+    needs: candidate
+    runs-on: xcode-27
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+      GAME: 0400486024DEC000
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: v134-source-candidate
+          path: ${{ runner.temp }}/v134
+      - name: Compile the exact source candidate with the iPhone SDK and Windows UIKit launcher
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/candidate-engine"
+          tar -xzf "$RUNNER_TEMP/v134/candidate-engine.tar.gz" -C "$RUNNER_TEMP/candidate-engine"
+          cd "$RUNNER_TEMP/candidate-engine"
+          xcodebuild -downloadComponent MetalToolchain
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("dm/ios/tools/compile_check.py")
+          s=p.read_text()
+          old="dirs = list(dict.fromkeys(os.path.dirname(s) for s in srcs))"
+          assert s.count(old)==1
+          s=s.replace(old,"srcs += [os.path.join(repo, 'win/ios', f) for f in sorted(os.listdir(os.path.join(repo, 'win/ios'))) if f.endswith('.m')]\n"+old)
+          assert "'-O1', '-w'" in s
+          s=s.replace("'-O1', '-w'", "'-O1', '-w', '-ferror-limit=0'")
+          p.write_text(s)
+          PY
+          python3 dm/ios/tools/compile_check.py

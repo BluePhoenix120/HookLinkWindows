@@ -15,6 +15,7 @@ from audit_v128_integration import ROOT, git, out, commit_tree, audit_merge
 from audit_v134_incremental import BASE, TARGET
 import reconcile_v134_shaders as shaders
 import reconcile_v134_pso as pso
+import reconcile_v134_mesh as mesh
 
 OOT = "dm/games/0400486024DEC000/patches.py"
 FSTEP = "dm/gfx/nvn/nvn_fstep.h"
@@ -135,6 +136,7 @@ def main():
             put(proc, read(TARGET, proc) + "\n\nif os.name == 'nt':\n    from proc_group_windows import Group, stop_all\n")
             subprocess.run(["python3", "-m", "py_compile", proc, "dm/tools/proc_group_windows.py"], cwd=cwd, check=True)
             summary["windows_process_backend"] = "Job Object; tested separately on native Windows"
+            summary["mesh_reconciliation"] = mesh.reconcile(cwd, TARGET, windows, read)
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)
             assert not out(cwd, "ls-files", "-u")
@@ -169,6 +171,9 @@ def main():
             summary["shader_pipeline_tests"] = "passed"
             subprocess.run(["python3", "-m", "unittest", "-v", "dm.tools.tests.test_merge_prewarm_seeds"], cwd=cwd, check=True)
             summary["prewarm_import_tests"] = "passed"
+            # Export the exact staged source tree, never the old engine on main.
+            subprocess.run(["git", "archive", "--format=tar.gz", "--output=" + str(dest/"candidate-engine.tar.gz"), summary["candidate_tree"]], cwd=cwd, check=True)
+            summary["native_compile_archive"] = "candidate-engine.tar.gz"
             report.extend(["", "## Remaining semantic review", "", *summary["remaining"]])
     finally:
         (dest/"report.md").write_text("\n".join(report) + "\n")
