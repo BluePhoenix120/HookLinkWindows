@@ -113,9 +113,13 @@ def reconcile(cwd, target, windows, read, dest):
       int official_tall = shape && shape_end != shape && !*shape_end && ratio >= 1.3f && ratio < 1.77f;
       if (g_hooklink_wide''')
     # Remove unreachable squarer-screen branch; official NXnative owns it.
-    a = block.index('           else if (hud && wcam <')
-    b = block.index('           // The view size', a)
-    block = block[:a] + block[b:]
+    # Locate by complete source lines, not the indentation of the baseline.
+    lines = block.splitlines(keepends=True)
+    starts = [i for i, l in enumerate(lines) if l.lstrip().startswith('else if (hud && wcam <')]
+    ends = [i for i, l in enumerate(lines) if l.lstrip().startswith('// The view size')]
+    if len(starts) != 1 or len(ends) != 1 or ends[0] - starts[0] != 3:
+        raise RuntimeError("Unexpected squarer-screen branch structure")
+    block = "".join(lines[:starts[0]] + lines[ends[0]:])
     block = block.replace('hud || wcam < 16.0f / 9.0f ? 0 : (float)w2', 'hud ? 0 : (float)w2')
     s = once(s, "    // Screen shape: DM_SCREEN_ASPECT", block+"    // Screen shape: DM_SCREEN_ASPECT")
     put(LOADER,s)
