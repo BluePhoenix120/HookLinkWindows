@@ -141,6 +141,7 @@ def main():
             summary["windows_process_backend"] = "Job Object; tested separately on native Windows"
             summary["mesh_reconciliation"] = mesh.reconcile(cwd, TARGET, windows, read)
             summary["renderer_reconciliation"] = renderer.reconcile(cwd, TARGET, dest)
+            summary["frame_generation_reconciliation"] = renderer.restore_frame_generation(cwd, TARGET, windows, dest)
             summary["profile_reconciliation"] = settings.reconcile(cwd, TARGET, windows, read)
             git(cwd, "add", "-A")
             pso.inventory(cwd, dest, TARGET)

@@ -23,6 +23,40 @@ DECISIONS = {
     20718: "official buffer-to-texture copy and completion",
 }
 
+def restore_frame_generation(cwd, target, windows, dest):
+    """Restore the independent owed-picture presentation lost in the three-way merge."""
+    def source(ref):
+        return subprocess.check_output(["git", "show", ref + ":" + METAL], cwd=cwd).decode("utf-8")
+    prior, official = source(windows), source(target)
+    start = "    // Frame generation: the present whose generated frame is on screen now"
+    anchor = "    // Keep a multi-tick frame on screen until its hold ends"
+    if prior.count(start) != 1 or prior.count(anchor) != 1 or start in official:
+        raise RuntimeError("Unexpected frame-generation source anchors")
+    block = prior[prior.index(start):prior.index(anchor)]
+    assert "if (g_fg_owed && tick_time >= g_fg_owe_at - tol)" in block
+    assert block.count("present_now(&ow.t, 0, ow.frame, tk, ow.crop, ow.ev_val, update.drawable, update.targetPresentationTimestamp, 0)") == 1
+    path = cwd/METAL
+    s = path.read_text(encoding="utf-8")
+    if s.count(anchor) != 1 or start in s:
+        raise RuntimeError("Candidate frame-generation anchor changed")
+    # Use the official callback's additional coverage guard; do not replace its
+    # hold, late-latch, or frame timing implementation.
+    guard = "if (!newer && g_dm_present_link && !g_rescue_mode)"
+    assert block.count(guard) == 1
+    block = block.replace(guard, "if (!newer && g_dm_present_link && !g_rescue_mode && !atomic_load(&g_covered) && !atomic_load(&g_present_suspended))")
+    lock = "            pthread_mutex_unlock(&g_pq_mu);"
+    assert block.count(lock) == 1
+    block = block.replace(lock, "            atomic_fetch_add(&g_link_presenting, 1);\n" + lock)
+    reset = "            g_fg_owing = 0;"
+    assert block.count(reset) == 1
+    block = block.replace(reset, reset + "\n            atomic_fetch_sub(&g_link_presenting, 1);")
+    s = s.replace(anchor, block + anchor)
+    path.write_text(s, encoding="utf-8")
+    (dest/"frame-generation-owed-picture.txt").write_text(block, encoding="utf-8")
+    assert s.count("present_now(&ow.t,") == 1
+    return {"owed_picture_restored": True, "device_validation_required": True}
+
+
 def reconcile(cwd, target, dest):
     # Stage the exact candidate before deriving the review patch. Use Git's
     # own reverse apply, with normal context checks, to recover official code.

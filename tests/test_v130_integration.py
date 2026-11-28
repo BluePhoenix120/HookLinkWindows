@@ -42,6 +42,18 @@ class X3Integration(unittest.TestCase):
 
     def test_x3_timing_abi_and_workgroup(self):
         base=ROOT/"engine/dm/gfx/nvn"
+        if PIN["nxnative_commit"] == "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf":
+            self.assertIn("#define FSTEP_UNIT_OFF 0x38", (base/"nvn_fstep.h").read_text(encoding="utf-8"))
+            h=(base/"hle_nvn.c").read_text(encoding="utf-8")
+            self.assertIn("nvn_fstep_t120(dm_fps_state)", h)
+            self.assertNotIn("static nvn_fdelta fd;", h)
+            self.assertNotIn("dm_fps_state + 0x38", h)
+            stub=(ROOT/"engine/dm/games/0400486024DEC000/patches.py").read_text(encoding="utf-8")
+            self.assertIn("ctx.capabilities.add('FRAME_STEP_120')", stub)
+            self.assertIn("def frame_step_v0(ctx)", stub)
+            self.assertIn("heap_retry(ctx)", stub)
+            self.assertTrue((ROOT/"Resources/presets/launcher_background.jpg").is_file())
+            return
         self.assertIn("#define FSTEP_UNIT_OFF 0x48",(base/"nvn_fstep.h").read_text(encoding="utf-8"))
         h=(base/"hle_nvn.c").read_text(encoding="utf-8")
         for marker in ("dm_fps_state + 0x38","dm_fps_state + 0x3c","static void fwg_frame(","fwg_frame(rtp);","void dm_frame_wg_join("):

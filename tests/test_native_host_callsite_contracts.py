@@ -22,7 +22,13 @@ class NativeHostCallSiteContracts(unittest.TestCase):
         if V134:
             prototype = prototype.replace('int dtt, int id_', 'int dtt, int dpf, int id_')
         self.assertEqual(self.s.count(prototype), 1)
-        self.assertIn("if (lead && got == MTLTextureTypeTextureBuffer) *lead = tbuf_lead", self.s)
+        if V134:
+            start = self.s.index(prototype)
+            body = self.s[start:self.s.index("\n}", start)]
+            self.assertIn("id<MTLTexture> v = pool_buffer_view(id_, chk, dpf, &tr);", body)
+            self.assertLess(body.index("if (!v) return 0;"), body.index("if (lead) *lead = tbuf_lead(id_, v);"))
+        else:
+            self.assertIn("if (lead && got == MTLTextureTypeTextureBuffer) *lead = tbuf_lead", self.s)
 
     def test_pool_entry_callers_supply_tenth_argument(self):
         self.assertEqual(len(re.findall(r"\bpool_entry\s*\(", self.s)), 3)
@@ -32,11 +38,16 @@ class NativeHostCallSiteContracts(unittest.TestCase):
 
     def test_buffer_to_texture_pairs_alias_before_copy(self):
         start = self.s.index("static void copy_b2t(")
-        end = self.s.index("// Texture copies a blit cannot do", start)
+        end = self.s.index("\n}", start) if V134 else self.s.index("// Texture copies a blit cannot do", start)
         body = self.s[start:end]
         self.assertEqual(body.count("tex_t pair; int paired = bcp_before(c->tex, t, &pair);"), 1)
         self.assertLess(body.index("int paired = bcp_before("), body.index("if (paired) bcp_after("))
-        self.assertLess(body.index("if (on_host && !tex_level_ok("), body.index("int paired = bcp_before("))
+        if V134:
+            self.assertLess(body.index("int paired = bcp_before("), body.index("gsb_store_buf(c->tex,"))
+            self.assertLess(body.index("if (!tex_level_ok(t, level,"), body.index("gsb_store_buf(c->tex,"))
+            self.assertLess(body.index("gsb_store_buf(c->tex,"), body.index("if (paired) bcp_after("))
+        else:
+            self.assertLess(body.index("if (on_host && !tex_level_ok("), body.index("int paired = bcp_before("))
 
     def test_display_link_timestamp_tolerance_is_in_scope(self):
         start = self.s.index("- (void)metalDisplayLink:")

@@ -1,5 +1,6 @@
 from pathlib import Path
 import unittest
+import json
 
 ROOT=Path(__file__).resolve().parents[1]
 M=(ROOT/'engine/dm/gfx/nvn/nvn_mtl.m').read_text(encoding='utf-8')
@@ -21,8 +22,11 @@ class MetalABI(unittest.TestCase):
         self.assertIn('return pso_build(d, off, &e);',body)
 
     def test_mesh_archive_and_display_link(self):
-        self.assertIn('mtk_desc4(d, ts, ms, ff, k->border, 0)',G)
-        self.assertNotIn('mtk_desc4(d, ts, ms, ff, k->border)',G)
+        v134=json.loads((ROOT/'ENGINE_PIN.json').read_text(encoding='utf-8'))['nxnative_commit']=='f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf'
+        expected='mtk_desc4(d, ts, ms, ff, k->border)' if v134 else 'mtk_desc4(d, ts, ms, ff, k->border, 0)'
+        obsolete='mtk_desc4(d, ts, ms, ff, k->border, 0)' if v134 else 'mtk_desc4(d, ts, ms, ff, k->border)'
+        self.assertIn(expected,G)
+        self.assertNotIn(obsolete,G)
         self.assertIn('static _Atomic int g_test_link_hold;',M)
         start=M.index('const double pres_gpu = g_present_gpu_s;')
         end=M.index('link_gpu_lead(it.frame, it.t_in, cb, wk_cb[k], pres_gpu',start)

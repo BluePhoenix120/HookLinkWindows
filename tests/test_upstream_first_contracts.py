@@ -79,6 +79,9 @@ class UpstreamFirstEngineContracts(unittest.TestCase):
             "dm/mac/pack_app.py":{"seals","as_packed","as_recorded","write_key"},
             "scripts/build_ipa_from_nsp.py":{"build_sources","drop_prewarm"}
         }
+        if PIN["nxnative_commit"] == "f36fa59becd8b3ffc4347e6f9d58e45fe4e51bdf":
+            specs["scripts/build_ipa_from_nsp.py"] = {"build_sources"}
+            specs["scripts/merge_prewarm_seeds.py"] = {"parse_pipelines", "row_key", "check_stages", "plan_profile"}
         for path,expected in specs.items():
             with self.subTest(path=path):
                 self.assertTrue(expected <= all_symbols(path),str(expected-all_symbols(path)))
